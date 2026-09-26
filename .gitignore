@@ -18,3 +18,7 @@ backups/
 # Sonstiges
 *.log
 .DS_Store
+
+# Lokale Claude-Einstellungen
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
