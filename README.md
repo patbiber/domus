@@ -8,11 +8,11 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 
 | Ordner | Dienst | Status |
 |---|---|---|
-| `homeassistant/` | Home Assistant (Container, `network_mode: host`) | läuft |
+| `homeassistant/` | Home Assistant (Container, `network_mode: host`) – https://domus.biber.solar | läuft |
 | `mosquitto/` | MQTT-Broker | geplant |
 | `zigbee2mqtt/` | Zigbee-Geräte (Zigbee-Stick folgt) | geplant |
 | – | Hue über die Hue Bridge (Integration in Home Assistant) | geplant |
-| `proxy/` | nginx (Reverse Proxy, Webhosting) + certbot (Let's Encrypt) – https://domus.biber.solar | läuft |
+| `proxy/` | nginx (Reverse Proxy für Home Assistant) + certbot (Let's Encrypt) | läuft |
 | `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control (systemd-User-Dienst, kein Docker) | läuft |
 
 ## Einrichtung
@@ -22,7 +22,7 @@ cp .env.example .env   # Werte anpassen
 cd homeassistant && docker compose up -d
 ```
 
-Home Assistant: http://192.168.178.121:8123
+Home Assistant: https://domus.biber.solar (Internet) bzw. http://192.168.178.121:8123 (LAN)
 
 ### Webseite / Zertifikat (`proxy/`)
 
@@ -36,6 +36,15 @@ cd proxy
 
 Erneuerung läuft automatisch (certbot prüft alle 12h, nginx lädt alle 6h neu). Port 80 leitet auf 443 weiter.
 Neue Seiten: weitere Datei in `proxy/conf.d/` anlegen.
+
+`domus.biber.solar` leitet auf Home Assistant weiter (`host.docker.internal:8123`, WebSockets aktiv).
+Die Proxy-Einstellungen von Home Assistant stehen seit 2026.x **nicht** mehr in `configuration.yaml` (`http:` wird ignoriert),
+sondern in `homeassistant/config/.storage/http` (nur bei gestopptem HA bearbeiten):
+
+- `use_x_forwarded_for: true`, `trusted_proxies: [172.16.0.0/12]` (Docker-Netze)
+- `ip_ban_enabled: true`, `login_attempts_threshold: 5` – Sperren landen in `config/ip_bans.yaml`
+
+Für jeden Benutzer 2-Faktor-Login (TOTP) im HA-Profil aktivieren.
 
 ### Claude Remote Control (`claude-remote/`)
 

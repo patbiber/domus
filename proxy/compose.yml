@@ -4,12 +4,13 @@ services:
     image: nginx:stable-alpine
     restart: unless-stopped
     env_file: ../.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./conf.d:/etc/nginx/conf.d:ro
-      - ./html:/usr/share/nginx/html:ro
       - ./certbot/conf:/etc/letsencrypt:ro
       - ./certbot/www:/var/www/certbot:ro
     # Alle 6h neu laden, damit erneuerte Zertifikate aktiv werden
