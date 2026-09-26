@@ -46,4 +46,5 @@ Siehe [CLAUDE.md](CLAUDE.md): keine Secrets im Repo, keine öffentlichen Ports o
 
 ## Host-Konfiguration
 
+- Zeitzone: `Europe/Zurich` (`timedatectl set-timezone`).
 - DNS: Cloudflare `1.1.1.1` / `1.0.0.1` statt Router, gesetzt in `/etc/netplan/00-installer-config.yaml` (`use-dns: false` für DHCP/RA + `nameservers`).
