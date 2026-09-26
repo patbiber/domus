@@ -1,0 +1,19 @@
+# Secrets
+.env
+*.env
+!.env.example
+secrets/
+
+# Dienst-Daten
+homeassistant/config/
+mosquitto/data/
+mosquitto/log/
+zigbee2mqtt/data/
+
+# Backups
+backups/
+*.tar.gz
+
+# Sonstiges
+*.log
+.DS_Store
