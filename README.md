@@ -12,7 +12,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | `mosquitto/` | MQTT-Broker | geplant |
 | `zigbee2mqtt/` | Zigbee-Geräte (Zigbee-Stick folgt) | geplant |
 | – | Hue über die Hue Bridge (Integration in Home Assistant) | geplant |
-| `proxy/` | Reverse Proxy + Webhosting | geplant |
+| `proxy/` | nginx (Reverse Proxy, Webhosting) + certbot (Let's Encrypt) – https://domus.biber.solar | läuft |
 
 ## Einrichtung
 
@@ -22,6 +22,19 @@ cd homeassistant && docker compose up -d
 ```
 
 Home Assistant: http://192.168.178.121:8123
+
+### Webseite / Zertifikat (`proxy/`)
+
+Voraussetzung: Fritzbox leitet TCP 80 und 443 an `192.168.178.121` weiter, `domus.biber.solar` zeigt (A-Record bei OVH) auf die öffentliche IP.
+
+```bash
+cd proxy
+./init-cert.sh --staging   # Testlauf gegen Let's-Encrypt-Staging
+./init-cert.sh             # echtes Zertifikat
+```
+
+Erneuerung läuft automatisch (certbot prüft alle 12h, nginx lädt alle 6h neu). Port 80 leitet auf 443 weiter.
+Neue Seiten: weitere Datei in `proxy/conf.d/` anlegen.
 
 ## Betrieb
 
