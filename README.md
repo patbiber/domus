@@ -13,6 +13,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | `zigbee2mqtt/` | Zigbee-Geräte (Zigbee-Stick folgt) | geplant |
 | – | Hue über die Hue Bridge (Integration in Home Assistant) | geplant |
 | `proxy/` | nginx (Reverse Proxy, Webhosting) + certbot (Let's Encrypt) – https://domus.biber.solar | läuft |
+| `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control (systemd-User-Dienst, kein Docker) | läuft |
 
 ## Einrichtung
 
@@ -35,6 +36,23 @@ cd proxy
 
 Erneuerung läuft automatisch (certbot prüft alle 12h, nginx lädt alle 6h neu). Port 80 leitet auf 443 weiter.
 Neue Seiten: weitere Datei in `proxy/conf.d/` anlegen.
+
+### Claude Remote Control (`claude-remote/`)
+
+Dauerhafte Claude-Code-Session, steuerbar über https://claude.ai/code oder die Claude-App (Umgebung „domus“).
+Läuft als systemd-User-Dienst in tmux, startet nach Absturz/Neustart automatisch (Linger aktiv).
+
+```bash
+mkdir -p ~/.config/systemd/user
+ln -sf ~/domus/claude-remote/claude-remote.service ~/.config/systemd/user/
+sudo loginctl enable-linger $USER
+systemctl --user daemon-reload && systemctl --user enable --now claude-remote
+
+systemctl --user status claude-remote   # Status
+tmux attach -t claude-remote            # zuschauen (verlassen: Ctrl-b d)
+```
+
+Rechte: `--permission-mode default` – Befehle werden in der App bestätigt.
 
 ## Betrieb
 
