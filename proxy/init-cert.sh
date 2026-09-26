@@ -14,7 +14,8 @@ LIVE=certbot/conf/live/$DOMAIN
 mkdir -p certbot/www "$LIVE"
 
 # 1. Dummy-Zertifikat, damit nginx starten kann
-if [[ ! -f $LIVE/fullchain.pem ]]; then
+# (Prüfung im Container: live/ gehört root, lokal nicht lesbar)
+if ! docker compose run --rm --entrypoint test certbot -f /etc/letsencrypt/live/$DOMAIN/fullchain.pem 2>/dev/null; then
   openssl req -x509 -nodes -newkey rsa:2048 -days 1 -subj "/CN=$DOMAIN" \
     -keyout "$LIVE/privkey.pem" -out "$LIVE/fullchain.pem" 2>/dev/null
 fi
