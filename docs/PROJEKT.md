@@ -2,7 +2,7 @@
 
 Stand: 27. September 2026
 
-Domus ist das Home-System der Familie Biber in Stäfa. Es läuft auf einem kleinen Intel NUC mit Ubuntu Server und
+Domus ist ein Home-System für ein Haus in Stäfa. Es läuft auf einem kleinen Intel NUC mit Ubuntu Server und
 bündelt Hausautomation, Photovoltaik-Monitoring, Strompreise und Benachrichtigungen an einem Ort. Die gesamte
 Konfiguration liegt versioniert im Git-Repository `patbiber/domus`; Geheimnisse und Betriebsdaten bleiben lokal.
 
