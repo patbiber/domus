@@ -14,6 +14,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | – | Hue über die Hue Bridge (Integration in Home Assistant) | geplant |
 | `proxy/` | nginx (Reverse Proxy für Home Assistant) + certbot (Let's Encrypt) | läuft |
 | `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control (systemd-User-Dienst, kein Docker) | läuft |
+| `energie/` | Energie-API (Fronius live + GWS-Tarif) und Retro-Webseite https://home.biber.solar | läuft |
 | `strompreise/` | Monatliches Archiv der GWS-Stromtarife (Skript + systemd-User-Timer, kein Docker) | läuft |
 
 ## Einrichtung
@@ -94,6 +95,26 @@ systemctl --user list-timers strompreise.timer   # nächster Lauf
 systemctl --user start strompreise.service       # sofort abrufen
 journalctl --user -u strompreise                 # Log
 ```
+
+### Energie-Dienst und home.biber.solar (`energie/`)
+
+Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen):
+- fragt alle 5 s den Fronius ab (`GetPowerFlowRealtimeData`) – nachts ist der Wechselrichter aus, dann `fronius_ok: false`,
+- berechnet den aktuellen Strompreis aus `strompreise/data/latest/tarife.json` + `energie/tarif.json`
+  (Produkt ÖkoStrom, Netztarif, Gemeindeabgabe, MWST, Rückliefervergütung Sommer/Winter, Korrekturen gemäss PDF),
+- `/api/status` (live) und `/api/history` (Minutenwerte der letzten 24 h, nur im Speicher),
+- liefert die Webseite `energie/www/index.html` aus (Retro-Adventure-Look, zufällige Geräte passend zum Smart-Meter-Verbrauch).
+
+https://home.biber.solar – nginx (`proxy/conf.d/home.biber.solar.conf`) leitet an `host.docker.internal:8099`,
+nur GET/HEAD, API mit Rate-Limit. Zertifikat einmalig geholt mit
+`docker exec certbot certbot certonly --webroot -w /var/www/certbot -d home.biber.solar --email … --agree-tos -n`
+(Erneuerung automatisch). **Die Seite ist öffentlich** – sie zeigt Live-Verbrauchsdaten des Hauses.
+
+Home Assistant liest per `rest` (in `configuration.yaml`): `sensor.strompreis_bezug`, `sensor.ruckliefervergutung`
+(beide CHF/kWh, fürs Energie-Dashboard), `sensor.stromkosten_aktuell`, `sensor.einspeiseerlos_aktuell` (CHF/h).
+
+Neue Tarife: Wenn das JSON vom PDF abweicht, `bezug_exkl_override` in `energie/tarif.json` setzen;
+neue Rückliefervergütung pro Jahr unter `rueckliefer` eintragen. Danach `cd energie && docker compose restart`.
 
 ### E-Mail-Versand (Proton SMTP)
 
