@@ -76,6 +76,20 @@ Nachts ist der Wechselrichter nicht erreichbar, die Einrichtung muss also tagsü
 
 Test: `curl -s http://192.168.1.221/solar_api/v1/GetPowerFlowRealtimeData.fcgi`
 
+### E-Mail-Versand (Proton SMTP)
+
+Absender `domus@biber.solar` über `smtp.protonmail.ch:587` (STARTTLS) mit einem Proton-SMTP-Token.
+
+- **Home Assistant:** Zugangsdaten als `smtp_username` / `smtp_password` in `homeassistant/config/secrets.yaml` (nicht im Repo).
+- **Host (`mail`-Befehl):** `msmtp` + `msmtp-mta` (stellt `sendmail` bereit) + `bsd-mailx` (stellt `mail` bereit).
+  Konfiguration in `/etc/msmtprc` (`root:msmtp`, `640`, enthält den Token), `msmtp` ist per
+  `dpkg-statoverride` setgid `msmtp` – so kann jeder Benutzer senden, aber niemand das Passwort lesen.
+
+```bash
+echo "Testinhalt" | mail -s "Betreff" empfaenger@example.com
+msmtp --serverinfo            # Verbindung zu Proton prüfen
+```
+
 ## Betrieb
 
 ```bash
