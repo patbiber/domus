@@ -2,7 +2,9 @@
 
 Home-System auf einem Intel NUC mit Ubuntu Server und Docker.
 
-## Struktur
+Ausführliche Projektdokumentation: [docs/PROJEKT.md](docs/PROJEKT.md)
+
+
 
 Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 
