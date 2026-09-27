@@ -1,0 +1,21 @@
+services:
+  energie:
+    container_name: energie
+    image: python:3.13-alpine
+    restart: unless-stopped
+    # Host-Netz: Fronius im LAN erreichbar, Home Assistant fragt 127.0.0.1:8099,
+    # nginx über host.docker.internal:8099. Port 8099 ist nur im LAN offen (keine Router-Freigabe).
+    network_mode: host
+    env_file: ../.env
+    environment:
+      FRONIUS_HOST: 192.168.1.221
+      PORT: "8099"
+    working_dir: /app
+    command: python -u server.py
+    read_only: true
+    volumes:
+      - ./server.py:/app/server.py:ro
+      - ./tarif.json:/app/tarif.json:ro
+      - ./www:/app/www:ro
+      - ../strompreise/data:/strompreise:ro
+      - /etc/localtime:/etc/localtime:ro
