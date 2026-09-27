@@ -80,7 +80,10 @@ Test: `curl -s http://192.168.1.221/solar_api/v1/GetPowerFlowRealtimeData.fcgi`
 
 Absender `domus@biber.solar` über `smtp.protonmail.ch:587` (STARTTLS) mit einem Proton-SMTP-Token.
 
-- **Home Assistant:** Zugangsdaten als `smtp_username` / `smtp_password` in `homeassistant/config/secrets.yaml` (nicht im Repo).
+- **Home Assistant:** Integration **SMTP** („domus_mail“, eingerichtet per einmaligem YAML-Import), Entität
+  `notify.domus_mail_patrick_biber_solar`. Zugangsdaten zusätzlich als `smtp_username` / `smtp_password` in
+  `homeassistant/config/secrets.yaml` (nicht im Repo). Token ändern: Geräte & Dienste → SMTP → Neu konfigurieren.
+- **Systemmails:** `/etc/aliases` leitet `root` und alle anderen lokalen Empfänger an `patrick@biber.solar`.
 - **Host (`mail`-Befehl):** `msmtp` + `msmtp-mta` (stellt `sendmail` bereit) + `bsd-mailx` (stellt `mail` bereit).
   Konfiguration in `/etc/msmtprc` (`root:msmtp`, `640`, enthält den Token), `msmtp` ist per
   `dpkg-statoverride` setgid `msmtp` – so kann jeder Benutzer senden, aber niemand das Passwort lesen.
