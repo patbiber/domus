@@ -63,6 +63,19 @@ tmux attach -t claude-remote            # zuschauen (verlassen: Ctrl-b d)
 
 Rechte: `--permission-mode default` – Befehle werden in der App bestätigt.
 
+### Photovoltaik (Fronius)
+
+| Gerät | IP | Details |
+|---|---|---|
+| Fronius-Wechselrichter (Datamanager, Solar API v1) | `192.168.1.221` | Seriennr. 33185466 |
+| Fronius Smart Meter TS 65A-3 | über den Wechselrichter | Seriennr. 96535978, Einbauort **Verbrauchszweig** (`Meter_Location: load`) |
+
+Der Smart Meter ist kein eigenes Netzwerkgerät, sondern hängt am Wechselrichter und wird über dessen Solar API ausgelesen.
+Home Assistant: Integration **Fronius** mit Host `192.168.1.221` (liefert Wechselrichter, Smart Meter und Powerflow).
+Nachts ist der Wechselrichter nicht erreichbar, die Einrichtung muss also tagsüber passieren.
+
+Test: `curl -s http://192.168.1.221/solar_api/v1/GetPowerFlowRealtimeData.fcgi`
+
 ## Betrieb
 
 ```bash
