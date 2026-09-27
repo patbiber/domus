@@ -22,3 +22,6 @@ backups/
 # Lokale Claude-Einstellungen
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+
+# Stromtarif-Archiv (Dienst-Daten)
+strompreise/data/

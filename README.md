@@ -14,6 +14,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | – | Hue über die Hue Bridge (Integration in Home Assistant) | geplant |
 | `proxy/` | nginx (Reverse Proxy für Home Assistant) + certbot (Let's Encrypt) | läuft |
 | `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control (systemd-User-Dienst, kein Docker) | läuft |
+| `strompreise/` | Monatliches Archiv der GWS-Stromtarife (Skript + systemd-User-Timer, kein Docker) | läuft |
 
 ## Einrichtung
 
@@ -75,6 +76,24 @@ Home Assistant: Integration **Fronius** mit Host `192.168.1.221` (liefert Wechse
 Nachts ist der Wechselrichter nicht erreichbar, die Einrichtung muss also tagsüber passieren.
 
 Test: `curl -s http://192.168.1.221/solar_api/v1/GetPowerFlowRealtimeData.fcgi`
+
+### Stromtarife GWS (`strompreise/`)
+
+`fetch-tarife.sh` lädt monatlich (1. des Monats, 06:17) von https://gws.ch/strom-tarife-produkte/:
+- die maschinenlesbaren Tarife (`tarife.json`, verlinkt auf strompreisvergleich.ch) – enthält aktuelles und kommendes Tarifjahr,
+- alle Tarif-PDFs der Seite (Privat/Gewerbe, Grosskunden, Messtarife, Haushalttarife, Stromprodukte).
+
+Ablage in `strompreise/data/<JJJJ-MM-TT>/` (nicht im Repo), `data/latest` zeigt auf den neuesten Stand, dazu `SHA256SUMS` und `quellen.txt`.
+Bei geänderten Dateien oder einem Fehler kommt eine Mail an `root` (→ patrick@biber.solar).
+
+```bash
+ln -sf ~/domus/strompreise/strompreise.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now strompreise.timer
+
+systemctl --user list-timers strompreise.timer   # nächster Lauf
+systemctl --user start strompreise.service       # sofort abrufen
+journalctl --user -u strompreise                 # Log
+```
 
 ### E-Mail-Versand (Proton SMTP)
 

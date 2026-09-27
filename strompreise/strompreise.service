@@ -1,0 +1,9 @@
+# Einmaliger Abruf der GWS-Stromtarife (ausgelöst durch strompreise.timer)
+[Unit]
+Description=GWS-Stromtarife herunterladen und ablegen (domus)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/strompreise/fetch-tarife.sh
