@@ -186,11 +186,11 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 27.09.2026 | E-Mail-Versand über Proton SMTP (Home Assistant und Host) |
 | 27.09.2026 | Monatliches Archiv der GWS-Stromtarife |
 | 27.09.2026 | Energie-Dienst, Strompreis-Sensoren, Retro-Webseite https://home.biber.solar |
+| 28.09.2026 | Fronius-Integration und Energie-Dashboard mit GWS-Tarifen |
 
 ## 8. Offene Punkte
 
-- Fronius-Integration in Home Assistant einrichten (Host `192.168.1.221`, nur über die Oberfläche möglich).
-- Energie-Dashboard mit Fronius-Sensoren und `sensor.strompreis_bezug` / `sensor.ruckliefervergutung` aufsetzen.
+- Nachtmodus am Fronius-Wechselrichter aktivieren, damit der nächtliche Netzbezug erfasst wird.
 - Rückliefervergütung 2027 nachtragen, sobald die GWS sie veröffentlichen (`energie/tarif.json`).
 - Entscheiden, ob https://home.biber.solar öffentlich bleiben oder ein Passwort bekommen soll.
 - MQTT, Zigbee2MQTT und Hue einbinden.

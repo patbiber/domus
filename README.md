@@ -115,6 +115,15 @@ nur GET/HEAD, API mit Rate-Limit. Zertifikat einmalig geholt mit
 Home Assistant liest per `rest` (in `configuration.yaml`): `sensor.strompreis_bezug`, `sensor.ruckliefervergutung`
 (beide CHF/kWh, fürs Energie-Dashboard), `sensor.stromkosten_aktuell`, `sensor.einspeiseerlos_aktuell` (CHF/h).
 
+**Energie-Dashboard** (`homeassistant/config/.storage/energy`, nur bei gestopptem HA bearbeiten):
+- Netz „GWS“: Bezug `sensor.netzbezug_energie`, Einspeisung `sensor.netzeinspeisung_energie` – kWh-Zähler per
+  `integration`-Sensor (in `configuration.yaml`) aus den Fronius-Leistungen `sensor.solarnet_leistung_netzbezug/-einspeisung`,
+  weil der Smart Meter im Verbrauchszweig sitzt und selbst keine Netzzähler liefert.
+- Preise: `sensor.strompreis_bezug` / `sensor.ruckliefervergutung`, Grundgebühren (Netznutzung + Messtarif,
+  CHF 11.35/Monat inkl. MWST) als `cost_adjustment_day: 0.373`.
+- Solar: `sensor.symo_8_2_3_m_1_energie_gesamt` (Wechselrichter-Zähler).
+- Einschränkung: Ohne Nachtmodus am Wechselrichter fehlt nachts der Netzbezug (Fronius nicht erreichbar).
+
 Neue Tarife: Wenn das JSON vom PDF abweicht, `bezug_exkl_override` in `energie/tarif.json` setzen;
 neue Rückliefervergütung pro Jahr unter `rueckliefer` eintragen. Danach `cd energie && docker compose restart`.
 
