@@ -105,6 +105,9 @@ Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen):
 - berechnet den aktuellen Strompreis aus `strompreise/data/latest/tarife.json` + `energie/tarif.json`
   (Produkt ÖkoStrom, Netztarif, Gemeindeabgabe, MWST, Rückliefervergütung Sommer/Winter, Korrekturen gemäss PDF),
 - `/api/status` (live) und `/api/history` (Minutenwerte der letzten 24 h, nur im Speicher),
+- `/api/boerse`: Day-Ahead-Börsenpreise Schweiz (EPEX Spot, stündlich, heute/morgen) von
+  https://api.energy-charts.info (Fraunhofer ISE, CC BY 4.0, ohne Token), umgerechnet in Rp/kWh zum EZB-Tageskurs;
+  wird alle 30 min aktualisiert,
 - liefert die Webseite `energie/www/index.html` aus (Retro-Adventure-Look, zufällige Geräte passend zum Smart-Meter-Verbrauch).
 
 https://home.biber.solar – nginx (`proxy/conf.d/home.biber.solar.conf`) leitet an `host.docker.internal:8099`,
@@ -114,6 +117,8 @@ nur GET/HEAD, API mit Rate-Limit. Zertifikat einmalig geholt mit
 
 Home Assistant liest per `rest` (in `configuration.yaml`): `sensor.strompreis_bezug`, `sensor.ruckliefervergutung`
 (beide CHF/kWh, fürs Energie-Dashboard), `sensor.stromkosten_aktuell`, `sensor.einspeiseerlos_aktuell` (CHF/h).
+Börse: `sensor.borsenpreis_day_ahead` (Rp/kWh, Attribute min/max/nächster negativer Preis),
+`binary_sensor.borsenpreis_negativ`, `sensor.borsenpreise_prognose` (Attribut `preise` mit allen Stundenwerten).
 
 **Energie-Dashboard** (`homeassistant/config/.storage/energy`, nur bei gestopptem HA bearbeiten):
 - Netz „GWS“: Bezug `sensor.netzbezug_energie`, Einspeisung `sensor.netzeinspeisung_energie` – kWh-Zähler per

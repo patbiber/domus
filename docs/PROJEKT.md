@@ -94,6 +94,9 @@ Geplant: `mosquitto/` (MQTT), `zigbee2mqtt/` (Zigbee-Stick folgt), Philips Hue �
   | `sensor.ruckliefervergutung` | CHF/kWh | aktuelle Rückliefervergütung (Sommer/Winter) |
   | `sensor.stromkosten_aktuell` | CHF/h | was der Netzbezug gerade kostet |
   | `sensor.einspeiseerlos_aktuell` | CHF/h | was die Einspeisung gerade bringt |
+  | `sensor.borsenpreis_day_ahead` | Rp/kWh | Day-Ahead-Börsenpreis Schweiz (EPEX Spot) |
+  | `binary_sensor.borsenpreis_negativ` | – | an, wenn der Börsenpreis gerade negativ ist |
+  | `sensor.borsenpreise_prognose` | Rp/kWh | tiefster kommender Preis, alle Stundenwerte als Attribut |
 
 ### 4.2 Reverse Proxy und Zertifikate (`proxy/`)
 
@@ -115,7 +118,8 @@ Geplant: `mosquitto/` (MQTT), `zigbee2mqtt/` (Zigbee-Stick folgt), Philips Hue �
 - Der Strompreis wird aus `tarife.json` (Produkt ÖkoStrom + Netztarif) und `energie/tarif.json` berechnet
   (Gemeindeabgabe, MWST, Rückliefervergütung, Korrekturen gemäss PDF). Nachgerechnet gegen die GWS-PDFs:
   26.68 Rp/kWh (2026) bzw. 24.65 Rp/kWh (2027) inkl. MWST.
-- Endpunkte: `/api/status` (live), `/api/history` (Minutenwerte der letzten 24 h, nur im Speicher).
+- Endpunkte: `/api/status` (live), `/api/history` (Minutenwerte der letzten 24 h, nur im Speicher),
+  `/api/boerse` (Day-Ahead-Börsenpreise CH von Energy-Charts, in Rp/kWh zum EZB-Kurs).
 - Nachts ist der Wechselrichter aus; die API meldet dann `fronius_ok: false`.
 
 ### 4.5 Retro-Webseite https://home.biber.solar
@@ -126,6 +130,7 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
 - Eine Figur mit Hut läuft zwischen Geräten umher; die Geräte werden zufällig so gewürfelt, dass ihre Summe dem
   aktuellen Smart-Meter-Verbrauch entspricht („Standby-Gespenster“ füllen den Rest).
 - Stromfunken auf der Leitung, ein rückwärts drehender Ferraris-Zähler, Münzen zwischen Sparschwein und GWS.
+- Börsenticker mit Day-Ahead-Preisen für heute/morgen; bei negativen Preisen schwitzt das GWS-Gebäude.
 - Klickbare Verb-Leiste („Schalte aus“, „Lies“, „Nimm“ …), Kassenbuch mit Leistung und CHF/h, 24-h-Diagramme.
 - Eine einzige Datei (`energie/www/index.html`), ohne externe Ressourcen.
 
@@ -187,6 +192,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 27.09.2026 | Monatliches Archiv der GWS-Stromtarife |
 | 27.09.2026 | Energie-Dienst, Strompreis-Sensoren, Retro-Webseite https://home.biber.solar |
 | 28.09.2026 | Fronius-Integration und Energie-Dashboard mit GWS-Tarifen |
+| 29.09.2026 | Day-Ahead-Börsenpreise in Home Assistant und auf home.biber.solar |
 
 ## 8. Offene Punkte
 
