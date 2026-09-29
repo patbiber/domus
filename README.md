@@ -119,6 +119,11 @@ Home Assistant liest per `rest` (in `configuration.yaml`): `sensor.strompreis_be
 (beide CHF/kWh, fürs Energie-Dashboard), `sensor.stromkosten_aktuell`, `sensor.einspeiseerlos_aktuell` (CHF/h).
 Börse: `sensor.borsenpreis_day_ahead` (Rp/kWh, Attribute min/max/nächster negativer Preis),
 `binary_sensor.borsenpreis_negativ`, `sensor.borsenpreise_prognose` (Attribut `preise` mit allen Stundenwerten).
+Dazu `sensor.borsenpreis_day_ahead_chf` (CHF/kWh) für den direkten Vergleich mit den GWS-Tarifen.
+
+**Dashboard „Energie & Börse“** (`/energie-boerse`, in `config/.storage/lovelace.energie_boerse`): Energie-Karten wie im
+eingebauten Energie-Dashboard (das sich nicht erweitern lässt) plus aktuelle Preise, Verlauf Börse vs. GWS (7 Tage)
+und Tabelle der kommenden Börsenpreise (🟩 unter GWS-Vergütung, 🟨 darüber, 🟥 negativ).
 
 **Energie-Dashboard** (`homeassistant/config/.storage/energy`, nur bei gestopptem HA bearbeiten):
 - Netz „GWS“: Bezug `sensor.netzbezug_energie`, Einspeisung `sensor.netzeinspeisung_energie` – kWh-Zähler per

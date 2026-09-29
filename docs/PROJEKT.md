@@ -97,6 +97,10 @@ Geplant: `mosquitto/` (MQTT), `zigbee2mqtt/` (Zigbee-Stick folgt), Philips Hue �
   | `sensor.borsenpreis_day_ahead` | Rp/kWh | Day-Ahead-Börsenpreis Schweiz (EPEX Spot) |
   | `binary_sensor.borsenpreis_negativ` | – | an, wenn der Börsenpreis gerade negativ ist |
   | `sensor.borsenpreise_prognose` | Rp/kWh | tiefster kommender Preis, alle Stundenwerte als Attribut |
+  | `sensor.borsenpreis_day_ahead_chf` | CHF/kWh | Börsenpreis für den Vergleich mit den GWS-Tarifen |
+
+- **Dashboard „Energie & Börse“** (`/energie-boerse`): Energie-Karten plus Börsenpreise, Verlauf Börse vs. GWS
+  und Tabelle der kommenden Stunden. Das eingebaute Energie-Dashboard lässt sich nicht um eigene Karten erweitern.
 
 ### 4.2 Reverse Proxy und Zertifikate (`proxy/`)
 
@@ -192,7 +196,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 27.09.2026 | Monatliches Archiv der GWS-Stromtarife |
 | 27.09.2026 | Energie-Dienst, Strompreis-Sensoren, Retro-Webseite https://home.biber.solar |
 | 28.09.2026 | Fronius-Integration und Energie-Dashboard mit GWS-Tarifen |
-| 29.09.2026 | Day-Ahead-Börsenpreise in Home Assistant und auf home.biber.solar |
+| 29.09.2026 | Day-Ahead-Börsenpreise in Home Assistant und auf home.biber.solar, Dashboard „Energie & Börse“ |
 
 ## 8. Offene Punkte
 
