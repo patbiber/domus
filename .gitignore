@@ -25,3 +25,6 @@ backups/
 
 # Stromtarif-Archiv (Dienst-Daten)
 strompreise/data/
+
+# Passwort-Hashes für nginx (Basic Auth)
+proxy/conf.d/*.htpasswd

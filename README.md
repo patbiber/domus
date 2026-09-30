@@ -115,7 +115,16 @@ Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen):
 https://home.biber.solar – nginx (`proxy/conf.d/home.biber.solar.conf`) leitet an `host.docker.internal:8099`,
 nur GET/HEAD, API mit Rate-Limit. Zertifikat einmalig geholt mit
 `docker exec certbot certbot certonly --webroot -w /var/www/certbot -d home.biber.solar --email … --agree-tos -n`
-(Erneuerung automatisch). **Die Seite ist öffentlich** – sie zeigt Live-Verbrauchsdaten des Hauses.
+(Erneuerung automatisch).
+
+**Passwortschutz** (HTTP Basic Auth, Benutzer `home`): Hash in `proxy/conf.d/home.biber.solar.htpasswd` (nicht im Repo).
+Home Assistant liest intern über `127.0.0.1:8099` und ist nicht betroffen. Passwort ändern:
+
+```bash
+cd ~/domus/proxy
+printf 'home:%s\n' "$(openssl passwd -apr1 'NEUES-PASSWORT')" > conf.d/home.biber.solar.htpasswd
+docker exec nginx nginx -s reload
+```
 
 Home Assistant liest per `rest` (in `configuration.yaml`): `sensor.strompreis_bezug`, `sensor.ruckliefervergutung`
 (beide CHF/kWh, fürs Energie-Dashboard), `sensor.stromkosten_aktuell`, `sensor.einspeiseerlos_aktuell` (CHF/h).

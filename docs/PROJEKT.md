@@ -107,7 +107,7 @@ Geplant: `mosquitto/` (MQTT), `zigbee2mqtt/` (Zigbee-Stick folgt), Philips Hue �
 - nginx terminiert TLS für `domus.biber.solar` (Home Assistant, WebSockets) und `home.biber.solar` (Energie-Seite).
 - Unbekannte Hostnamen und direkte IP-Zugriffe werden verworfen (`return 444`).
 - certbot prüft alle 12 h die Erneuerung, nginx lädt alle 6 h neu.
-- `home.biber.solar`: nur GET/HEAD, Rate-Limit auf `/api/`, strenge Content-Security-Policy.
+- `home.biber.solar`: Passwortschutz (Basic Auth), nur GET/HEAD, Rate-Limit, strenge Content-Security-Policy.
 
 ### 4.3 Tarifarchiv GWS (`strompreise/`)
 
@@ -160,7 +160,7 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
 | Betriebsdaten | `homeassistant/config/`, `strompreise/data/`, `backups/` per `.gitignore` ausgeschlossen |
 | Öffentliche Ports | Nur 80/443 (Router → NUC); Port 8099 nur im LAN |
 | Home Assistant | TLS, IP-Sperre, 2-Faktor-Login |
-| Energie-Seite | nur lesend, Rate-Limit, CSP; **öffentlich** – zeigt Live-Verbrauchsdaten des Hauses |
+| Energie-Seite | Passwortschutz (Basic Auth), nur lesend, Rate-Limit, CSP |
 
 ## 6. Betrieb
 
@@ -197,11 +197,10 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 27.09.2026 | Energie-Dienst, Strompreis-Sensoren, Retro-Webseite https://home.biber.solar |
 | 28.09.2026 | Fronius-Integration und Energie-Dashboard mit GWS-Tarifen |
 | 29.09.2026 | Day-Ahead-Börsenpreise in Home Assistant und auf home.biber.solar, Dashboard „Energie & Börse“ |
-| 30.09.2026 | Nachtmodus am Wechselrichter, Nachtansicht auf home.biber.solar |
+| 30.09.2026 | Nachtmodus am Wechselrichter, Nachtansicht und Passwortschutz für home.biber.solar |
 
 ## 8. Offene Punkte
 
 - Rückliefervergütung 2027 nachtragen, sobald die GWS sie veröffentlichen (`energie/tarif.json`).
-- Entscheiden, ob https://home.biber.solar öffentlich bleiben oder ein Passwort bekommen soll.
 - MQTT, Zigbee2MQTT und Hue einbinden.
 - LAN-Adresse im README prüfen (dort steht `192.168.178.121`, der NUC meldet `192.168.1.x`).
