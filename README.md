@@ -109,6 +109,8 @@ Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen):
   https://api.energy-charts.info (Fraunhofer ISE, CC BY 4.0, ohne Token), umgerechnet in Rp/kWh zum EZB-Tageskurs;
   wird alle 30 min aktualisiert,
 - liefert die Webseite `energie/www/index.html` aus (Retro-Adventure-Look, zufällige Geräte passend zum Smart-Meter-Verbrauch).
+  Tag/Nacht richtet sich nach der PV-Leistung: nachts Mond, Sterne, beleuchtete Räume, Nachtstrom-Sprüche;
+  der Schlafmodus erscheint nur noch, wenn der Fronius keine Daten liefert.
 
 https://home.biber.solar – nginx (`proxy/conf.d/home.biber.solar.conf`) leitet an `host.docker.internal:8099`,
 nur GET/HEAD, API mit Rate-Limit. Zertifikat einmalig geholt mit
@@ -132,7 +134,7 @@ und Tabelle der kommenden Börsenpreise (🟩 unter GWS-Vergütung, 🟨 darübe
 - Preise: `sensor.strompreis_bezug` / `sensor.ruckliefervergutung`, Grundgebühren (Netznutzung + Messtarif,
   CHF 11.35/Monat inkl. MWST) als `cost_adjustment_day: 0.373`.
 - Solar: `sensor.symo_8_2_3_m_1_energie_gesamt` (Wechselrichter-Zähler).
-- Einschränkung: Ohne Nachtmodus am Wechselrichter fehlt nachts der Netzbezug (Fronius nicht erreichbar).
+- Nachtmodus am Wechselrichter ist aktiv (seit 30.09.2026): Der Fronius misst auch nachts, der Netzbezug wird durchgehend erfasst.
 
 Neue Tarife: Wenn das JSON vom PDF abweicht, `bezug_exkl_override` in `energie/tarif.json` setzen;
 neue Rückliefervergütung pro Jahr unter `rueckliefer` eintragen. Danach `cd energie && docker compose restart`.

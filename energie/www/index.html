@@ -222,7 +222,7 @@ function renderInventory() {
   const ul = $("inv");
   ul.innerHTML = "";
   if (!S || !S.fronius_ok) {
-    ul.innerHTML = "<li>??? – der Fronius schläft</li>";
+    ul.innerHTML = "<li>??? – keine Daten vom Fronius</li>";
     $("invsum").textContent = "–";
     return;
   }
@@ -322,8 +322,9 @@ function onData() {
     renderInventory();
   }
   if (ok !== wasOk) {
-    if (!ok) say("Zzz… Der Fronius schläft. Keine Sonne, keine Daten. Ich schlafe auch.", "#aaaaff", 8000);
-    else say(pick(["Guten Morgen! Der Fronius ist wach.", "Die Sonne ist da. Ran an die Panels!"]));
+    if (!ok) say("Hm, der Fronius antwortet nicht. Keine Daten gerade. Ich mache ein Nickerchen.", "#aaaaff", 8000);
+    else if (isNight()) say(pick(["Guten Abend! Die Sonne schläft, der Stromzähler nicht.", "Nachtschicht! Jetzt kommt der Strom von der GWS."]), "#aaddff");
+    else say(pick(["Guten Tag! Der Fronius ist wach.", "Die Sonne ist da. Ran an die Panels!"]));
     wasOk = ok;
   }
   updateStats();
@@ -346,8 +347,8 @@ function updateStats() {
     $("t-boerse").classList.toggle("neg", b.negativ);
   }
   if (!S || !S.fronius_ok) {
-    for (const id of ["s-pv", "s-haus", "s-netz", "s-zahle", "s-bekomme"]) $(id).textContent = "Zzz";
-    $("s-pvday").textContent = "Wechselrichter schläft";
+    for (const id of ["s-pv", "s-haus", "s-netz", "s-zahle", "s-bekomme"]) $(id).textContent = "–";
+    $("s-pvday").textContent = "keine Daten vom Fronius";
     $("s-autark").textContent = $("s-netzdir").textContent = " ";
     return;
   }
@@ -389,6 +390,15 @@ function chatter() {
     [`Oh nein, wir kaufen Strom ein. ${fmtCHF(S.kosten_chf_h || 0, 2)} pro Stunde!`],
     [`Wer hat ${big ? "den " + big.name : "das"} angelassen?!`], [`GWS: Wir nehmen auch Münzen. Danke!`, "#ffffff"]);
   if (S.pv_w > 3000) lines.push([`Die Panels glühen! ${fmtW(S.pv_w)} Sonne!`]);
+  if (isNight()) {
+    lines.length = 0;
+    lines.push([`Nachtstrom: ${fmtW(S.bezug_w)} aus dem Netz, ${fmtCHF(S.kosten_chf_h || 0, 2)} pro Stunde.`, "#aaddff"],
+      ["Der Mond liefert leider 0 Watt. Ich habe nachgemessen."], ["Die Panels schlafen. Die Geräte leider nicht."],
+      [`Wer braucht um diese Zeit ${big ? "den " + big.name : "so viel Strom"}?`],
+      ["Ein Batteriespeicher wäre jetzt praktisch. Nur so ein Gedanke."],
+      [`Heute hat die Sonne ${S.pv_heute_kwh.toFixed(1)} kWh geliefert. Nicht schlecht.`],
+      ["GWS: Wir liefern auch nachts. Gegen Münzen.", "#ffffff"]);
+  }
   const bo = S.boerse;
   if (bo && bo.negativ) lines.push(
     ["GWS: Negative Börsenpreise! Wir zahlen fürs Abnehmen drauf!", "#ffffff"],
@@ -427,14 +437,31 @@ function wirePoint(s) { // s 0..1 über beide Abschnitte, mit Durchhang
   return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u + Math.sin(u * Math.PI) * 5 };
 }
 
+// Nacht = keine PV-Leistung (Fronius misst auch nachts); ohne Daten nach Uhrzeit
+function isNight() {
+  if (S && S.fronius_ok) return S.pv_w < 10;
+  const h = new Date().getHours() + new Date().getMinutes() / 60;
+  return h < 6.5 || h > 19.5;
+}
+
+let shooting = null;
 function sky(t, ok) {
   const h = new Date().getHours() + new Date().getMinutes() / 60;
-  const day = ok && h > 6 && h < 20.5;
+  const day = !isNight();
   const bands = day ? ["#5599ff", "#66aaff", "#88ccff", "#aaddff"] : ["#000022", "#000033", "#110044", "#221155"];
   bands.forEach((c, i) => R(0, i * 30, W, 30, c));
   if (!day) {
     for (const s of STARS) if (Math.sin(t * 2 + s.p) > -.3) R(s.x, s.y, 1, 1, "#ffffcc");
-    R(270, 14, 10, 10, "#ffffcc"); R(274, 12, 8, 8, bands[0]); // Mond
+    const disc = (cx, cy, r, c) => { for (let y = -r; y <= r; y++) { const w = Math.sqrt(r * r - y * y); R(cx - w, cy + y, w * 2, 1, c); } };
+    disc(276, 20, 7, "#ffffcc"); disc(280, 17, 6, bands[0]); // Mondsichel
+    R(272, 19, 1, 1, "#ccccaa"); R(271, 23, 2, 1, "#ccccaa"); // Mondgesicht
+    // Sternschnuppe ab und zu
+    if (!shooting && Math.random() < .002) shooting = { x: rnd(20, 200), y: rnd(4, 30), s: 0 };
+    if (shooting) {
+      shooting.s += .02;
+      for (let k = 0; k < 6; k++) R(shooting.x + shooting.s * 60 - k * 2, shooting.y + shooting.s * 20 - k * .7, 1, 1, k ? "#aaaacc" : "#ffffff");
+      if (shooting.s >= 1) shooting = null;
+    }
     return;
   }
   const frac = clamp((h - 6) / 14.5, 0, 1);
@@ -453,32 +480,41 @@ function sky(t, ok) {
   R(cx, 18, 22, 5, "#ffffff"); R(cx + 4, 14, 12, 5, "#ffffff"); R(cx + 26, 30, 16, 4, "#eeeeff");
 }
 
-function ground() {
-  R(0, 118, W, 8, "#22aa22");
-  for (let x = 0; x < W; x += 3) R(x, 117 + (x % 2), 1, 1, "#33cc33");
-  R(0, 126, W, 24, "#666666");
-  for (let x = 4; x < W; x += 20) R(x, 137, 10, 2, "#dddd55");
+function ground(night) {
+  R(0, 118, W, 8, night ? "#115511" : "#22aa22");
+  for (let x = 0; x < W; x += 3) R(x, 117 + (x % 2), 1, 1, night ? "#1a661a" : "#33cc33");
+  R(0, 126, W, 24, night ? "#333344" : "#666666");
+  for (let x = 4; x < W; x += 20) R(x, 137, 10, 2, night ? "#888844" : "#dddd55");
+  // Strassenlaterne
+  R(232, 96, 2, 22, "#444444"); R(229, 94, 8, 3, "#555555");
+  if (night) { g.fillStyle = "rgba(255,230,140,0.16)"; g.beginPath(); g.moveTo(230, 97); g.lineTo(236, 97); g.lineTo(248, 126); g.lineTo(218, 126); g.fill(); R(230, 97, 6, 1, "#ffee99"); }
 }
 
-function house(t, ok) {
+function house(t, ok, night) {
   // Aussenwände
-  R(38, 42, 154, 78, "#aa5500");
-  R(42, 44, 146, 36, "#ccbb99");   // OG innen
-  R(42, 83, 146, 35, "#99bbcc");   // EG innen
-  for (let x = 46; x < 188; x += 12) R(x, 50, 1, 28, "#bbaa88"); // Tapete
+  R(38, 42, 154, 78, night ? "#773b00" : "#aa5500");
+  R(42, 44, 146, 36, night ? "#8a7f63" : "#ccbb99");   // OG innen
+  R(42, 83, 146, 35, night ? "#5f7686" : "#99bbcc");   // EG innen
+  for (let x = 46; x < 188; x += 12) R(x, 50, 1, 28, night ? "#7a7058" : "#bbaa88"); // Tapete
+  if (night && ok) { // Deckenlampen mit Lichtkegel
+    for (const [lx, ly] of [[110, 45], [158, 45], [100, 84], [150, 84]]) {
+      g.fillStyle = "rgba(255,225,130,0.22)"; g.beginPath(); g.moveTo(lx - 2, ly + 3); g.lineTo(lx + 2, ly + 3); g.lineTo(lx + 16, ly + 34); g.lineTo(lx - 16, ly + 34); g.fill();
+      R(lx - 1, ly, 2, 2, "#444444"); R(lx - 2, ly + 2, 4, 2, "#ffee88");
+    }
+  }
   R(74, 80, 116, 3, "#664422");    // Decke/Boden OG (mit Treppenloch links)
   R(42, 117, 146, 3, "#664422");
   // Treppe
   for (let i = 0; i < 8; i++) R(46 + i * 3, 114 - i * 4.8, 6, 3, "#885533");
   // Fenster OG
-  R(176, 52, 10, 10, ok ? "#aaddff" : "#223355"); R(180, 52, 1, 10, "#664422"); R(176, 56, 10, 1, "#664422");
+  R(176, 52, 10, 10, night ? (ok ? "#ffdd66" : "#223355") : "#aaddff"); R(180, 52, 1, 10, "#664422"); R(176, 56, 10, 1, "#664422");
   // Dach
   for (let y = 12; y <= 44; y++) { const hw = (y - 12) / 30 * 83; R(115 - hw, y, hw * 2, 1, "#aa0000"); }
   R(150, 16, 7, 14, "#883300"); R(149, 14, 9, 3, "#662200"); // Kamin
   const pvK = S && S.fronius_ok ? clamp(S.pv_w / 8000, 0, 1) : 0;
   for (const p of PANEL_ROWS) {
     const glow = pvK > 0 && Math.sin(t * 3 + p.x * .3 + p.y) > 1 - pvK * 1.6;
-    R(p.x, p.y, 8, 3, glow ? "#88bbff" : "#2233aa");
+    R(p.x, p.y, 8, 3, glow ? "#88bbff" : night ? (Math.sin(t * .7 + p.x) > .995 ? "#aaaacc" : "#141c44") : "#2233aa");
     R(p.x + 3, p.y, 1, 3, "#5577cc");
   }
   // Stromzähler (Ferraris) aussen an der Wand
@@ -496,7 +532,7 @@ function house(t, ok) {
   R(px - 1, py - 10, 3, 1, "#330000"); R(px + 3, py - 8, 1, 1, "#000");
 }
 
-function gws(t) {
+function gws(t, night) {
   const b = gwsBounce > 0 ? -Math.round(Math.sin(gwsBounce * 20) * 1.5) : 0;
   // Mast
   R(219, 36, 3, 82, "#775533"); R(213, 38, 15, 2, "#775533");
@@ -506,7 +542,7 @@ function gws(t) {
   R(254, 70 + b, 44, 12, "#000000"); ptext(g, "GWS", 259, 72 + b, "#ffff55", 2);
   R(300, 70 + b, 10, 12, "#000"); // Blitz-Schild
   R(305, 71 + b, 2, 4, "#ffff55"); R(303, 75 + b, 4, 1, "#ffff55"); R(303, 76 + b, 2, 4, "#ffff55");
-  for (let x = 252; x < 310; x += 14) R(x, 88, 8, 8, Math.sin(t + x) > .9 ? "#ffff99" : "#556677");
+  for (let x = 252; x < 310; x += 14) R(x, 88, 8, 8, night ? (x % 28 ? "#ffdd66" : "#334455") : Math.sin(t + x) > .9 ? "#ffff99" : "#556677");
   R(274, 102, 12, 16, "#553311"); R(283, 110, 1, 1, "#ffcc00");
   // Trafo mit Summen
   R(292, 104, 14, 14, "#447744"); R(294, 106, 10, 1, "#88aa88"); R(294, 109, 10, 1, "#88aa88");
@@ -658,9 +694,9 @@ cv.addEventListener("click", e => {
     if (Math.abs(x - d.slot.x) < 9 && y > fy - 24 && y < fy + 2) return interact(d);
   }
   if (x > 240 && y > 56 && y < 120) { sentence(`${verb} GWS`); return say(S && S.tarif ? `Die Gemeindewerke Stäfa. Verkaufen mir Strom für ${(S.tarif.bezug_chf_kwh * 100).toFixed(2)} Rp/kWh und zahlen ${(S.tarif.rueckliefer_chf_kwh * 100).toFixed(0)} Rp/kWh zurück.` : "Die Gemeindewerke Stäfa.", "#ffffff"); }
-  if (x >= 190 && x <= 206 && y >= 86 && y <= 106) { sentence(`${verb} Stromzähler`); return say(!S || !S.fronius_ok ? "Der Zähler döst." : S.netz_w < 0 ? `Der Zähler dreht rückwärts! ${fmtW(-S.netz_w)} gehen ans Netz.` : `Der Zähler dreht vorwärts. ${fmtW(S.netz_w)} kommen aus dem Netz.`); }
+  if (x >= 190 && x <= 206 && y >= 86 && y <= 106) { sentence(`${verb} Stromzähler`); return say(!S || !S.fronius_ok ? "Keine Daten vom Zähler." : S.netz_w < 0 ? `Der Zähler dreht rückwärts! ${fmtW(-S.netz_w)} gehen ans Netz.` : `Der Zähler dreht vorwärts. ${fmtW(S.netz_w)} kommen aus dem Netz.`); }
   if (Math.abs(x - PIGGY.x) < 8 && y > FLOOR[0] - 12 && y < FLOOR[0] + 2) { sentence(`${verb} Sparschwein`); return walkTo(PIGGY.x - 10, 0, () => say(`Mein Sparschwein. Seit du zuschaust: ${(session >= 0 ? "+" : "") + session.toFixed(4)} CHF. Oink.`, "#ff99cc")); }
-  if (y < 44 && x > 30 && x < 200) { sentence(`${verb} Solaranlage`); return say(S && S.fronius_ok ? `Die Panels liefern ${fmtW(S.pv_w)}. Heute schon ${S.pv_heute_kwh.toFixed(2)} kWh.` : "Die Panels schlafen. Wie alle hier."); }
+  if (y < 44 && x > 30 && x < 200) { sentence(`${verb} Solaranlage`); return say(S && S.fronius_ok ? (isNight() ? `Die Panels schlafen. Heute haben sie ${S.pv_heute_kwh.toFixed(2)} kWh geliefert.` : `Die Panels liefern ${fmtW(S.pv_w)}. Heute schon ${S.pv_heute_kwh.toFixed(2)} kWh.`) : "Keine Daten von den Panels."); }
   if (y < 118 && x > 40 && x < 190) {
     const f = y < 81 ? 1 : 0;
     sentence(`Gehe zu`);
@@ -760,7 +796,8 @@ function frame(now) {
   const dt = Math.min(.1, (now - last) / 1000); last = now;
   const t = now / 1000;
   const ok = !!(S && S.fronius_ok);
-  sky(t, ok); ground(); house(t, ok); gws(t);
+  const night = isNight();
+  sky(t, ok); ground(night); house(t, ok, night); gws(t, night);
   drawDevices(t);
   for (const d of devices) d.wob = Math.min(1, d.wob + dt);
   spawn(dt);

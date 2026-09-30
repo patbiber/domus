@@ -124,7 +124,7 @@ Geplant: `mosquitto/` (MQTT), `zigbee2mqtt/` (Zigbee-Stick folgt), Philips Hue �
   26.68 Rp/kWh (2026) bzw. 24.65 Rp/kWh (2027) inkl. MWST.
 - Endpunkte: `/api/status` (live), `/api/history` (Minutenwerte der letzten 24 h, nur im Speicher),
   `/api/boerse` (Day-Ahead-Börsenpreise CH von Energy-Charts, in Rp/kWh zum EZB-Kurs).
-- Nachts ist der Wechselrichter aus; die API meldet dann `fronius_ok: false`.
+- Der Wechselrichter läuft im Nachtmodus und liefert rund um die Uhr Werte; fällt er aus, meldet die API `fronius_ok: false`.
 
 ### 4.5 Retro-Webseite https://home.biber.solar
 
@@ -197,10 +197,10 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 27.09.2026 | Energie-Dienst, Strompreis-Sensoren, Retro-Webseite https://home.biber.solar |
 | 28.09.2026 | Fronius-Integration und Energie-Dashboard mit GWS-Tarifen |
 | 29.09.2026 | Day-Ahead-Börsenpreise in Home Assistant und auf home.biber.solar, Dashboard „Energie & Börse“ |
+| 30.09.2026 | Nachtmodus am Wechselrichter, Nachtansicht auf home.biber.solar |
 
 ## 8. Offene Punkte
 
-- Nachtmodus am Fronius-Wechselrichter aktivieren, damit der nächtliche Netzbezug erfasst wird.
 - Rückliefervergütung 2027 nachtragen, sobald die GWS sie veröffentlichen (`energie/tarif.json`).
 - Entscheiden, ob https://home.biber.solar öffentlich bleiben oder ein Passwort bekommen soll.
 - MQTT, Zigbee2MQTT und Hue einbinden.
