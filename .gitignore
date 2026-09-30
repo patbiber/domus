@@ -28,3 +28,6 @@ strompreise/data/
 
 # Passwort-Hashes für nginx (Basic Auth)
 proxy/conf.d/*.htpasswd
+
+# Python
+__pycache__/
