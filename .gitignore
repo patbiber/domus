@@ -31,3 +31,4 @@ proxy/conf.d/*.htpasswd
 
 # Python
 __pycache__/
+energie/data/

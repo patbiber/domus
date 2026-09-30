@@ -108,6 +108,10 @@ Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen):
 - `/api/boerse`: Day-Ahead-Börsenpreise Schweiz (EPEX Spot, stündlich, heute/morgen) von
   https://api.energy-charts.info (Fraunhofer ISE, CC BY 4.0, ohne Token), umgerechnet in Rp/kWh zum EZB-Tageskurs;
   wird alle 30 min aktualisiert,
+- `/api/speicher`: **Speicher-Simulation** – drei virtuelle Speicher (Stecker 2 kWh/600 W, 5 kWh/3 kW, 10 kWh/5 kW,
+  je 95 % Wirkungsgrad pro Richtung) werden alle 5 s mit dem echten Netzsaldo geladen/entladen; Ersparnis =
+  vermiedener Bezug × Bezugspreis − beim Entladen anteilig verrechnete entgangene Rückliefervergütung.
+  Stand in `energie/data/speicher.json` (nicht im Repo, übersteht Neustarts). Zurücksetzen: Dienst stoppen, Datei löschen.
 - liefert die Webseite `energie/www/index.html` aus (Retro-Adventure-Look, zufällige Geräte passend zum Smart-Meter-Verbrauch).
   Tag/Nacht richtet sich nach der PV-Leistung: nachts Mond, Sterne, beleuchtete Räume, Nachtstrom-Sprüche;
   der Schlafmodus erscheint nur noch, wenn der Fronius keine Daten liefert.
@@ -131,6 +135,8 @@ Home Assistant liest per `rest` (in `configuration.yaml`): `sensor.strompreis_be
 Börse: `sensor.borsenpreis_day_ahead` (Rp/kWh, Attribute min/max/nächster negativer Preis),
 `binary_sensor.borsenpreis_negativ`, `sensor.borsenpreise_prognose` (Attribut `preise` mit allen Stundenwerten).
 Dazu `sensor.borsenpreis_day_ahead_chf` (CHF/kWh) für den direkten Vergleich mit den GWS-Tarifen.
+Speicher-Simulation: `sensor.speicher_simulation_<grösse>_ersparnis` (CHF seit Start, Attribute heute/Zyklen/
+Autarkie/Hochrechnung) und `sensor.speicher_simulation_<grösse>_ladestand` (%); Karten im Dashboard „Energie & Börse“.
 
 **Dashboard „Energie & Börse“** (`/energie-boerse`, in `config/.storage/lovelace.energie_boerse`): Energie-Karten wie im
 eingebauten Energie-Dashboard (das sich nicht erweitern lässt) plus aktuelle Preise, Verlauf Börse vs. GWS (7 Tage)

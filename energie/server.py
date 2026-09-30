@@ -4,6 +4,7 @@ Endpunkte:
   /api/status   aktuelle Leistung (PV, Verbrauch, Netz), Tarif, Kosten/Erlös pro Stunde
   /api/history  Minutenwerte der letzten 24 h (nur im Speicher, nach Neustart leer)
   /api/boerse   Day-Ahead-Börsenpreise Schweiz (heute/morgen) von Energy-Charts, in Rp/kWh via EZB-Kurs
+  /api/speicher Simulation virtueller Batteriespeicher mit den echten Netzwerten (Stand in /data/speicher.json)
   /             statische Webseite aus www/
 """
 
@@ -27,6 +28,14 @@ POLL_S = 5
 BOERSE_URL = "https://api.energy-charts.info/price?bzn=CH&start={start}&end={end}"
 EZB_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
 BOERSE_REFRESH_S = 30 * 60
+SPEICHER_FILE = os.environ.get("SPEICHER_FILE", "/data/speicher.json")
+MAX_DT_S = 30                      # grössere Lücken (Neustart, Ausfall) werden nicht hochgerechnet
+WIRKUNGSGRAD = 0.95                # je Richtung, also rund 90 % hin und zurück
+SPEICHER = [                       # virtuelle Speicher: Kapazität nutzbar, Lade- und Entladeleistung
+    {"id": "stecker-2kwh", "name": "Steckerspeicher 2 kWh", "kapazitaet_kwh": 2, "laden_w": 1200, "entladen_w": 600},
+    {"id": "speicher-5kwh", "name": "Speicher 5 kWh", "kapazitaet_kwh": 5, "laden_w": 3000, "entladen_w": 3000},
+    {"id": "speicher-10kwh", "name": "Speicher 10 kWh", "kapazitaet_kwh": 10, "laden_w": 5000, "entladen_w": 5000},
+]
 WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
 
 state = {"status": None, "boerse": None}
@@ -167,6 +176,95 @@ def poll_boerse():
         time.sleep(wait)
 
 
+class SpeicherSimulation:
+    """Rechnet mit dem echten Netzsaldo nach, was ein Speicher gespart hätte.
+
+    Überschuss (Einspeisung) lädt den virtuellen Speicher, Netzbezug entlädt ihn. Die entgangene
+    Rückliefervergütung wird mit der Energie im Speicher mitgeführt (wert_chf) und erst beim Entladen
+    verrechnet: Ersparnis = vermiedener Bezug × Bezugspreis − anteilige entgangene Vergütung.
+    """
+
+    def __init__(self, path):
+        self.path = path
+        self.last_ts = None
+        try:
+            with open(path, encoding="utf-8") as f:
+                self.data = json.load(f)
+        except (OSError, ValueError):
+            self.data = {"start": datetime.now().isoformat(timespec="seconds"), "sims": {}}
+        for sp in SPEICHER:
+            self.data["sims"].setdefault(sp["id"], {"soc_wh": 0.0, "wert_chf": 0.0, "tage": {}})
+
+    def step(self, status, now):
+        ts = now.timestamp()
+        dt = ts - self.last_ts if self.last_ts else None
+        self.last_ts = ts
+        t = status.get("tarif")
+        if not status.get("fronius_ok") or not t or dt is None or dt <= 0 or dt > MAX_DT_S:
+            return
+        h = dt / 3600
+        netz = status["netz_w"]                     # + Bezug, - Einspeisung
+        tag = now.date().isoformat()
+        rueck = t["rueckliefer_chf_kwh"] or 0
+        for sp in SPEICHER:
+            sim = self.data["sims"][sp["id"]]
+            cap = sp["kapazitaet_kwh"] * 1000
+            d = sim["tage"].setdefault(tag, {"stunden": 0.0, "geladen_kwh": 0.0, "entladen_kwh": 0.0,
+                                             "bezug_ohne_kwh": 0.0, "bezug_mit_kwh": 0.0, "ersparnis_chf": 0.0})
+            laden = entladen = kosten = 0.0         # W am Netzanschluss, CHF
+            if netz < 0:
+                laden = min(-netz, sp["laden_w"], (cap - sim["soc_wh"]) / WIRKUNGSGRAD / h)
+                sim["soc_wh"] += laden * h * WIRKUNGSGRAD
+                sim["wert_chf"] += laden * h / 1000 * rueck
+            elif netz > 0 and sim["soc_wh"] > 0:
+                entladen = min(netz, sp["entladen_w"], sim["soc_wh"] * WIRKUNGSGRAD / h)
+                anteil = min(entladen * h / WIRKUNGSGRAD / sim["soc_wh"], 1.0)
+                kosten = sim["wert_chf"] * anteil
+                sim["wert_chf"] -= kosten
+                sim["soc_wh"] -= entladen * h / WIRKUNGSGRAD
+            sim["soc_wh"] = min(max(sim["soc_wh"], 0.0), cap)
+            d["stunden"] += h
+            d["geladen_kwh"] += laden * h / 1000
+            d["entladen_kwh"] += entladen * h / 1000
+            d["bezug_ohne_kwh"] += max(netz, 0) * h / 1000
+            d["bezug_mit_kwh"] += (max(netz, 0) - entladen) * h / 1000
+            d["ersparnis_chf"] += entladen * h / 1000 * t["bezug_chf_kwh"] - kosten
+
+    def save(self):
+        tmp = self.path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(self.data, f)
+        os.replace(tmp, self.path)
+
+    def report(self):
+        heute = date.today().isoformat()
+        out = {"start": self.data["start"], "wirkungsgrad": WIRKUNGSGRAD ** 2, "speicher": []}
+        for sp in SPEICHER:
+            sim = self.data["sims"][sp["id"]]
+            tage = sim["tage"]
+            summe = {k: sum(d[k] for d in tage.values()) for k in
+                     ("stunden", "geladen_kwh", "entladen_kwh", "bezug_ohne_kwh", "bezug_mit_kwh", "ersparnis_chf")}
+            letzte7 = [d for k, d in sorted(tage.items())[-7:]]
+            s7 = {k: sum(d[k] for d in letzte7) for k in ("stunden", "ersparnis_chf", "entladen_kwh")}
+            r2 = lambda v, n=3: round(v, n)
+            out["speicher"].append({
+                **sp,
+                "soc_pct": r2(sim["soc_wh"] / (sp["kapazitaet_kwh"] * 10), 1),
+                "heute": {k: r2(v) for k, v in tage.get(heute, {}).items()},
+                "summe": {k: r2(v) for k, v in summe.items()},
+                "tage_gemessen": r2(summe["stunden"] / 24, 2),
+                "zyklen": r2(summe["entladen_kwh"] / sp["kapazitaet_kwh"], 1),
+                "autarkie_plus_pct": r2(100 * summe["entladen_kwh"] / summe["bezug_ohne_kwh"], 1) if summe["bezug_ohne_kwh"] else None,
+                # Hochrechnung aus den letzten 7 Tagen – saisonal stark schwankend, nur als Richtwert
+                "ersparnis_pro_jahr_chf": r2(s7["ersparnis_chf"] / s7["stunden"] * 24 * 365, 0) if s7["stunden"] >= 20 else None,
+                "tage": [{"tag": k, **{kk: r2(vv) for kk, vv in d.items()}} for k, d in sorted(tage.items())[-60:]],
+            })
+        return out
+
+
+speicher_sim = None
+
+
 def poll():
     last_minute = None
     while True:
@@ -190,9 +288,14 @@ def poll():
             status["erloes_chf_h"] = round(status["einspeisung_w"] / 1000 * (t["rueckliefer_chf_kwh"] or 0), 4)
         with lock:
             state["status"] = status
+            speicher_sim.step(status, now)
             minute = now.strftime("%Y-%m-%dT%H:%M")
             if status["fronius_ok"] and minute != last_minute:
                 last_minute = minute
+                try:
+                    speicher_sim.save()
+                except OSError as e:
+                    print("Speicher-Simulation nicht gespeichert:", e, flush=True)
                 history.append({k: status.get(k) for k in
                                 ("zeit", "pv_w", "verbrauch_w", "netz_w", "kosten_chf_h", "erloes_chf_h")})
         time.sleep(POLL_S)
@@ -220,6 +323,9 @@ class Handler(SimpleHTTPRequestHandler):
             with lock:
                 b = state["boerse"]
                 return self.send_json({**b, "aktuell": boerse_now(b, time.time())} if b else {"preise": []})
+        if path == "/api/speicher":
+            with lock:
+                return self.send_json(speicher_sim.report())
         if path == "/api/history":
             with lock:
                 return self.send_json(list(history))
@@ -233,6 +339,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    speicher_sim = SpeicherSimulation(SPEICHER_FILE)
     threading.Thread(target=poll_boerse, daemon=True).start()
     threading.Thread(target=poll, daemon=True).start()
     ThreadingHTTPServer(("0.0.0.0", PORT), partial(Handler, directory=WWW)).serve_forever()

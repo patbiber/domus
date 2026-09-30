@@ -18,4 +18,5 @@ services:
       - ./tarif.json:/app/tarif.json:ro
       - ./www:/app/www:ro
       - ../strompreise/data:/strompreise:ro
+      - ./data:/data                      # Stand der Speicher-Simulation (nicht im Repo)
       - /etc/localtime:/etc/localtime:ro
