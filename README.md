@@ -184,9 +184,21 @@ docker compose logs -f
 ### Backup Home Assistant
 
 ```bash
-mkdir -p ~/domus/backups
-sudo tar czf ~/domus/backups/homeassistant-$(date +%F-%H%M).tar.gz -C ~/domus/homeassistant config
+~/domus/homeassistant/backup.sh   # sichert config/ nach backups/, behält die letzten 10 (KEEP=20 ./backup.sh für mehr)
 ```
+
+### Aufbewahrung von Daten und Logs
+
+| Was | Wo | Wie lange |
+|---|---|---|
+| Livewerte, 24-h-Diagramm, Börsenpreise | Arbeitsspeicher Energie-Dienst | bis zum nächsten Abruf bzw. 24 h, nach Neustart leer |
+| Speicher-Simulation | `energie/data/speicher.json` | unbegrenzt (ein Eintrag pro Tag) |
+| HA-Zustände und 5-min-Werte | `home-assistant_v2.db` | 10 Tage (HA-Standard) |
+| HA-Stundenstatistik (Energie, Kosten) | `home-assistant_v2.db` | unbegrenzt |
+| Tarifarchiv GWS | `strompreise/data/` | unbegrenzt |
+| HA-Backups | `backups/` | die letzten 10 (`backup.sh`) |
+| Container-Logs | Docker (`json-file`) | höchstens 3 × 10 MB pro Container (`logging:` in jeder `compose.yml`) |
+| nginx home.biber.solar | Container-Log | Seitenaufrufe, Logins, Fehler; erfolgreiche `/api/…`-Abrufe werden nicht protokolliert |
 
 ## Regeln
 

@@ -20,3 +20,8 @@ services:
       - ../strompreise/data:/strompreise:ro
       - ./data:/data                      # Stand der Speicher-Simulation (nicht im Repo)
       - /etc/localtime:/etc/localtime:ro
+    logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

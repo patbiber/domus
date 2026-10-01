@@ -158,7 +158,8 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
 | Thema | Umsetzung |
 |---|---|
 | Secrets | Nur `.env.example` im Repo; `.env`, `secrets.yaml`, `/etc/msmtprc` bleiben lokal |
-| Betriebsdaten | `homeassistant/config/`, `strompreise/data/`, `backups/` per `.gitignore` ausgeschlossen |
+| Betriebsdaten | `homeassistant/config/`, `strompreise/data/`, `energie/data/`, `backups/` per `.gitignore` ausgeschlossen |
+| Aufbewahrung | Container-Logs max. 3 × 10 MB, keine Protokollierung der laufenden API-Abrufe, HA-Backups: letzte 10 |
 | Öffentliche Ports | Nur 80/443 (Router → NUC); Port 8099 nur im LAN |
 | Home Assistant | TLS, IP-Sperre, 2-Faktor-Login |
 | Energie-Seite | Passwortschutz (Basic Auth), nur lesend, Rate-Limit, CSP |
@@ -170,7 +171,7 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
 cd <dienst> && docker compose pull && docker compose up -d
 
 # Backup Home Assistant
-sudo tar czf ~/domus/backups/homeassistant-$(date +%F-%H%M).tar.gz -C ~/domus/homeassistant config
+~/domus/homeassistant/backup.sh   # behält die letzten 10
 
 # Tarife sofort abrufen, Timer ansehen
 systemctl --user start strompreise.service
