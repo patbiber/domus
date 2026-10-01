@@ -59,6 +59,7 @@
   .stat .s { font-size: 12px; color: var(--grey); }
   .pv .v { color: var(--yellow); } .haus .v { color: var(--red); } .netz .v { color: var(--cyan); }
   .zahle .v { color: var(--red); } .bekomme .v { color: var(--green); } .session .v { color: var(--purple); }
+  .srv .v { color: var(--cyan); }
   .boerse .v { color: var(--cyan); } .boerse.neg { border-color: var(--red); } .boerse.neg .v { color: var(--red); animation: blink 1s steps(2) infinite; }
   @keyframes blink { 50% { opacity: .35; } }
   .charts { margin-top: 10px; display: grid; gap: 8px; }
@@ -97,6 +98,7 @@
       <div class="stat zahle"><div class="k">Ich bezahle gerade</div><div class="v" id="s-zahle">–</div><div class="s" id="s-tarif">&nbsp;</div></div>
       <div class="stat bekomme"><div class="k">Ich bekomme gerade</div><div class="v" id="s-bekomme">–</div><div class="s" id="s-rueck">&nbsp;</div></div>
       <div class="stat session"><div class="k">Seit du zuschaust</div><div class="v" id="s-session">0.0000 CHF</div><div class="s" id="s-sessiont">&nbsp;</div></div>
+      <div class="stat srv"><div class="k">homi-Server (unter der Treppe)</div><div class="v" id="s-srv">–</div><div class="s" id="s-srv2">&nbsp;</div></div>
       <div class="stat boerse" id="t-boerse"><div class="k">Strombörse Day-Ahead CH</div><div class="v" id="s-boerse">–</div><div class="s" id="s-boerse2">&nbsp;</div></div>
     </div>
     <div class="charts">
@@ -123,6 +125,7 @@ const pick = a => a[Math.floor(Math.random() * a.length)];
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const fmtW = w => w >= 1000 ? (w / 1000).toFixed(2) + " kW" : Math.round(w) + " W";
 const fmtCHF = (v, d = 2) => v.toFixed(d) + " CHF";
+const fmtUptime = s => { const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return (d ? `${d} T ` : "") + `${h} h ${m} min`; };
 
 // 3x5-Pixelschrift
 const FONT = {
@@ -173,6 +176,9 @@ const CATALOG = [
   { id: "heatpump", name: "Wärmepumpe", w: 1500, spr: "heatpump", q: "Holt Wärme aus der Luft. Magie? Nein, Physik." },
   { id: "pc", name: "Gaming-PC", w: 400, spr: "pc", q: "RGB-Beleuchtung: das wichtigste Bauteil." },
 ];
+// Der echte homi-Server (Intel NUC) wohnt fest unter der Treppe; Verbrauch live gemessen
+const SERVER = { id: "nuc", name: "homi-Server (NUC)", spr: "nuc", fest: true, q: "Psst. Hier unten wohne ich." };
+const NUC_SLOT = { x: 66, f: 0 };
 const GHOST = { id: "ghost", name: "Standby-Gespenster", spr: "ghost", q: "Buuuh! Wir sind die Standby-Lämpchen. Wir sind überall." };
 
 // Plätze im Haus (x = Mitte, f = Stockwerk)
@@ -201,6 +207,8 @@ let talkUntil = 0;
 function rollDevices(target) {
   const chosen = [];
   let sum = 0;
+  const srvW = S && S.server && S.server.leistung_w ? Math.round(S.server.leistung_w) : 0;
+  if (srvW && srvW <= target) { chosen.push({ ...SERVER, w: srvW }); sum += srvW; }
   const base = ["router", "fridge"];
   for (const id of base) {
     const d = CATALOG.find(c => c.id === id);
@@ -208,13 +216,14 @@ function rollDevices(target) {
   }
   const rest = CATALOG.filter(c => !base.includes(c.id)).sort(() => Math.random() - .5);
   for (const d of rest) {
-    if (chosen.length >= SLOTS.length - 1) break;
+    if (chosen.filter(d => !d.fest).length >= SLOTS.length - 1) break;
     if (sum + d.w <= target) { chosen.push({ ...d }); sum += d.w; }
   }
   const remain = Math.round(target - sum);
   if (remain >= 1) chosen.push({ ...GHOST, w: remain });
   const slots = [...SLOTS].sort(() => Math.random() - .5);
-  devices = chosen.map((d, i) => ({ ...d, slot: slots[i], wob: Math.random() * 6 }));
+  let si = 0;
+  devices = chosen.map(d => ({ ...d, slot: d.fest ? NUC_SLOT : slots[si++], wob: Math.random() * 6 }));
   renderInventory();
 }
 
@@ -266,6 +275,26 @@ function interact(d, v = verb) {
     hero.dir = 1;
     d.wob = 0;
     const w = d.w.toLocaleString("de-CH");
+    if (d.id === "nuc") {
+      const sv = (S && S.server) || {}, up = fmtUptime(sv.uptime_s || 0);
+      const N = {
+        "Was ist": `Das bin ich, homi. Ein NUC unter der Treppe: ${sv.leistung_w} W, ${Math.round(sv.cpu_pct || 0)} % CPU, ${Math.round(sv.temp_c || 0)} °C.`,
+        "Schalte aus": "Netter Versuch. Dann würde hier niemand mehr Kilowattstunden zählen.",
+        "Schalte ein": `Bin seit ${up} an. Ohne Pause. Ohne Kaffee.`,
+        "Nimm": "Ich bin festgeschraubt. Und ehrlich gesagt beleidigt.",
+        "Lies": `Typenschild: Intel NUC D34010WYK. Uptime ${up}. Kleingedruckt: 'Bitte nicht füttern.'`,
+        "Gib": "Ein Update für mich? Kommt jeden Montag um 04:15 ganz von selbst.",
+        "Benutze": `Ich brauche ${sv.kwh_jahr} kWh im Jahr. Macht ${(sv.kosten_jahr_chf || 0).toFixed(2)} CHF. Ein Schnäppchen.`,
+        "Öffne": `Drinnen: ein Prozessor, 8 GB RAM (${Math.round(sv.ram_pct || 0)} % belegt) und sehr viel Ehrgeiz.`,
+        "Schliesse": "Die Tür unter der Treppe bleibt zu. Harry wohnt hier nicht mehr.",
+        "Drücke": "Bitte NICHT den Power-Knopf. Danke.",
+        "Ziehe": "Finger weg vom Stromkabel! Ich hatte gerade so eine schöne Uptime.",
+        "Gehe zu": `Psst, hier unten wohne ich. Uptime: ${up}.`,
+      };
+      say(N[v] || N["Was ist"], "#55ffff");
+      sentence(v);
+      return;
+    }
     const T = {
       "Was ist": `Das ist ${d.id === "ghost" ? "eine Horde" : "ein(e)"} ${d.name}. Zieht gerade ${w} Watt.`,
       "Schalte aus": `Geht nicht. ${d.name} ist Teil des Messwerts. Physik!`,
@@ -311,6 +340,8 @@ function onData() {
     if (lastTarget < 0 || Math.abs(t - lastTarget) > Math.max(60, lastTarget * .12) || now - lastRoll > 60000) {
       rollDevices(t); lastTarget = t; lastRoll = now;
     } else {
+      const nuc = devices.find(d => d.id === "nuc");
+      if (nuc && S.server && S.server.leistung_w) nuc.w = Math.round(S.server.leistung_w);
       const ghost = devices.find(d => d.id === "ghost");
       const other = devices.filter(d => d.id !== "ghost").reduce((a, d) => a + d.w, 0);
       if (ghost && t - other >= 1) ghost.w = Math.round(t - other);
@@ -337,6 +368,11 @@ function updateStats() {
     $("s-tarif").textContent = `Tarif ${(t.bezug_chf_kwh * 100).toFixed(2)} Rp/kWh (${t.produkt})`;
     $("s-rueck").textContent = t.rueckliefer_chf_kwh != null
       ? `Vergütung ${(t.rueckliefer_chf_kwh * 100).toFixed(2)} Rp/kWh (${t.saison})` : "Vergütung unbekannt";
+  }
+  const sv = S && S.server;
+  if (sv && sv.leistung_w != null) {
+    $("s-srv").textContent = `${sv.leistung_w.toFixed(1)} W`;
+    $("s-srv2").textContent = `läuft seit ${fmtUptime(sv.uptime_s)} · CPU ${Math.round(sv.cpu_pct || 0)} % · ${Math.round(sv.temp_c || 0)} °C · ca. CHF ${Math.round(sv.kosten_jahr_chf || 0)}/Jahr`;
   }
   const b = S && S.boerse;
   if (b && b.rp_kwh != null) {
@@ -408,6 +444,9 @@ function chatter() {
     [bo.naechster_negativer ? `Achtung, ab ${bo.naechster_negativer.slice(11, 16)} Uhr wird der Börsenpreis negativ!` : "Keine negativen Börsenpreise in Sicht."]);
   lines.push(["Ich sollte mal wieder die Panels putzen."], ["Wenn ich nur einen gelben Kristall hätte…"],
     ["Zweiköpfige Eichhörnchen? Nicht in diesem Haus."], ["Irgendwas brummt hier. Hoffentlich nur der Kühlschrank."]);
+  if (S.server && S.server.leistung_w) lines.push(
+    [`Der Server unter der Treppe läuft seit ${fmtUptime(S.server.uptime_s)}. Respekt.`, "#55ffff"],
+    [`homi braucht nur ${S.server.leistung_w.toFixed(1)} W. Weniger als die Stehlampe.`, "#55ffff"]);
   const [text, color] = pick(lines);
   say(text, color);
 }
@@ -606,6 +645,16 @@ const SPR = {
   ebike(x, y, t) { R(x - 7, y - 5, 5, 5, "#222"); R(x + 2, y - 5, 5, 5, "#222"); R(x - 6, y - 4, 3, 3, "#99bbcc"); R(x + 3, y - 4, 3, 3, "#99bbcc"); R(x - 4, y - 8, 9, 2, "#33aa33"); R(x, y - 11, 2, 3, "#33aa33"); const lv = Math.floor(t * 2) % 4; for (let i = 0; i <= lv; i++) R(x - 3 + i * 2, y - 7, 1, 1, "#ffff55"); },
   heatpump(x, y, t) { R(x - 7, y - 12, 14, 12, "#dddddd"); R(x - 5, y - 10, 8, 8, "#555"); const a = t * 10; R(x - 1 + Math.cos(a) * 3, y - 6 + Math.sin(a) * 3, 1, 1, "#fff"); R(x - 1 - Math.cos(a) * 3, y - 6 - Math.sin(a) * 3, 1, 1, "#fff"); R(x + 4, y - 10, 2, 1, "#55ff55"); },
   pc(x, y, t) { R(x - 4, y - 16, 8, 16, "#222"); const c = `hsl(${(t * 120) % 360},100%,60%)`; R(x - 4, y - 16, 1, 16, c); R(x + 3, y - 16, 1, 16, c); R(x - 2, y - 13, 4, 1, "#555"); R(x - 2, y - 11, 4, 1, "#555"); },
+  nuc(x, y, t) {
+    const sv = (S && S.server) || {}, cpu = sv.cpu_pct || 0;
+    R(x - 7, y - 6, 14, 6, "#2a2a2a"); R(x - 7, y - 6, 14, 1, "#666666");   // Gehäuse
+    R(x - 5, y - 4, 4, 1, "#111111"); R(x - 5, y - 2, 4, 1, "#111111");     // Lüftungsschlitze
+    R(x + 4, y - 4, 1, 1, "#3399ff");                                       // Power-LED
+    if (Math.sin(t * (3 + cpu * 2)) > .3) R(x + 2, y - 4, 1, 1, "#ffaa33"); // Aktivität, schneller bei Last
+    R(x + 6, y - 2, 4, 1, "#444444");                                       // Netzwerkkabel
+    ptext(g, "HOMI", x - 7, y - 13, "#55ffff");
+    if ((sv.temp_c || 0) > 60) for (let i = 0; i < 3; i++) R(x - 4 + i * 4 + Math.sin(t * 3 + i), y - 9 - ((t * 6 + i * 2) % 4), 1, 1, "#ff9966");
+  },
   ghost(x, y, t, w) { const n = clamp(Math.ceil(Math.log10((w || 1) + 1) * 1.5), 1, 5); for (let i = 0; i < n; i++) { const gx = x - 6 + i * 3 + Math.sin(t * 2 + i) * 2, gy = y - 12 - i % 2 * 3 + Math.sin(t * 3 + i * 2) * 2; R(gx, gy, 5, 6, "#ffffff"); R(gx, gy + 6, 1, 1, "#ffffff"); R(gx + 2, gy + 6, 1, 1, "#ffffff"); R(gx + 4, gy + 6, 1, 1, "#ffffff"); R(gx + 1, gy + 2, 1, 1, "#000"); R(gx + 3, gy + 2, 1, 1, "#000"); } },
 };
 

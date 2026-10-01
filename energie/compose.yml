@@ -20,6 +20,7 @@ services:
       - ../strompreise/data:/strompreise:ro
       - ./data:/data                      # Stand der Speicher-Simulation (nicht im Repo)
       - /etc/localtime:/etc/localtime:ro
+      - /sys/devices/virtual/powercap/intel-rapl:/host/rapl:ro   # Energiezähler der CPU (Server-Verbrauch)
     logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB
       driver: json-file
       options:
