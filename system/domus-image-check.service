@@ -1,6 +1,0 @@
-[Unit]
-Description=domus: auf neue Docker-Images prüfen (nur melden)
-
-[Service]
-Type=oneshot
-ExecStart=%h/domus/system/image-check.sh

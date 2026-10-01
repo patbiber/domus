@@ -1,0 +1,11 @@
+# Jeden Montag 04:15 (nachts, kein Solarstrom, nach dem möglichen Neustart um 03:30); verpasste Läufe nachholen
+[Unit]
+Description=domus: wöchentliches Docker-Image-Update
+
+[Timer]
+OnCalendar=Mon *-*-* 04:15:00
+Persistent=true
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target

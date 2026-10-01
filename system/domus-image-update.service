@@ -1,0 +1,9 @@
+# Wöchentliches Docker-Image-Update mit Backup, Gesundheitsprüfung und Zurückrollen (siehe image-update.sh)
+[Unit]
+Description=domus: Docker-Images aktualisieren und prüfen
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/system/image-update.sh
+TimeoutStartSec=45min

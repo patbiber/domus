@@ -161,7 +161,7 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
 |---|---|
 | Secrets | Nur `.env.example` im Repo; `.env`, `secrets.yaml`, `/etc/msmtprc` bleiben lokal |
 | Betriebsdaten | `homeassistant/config/`, `strompreise/data/`, `energie/data/`, `backups/` per `.gitignore` ausgeschlossen |
-| Updates | Ubuntu und Docker CE automatisch, Neustart nur wenn nötig um 03:30, Mail-Bericht; Container-Images nur gemeldet |
+| Updates | Ubuntu und Docker CE täglich, Neustart nur wenn nötig um 03:30; Container-Images wöchentlich mit HA-Backup, Prüfung und automatischem Zurückrollen; Mail-Bericht |
 | Aufbewahrung | Container-Logs max. 3 × 10 MB, keine Protokollierung der laufenden API-Abrufe, HA-Backups: letzte 10 |
 | Öffentliche Ports | Nur 80/443 (Router → NUC); Port 8099 nur im LAN |
 | Home Assistant | TLS, IP-Sperre, 2-Faktor-Login |
@@ -205,7 +205,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 30.09.2026 | Nachtmodus am Wechselrichter, Nachtansicht und Passwortschutz für home.biber.solar |
 | 30.09.2026 | Speicher-Simulation (2/5/10 kWh) in Energie-Dienst und Home Assistant |
 | 01.10.2026 | Log-Rotation, Backup-Rotation, 10-Minuten-Archiv (5 Jahre) und Logbuch in homi |
-| 01.10.2026 | Automatische OS-Updates mit Neustart um 03:30, Neustart-Bericht, Image-Prüfung |
+| 01.10.2026 | Automatische OS- und Docker-Image-Updates mit Prüfung und Zurückrollen, Neustart-Bericht |
 
 ## 8. Offene Punkte
 
