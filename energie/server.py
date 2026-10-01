@@ -5,12 +5,16 @@ Endpunkte:
   /api/history  Minutenwerte der letzten 24 h (nur im Speicher, nach Neustart leer)
   /api/boerse   Day-Ahead-Börsenpreise Schweiz (heute/morgen) von Energy-Charts, in Rp/kWh via EZB-Kurs
   /api/speicher Simulation virtueller Batteriespeicher mit den echten Netzwerten (Stand in /data/speicher.json)
+  /api/archiv   10-Minuten-Archiv (5 Jahre), ?von=JJJJ-MM-TT&bis=JJJJ-MM-TT&aufloesung=10min|stunde|tag|monat|jahr
   /             statische Webseite aus www/
 """
 
+import csv
+import gzip
 import json
 import os
 import re
+import shutil
 import threading
 import time
 import urllib.request
@@ -18,6 +22,7 @@ from collections import deque
 from datetime import date, datetime, timedelta
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs, urlsplit
 
 FRONIUS = os.environ.get("FRONIUS_HOST", "192.168.1.221")
 TARIFE_JSON = os.environ.get("TARIFE_JSON", "/strompreise/latest/tarife.json")
@@ -29,6 +34,12 @@ BOERSE_URL = "https://api.energy-charts.info/price?bzn=CH&start={start}&end={end
 EZB_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
 BOERSE_REFRESH_S = 30 * 60
 SPEICHER_FILE = os.environ.get("SPEICHER_FILE", "/data/speicher.json")
+ARCHIV_DIR = os.environ.get("ARCHIV_DIR", "/data/archiv")
+ARCHIV_TAGE = 5 * 365 + 2          # 5 Jahre aufbewahren
+SLOT_S = 600                       # 10-Minuten-Schritte
+ARCHIV_FELDER = ["zeit", "sekunden", "pv_kwh", "verbrauch_kwh", "bezug_kwh", "einspeisung_kwh",
+                 "kosten_chf", "erloes_chf", "boerse_rp", "quelle"]
+SUMMEN = ["sekunden", "pv_kwh", "verbrauch_kwh", "bezug_kwh", "einspeisung_kwh", "kosten_chf", "erloes_chf"]
 MAX_DT_S = 30                      # grössere Lücken (Neustart, Ausfall) werden nicht hochgerechnet
 WIRKUNGSGRAD = 0.95                # je Richtung, also rund 90 % hin und zurück
 SPEICHER = [                       # virtuelle Speicher: Kapazität nutzbar, Lade- und Entladeleistung
@@ -265,6 +276,146 @@ class SpeicherSimulation:
 speicher_sim = None
 
 
+class Archiv:
+    """10-Minuten-Archiv: eine CSV pro Tag unter <ARCHIV_DIR>/<Jahr>/<Datum>.csv.
+
+    `sekunden` = wie viele Sekunden des Schritts gemessen wurden (600 = vollständig).
+    Vergangene Tage werden gzip-komprimiert, Tage älter als 5 Jahre gelöscht.
+    `quelle`: live = von homi gemessen, ha = einmalig aus Home Assistant übernommen.
+    """
+
+    def __init__(self, base):
+        self.base = base
+        self.slot = None
+        self.acc = None
+        self.last_ts = None
+        self.tag = None
+
+    def pfad(self, tag):
+        return os.path.join(self.base, tag[:4], f"{tag}.csv")
+
+    def schreiben(self, rows):
+        for r in rows:
+            p = self.pfad(r["zeit"][:10])
+            os.makedirs(os.path.dirname(p), exist_ok=True)
+            neu = not os.path.exists(p)
+            with open(p, "a", encoding="utf-8", newline="") as f:
+                w = csv.DictWriter(f, ARCHIV_FELDER)
+                if neu:
+                    w.writeheader()
+                w.writerow(r)
+
+    def aufraeumen(self, heute):
+        """Vergangene Tage komprimieren (an bestehende .gz anhängen), zu alte Tage löschen."""
+        if not os.path.isdir(self.base):
+            return
+        grenze = (heute - timedelta(days=ARCHIV_TAGE)).isoformat()
+        for jahr in os.listdir(self.base):
+            d = os.path.join(self.base, jahr)
+            for name in os.listdir(d):
+                p = os.path.join(d, name)
+                if name[:10] < grenze:
+                    os.remove(p)
+                elif name.endswith(".csv") and name[:10] < heute.isoformat():
+                    with open(p, "rb") as src, gzip.open(p + ".gz", "ab") as dst:
+                        shutil.copyfileobj(src, dst)
+                    os.remove(p)
+            if not os.listdir(d):
+                os.rmdir(d)
+
+    def lesen(self, von, bis):
+        """Alle 10-Minuten-Zeilen von..bis (Datum), sortiert; doppelte Zeitpunkte: die vollständigere gewinnt."""
+        rows = {}
+        d = von
+        while d <= bis:
+            for p in (self.pfad(d.isoformat()) + ".gz", self.pfad(d.isoformat())):
+                if not os.path.exists(p):
+                    continue
+                with (gzip.open if p.endswith(".gz") else open)(p, "rt", encoding="utf-8") as f:
+                    for r in csv.DictReader(f):
+                        if r["zeit"] == "zeit":          # Kopfzeile eines angehängten gzip-Teils
+                            continue
+                        alt = rows.get(r["zeit"])   # doppelt: die vollständigere Zeile gewinnt, bei Gleichstand live
+                        if alt is None or (float(r["sekunden"] or 0), r["quelle"] == "live") > \
+                                (float(alt["sekunden"] or 0), alt["quelle"] == "live"):
+                            rows[r["zeit"]] = r
+            d += timedelta(days=1)
+        return [{"zeit": z, "quelle": rows[z]["quelle"],
+                 **{k: (float(rows[z][k]) if rows[z][k] != "" else None)
+                    for k in ARCHIV_FELDER if k not in ("zeit", "quelle")}} for z in sorted(rows)]
+
+    def step(self, status, now):
+        ts = now.timestamp()
+        slot = int(ts // SLOT_S) * SLOT_S
+        if slot != self.slot:
+            self.flush()
+            self.slot = slot
+            self.acc = {"s": 0.0, "pv": 0.0, "vb": 0.0, "bz": 0.0, "es": 0.0, "k": 0.0, "e": 0.0, "bo": 0.0, "bo_s": 0.0}
+            if self.tag != now.date():
+                self.tag = now.date()
+                self.aufraeumen(self.tag)
+        dt = ts - self.last_ts if self.last_ts else None
+        self.last_ts = ts
+        if not status.get("fronius_ok") or dt is None or dt <= 0 or dt > MAX_DT_S:
+            return
+        a, h = self.acc, dt / 3600
+        a["s"] += dt
+        a["pv"] += status["pv_w"] * h / 1000
+        a["vb"] += status["verbrauch_w"] * h / 1000
+        a["bz"] += status["bezug_w"] * h / 1000
+        a["es"] += status["einspeisung_w"] * h / 1000
+        t = status.get("tarif")
+        if t:
+            a["k"] += status["bezug_w"] * h / 1000 * t["bezug_chf_kwh"]
+            a["e"] += status["einspeisung_w"] * h / 1000 * (t["rueckliefer_chf_kwh"] or 0)
+        b = status.get("boerse")
+        if b and b.get("rp_kwh") is not None:
+            a["bo"] += b["rp_kwh"] * dt
+            a["bo_s"] += dt
+
+    def flush(self):
+        a = self.acc
+        if not a or a["s"] < 1:
+            return
+        self.schreiben([{
+            "zeit": datetime.fromtimestamp(self.slot).isoformat(timespec="minutes"),
+            "sekunden": round(a["s"]), "pv_kwh": round(a["pv"], 5), "verbrauch_kwh": round(a["vb"], 5),
+            "bezug_kwh": round(a["bz"], 5), "einspeisung_kwh": round(a["es"], 5),
+            "kosten_chf": round(a["k"], 5), "erloes_chf": round(a["e"], 5),
+            "boerse_rp": round(a["bo"] / a["bo_s"], 3) if a["bo_s"] else "", "quelle": "live"}])
+
+
+def archiv_aggregat(rows, aufloesung):
+    """Fasst 10-Minuten-Zeilen zu Stunden, Tagen, Monaten oder Jahren zusammen, plus Gesamtsumme."""
+    laenge = {"10min": 16, "stunde": 13, "tag": 10, "monat": 7, "jahr": 4}[aufloesung]
+    gruppen = {}
+    for r in rows:
+        g = gruppen.setdefault(r["zeit"][:laenge], {k: 0.0 for k in SUMMEN} | {"_bo": 0.0, "_bo_s": 0.0})
+        for k in SUMMEN:
+            g[k] += r[k] or 0
+        if r["boerse_rp"] is not None and r["sekunden"]:
+            g["_bo"] += r["boerse_rp"] * r["sekunden"]
+            g["_bo_s"] += r["sekunden"]
+
+    def fertig(g):
+        out = {k: round(g[k], 4) for k in SUMMEN}
+        out["sekunden"] = round(g["sekunden"])
+        out["boerse_rp"] = round(g["_bo"] / g["_bo_s"], 2) if g["_bo_s"] else None
+        out["saldo_chf"] = round(g["erloes_chf"] - g["kosten_chf"], 4)
+        out["autarkie_pct"] = round(100 * (1 - g["bezug_kwh"] / g["verbrauch_kwh"]), 1) if g["verbrauch_kwh"] > 0.001 else None
+        out["eigenverbrauch_pct"] = round(100 * (1 - g["einspeisung_kwh"] / g["pv_kwh"]), 1) if g["pv_kwh"] > 0.001 else None
+        return out
+
+    total = {k: 0.0 for k in SUMMEN} | {"_bo": 0.0, "_bo_s": 0.0}
+    for g in gruppen.values():
+        for k in total:
+            total[k] += g[k]
+    return {"zeilen": [{"zeit": z, **fertig(g)} for z, g in sorted(gruppen.items())], "summe": fertig(total)}
+
+
+archiv = None
+
+
 def poll():
     last_minute = None
     while True:
@@ -289,6 +440,10 @@ def poll():
         with lock:
             state["status"] = status
             speicher_sim.step(status, now)
+            try:
+                archiv.step(status, now)
+            except OSError as e:
+                print("Archiv nicht geschrieben:", e, flush=True)
             minute = now.strftime("%Y-%m-%dT%H:%M")
             if status["fronius_ok"] and minute != last_minute:
                 last_minute = minute
@@ -326,10 +481,43 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/speicher":
             with lock:
                 return self.send_json(speicher_sim.report())
+        if path == "/api/archiv":
+            return self.send_archiv()
         if path == "/api/history":
             with lock:
-                return self.send_json(list(history))
+                h = list(history)
+            # Lücke seit dem letzten Neustart mit 10-Minuten-Werten aus dem Archiv füllen
+            jetzt = datetime.now()
+            ab = (jetzt - timedelta(hours=24)).isoformat(timespec="minutes")
+            bis = h[0]["zeit"][:16] if h else jetzt.isoformat(timespec="minutes")
+            alt = [{"zeit": r["zeit"], "dauer_min": 10,
+                    "pv_w": round(r["pv_kwh"] * 3.6e6 / r["sekunden"]),
+                    "verbrauch_w": round(r["verbrauch_kwh"] * 3.6e6 / r["sekunden"]),
+                    "netz_w": round((r["bezug_kwh"] - r["einspeisung_kwh"]) * 3.6e6 / r["sekunden"]),
+                    "kosten_chf_h": round(r["kosten_chf"] * 3600 / r["sekunden"], 4),
+                    "erloes_chf_h": round(r["erloes_chf"] * 3600 / r["sekunden"], 4)}
+                   for r in archiv.lesen((jetzt - timedelta(hours=24)).date(), jetzt.date())
+                   if ab <= r["zeit"] < bis and r["sekunden"] and r["sekunden"] >= 60]
+            return self.send_json(alt + h)
         return super().do_GET()
+
+    def send_archiv(self):
+        q = {k: v[0] for k, v in parse_qs(urlsplit(self.path).query).items()}
+        aufl = q.get("aufloesung", "tag")
+        grenzen = {"10min": 31, "stunde": 92, "tag": 800, "monat": ARCHIV_TAGE + 31, "jahr": ARCHIV_TAGE + 31}
+        try:
+            bis = date.fromisoformat(q.get("bis", date.today().isoformat()))
+            von = date.fromisoformat(q.get("von", (bis - timedelta(days=6)).isoformat()))
+            if aufl not in grenzen or von > bis or (bis - von).days > grenzen[aufl]:
+                raise ValueError
+        except ValueError:
+            self.send_response(400)
+            self.end_headers()
+            return
+        rows = archiv.lesen(von, bis)
+        erste = rows[0]["zeit"] if rows else None
+        return self.send_json({"von": von.isoformat(), "bis": bis.isoformat(), "aufloesung": aufl,
+                               "erste_daten": erste, **archiv_aggregat(rows, aufl)})
 
     def list_directory(self, path):
         self.send_error(404)
@@ -340,6 +528,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__ == "__main__":
     speicher_sim = SpeicherSimulation(SPEICHER_FILE)
+    archiv = Archiv(ARCHIV_DIR)
     threading.Thread(target=poll_boerse, daemon=True).start()
     threading.Thread(target=poll, daemon=True).start()
     ThreadingHTTPServer(("0.0.0.0", PORT), partial(Handler, directory=WWW)).serve_forever()

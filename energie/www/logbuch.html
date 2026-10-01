@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>homi Logbuch</title>
+<meta name="description" content="Archiv von homi: Produktion, Verbrauch, Netz und Geld in 10-Minuten-Schritten bis 5 Jahre zurück.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23000'/%3E%3Crect x='3' y='2' width='10' height='12' fill='%23a50'/%3E%3Crect x='5' y='4' width='6' height='1' fill='%23ff5'/%3E%3Crect x='5' y='7' width='6' height='1' fill='%23ff5'/%3E%3C/svg%3E">
+<style>
+  :root { --green: #55ff55; --green-dim: #00aa00; --purple: #ff55ff; --cyan: #55ffff; --yellow: #ffff55; --red: #ff5555; --grey: #aaa; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #000; color: #fff; }
+  body { font-family: "Courier New", Courier, monospace; font-weight: bold; display: flex; justify-content: center; padding: 16px; }
+  .monitor { width: 100%; max-width: 960px; border: 6px solid #333; border-radius: 10px; padding: 10px;
+    box-shadow: 0 0 0 2px #111, 0 0 40px rgba(85, 255, 255, .15); position: relative; overflow: hidden; }
+  .monitor::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.18) 2px 3px); }
+  #talk { min-height: 2.6em; font-size: clamp(13px, 2.2vw, 18px); text-align: center; color: var(--yellow); padding: 2px 8px 6px; }
+  h1 { font-size: clamp(16px, 2.6vw, 22px); color: var(--cyan); margin: 4px 0 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  h1 a { color: var(--green-dim); font-size: .7em; text-decoration: none; }
+  h1 a:hover { color: var(--green); }
+  .nav { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin-bottom: 10px; }
+  .nav button { all: unset; cursor: pointer; color: var(--green-dim); font-size: clamp(13px, 2vw, 16px); padding: 2px 0; }
+  .nav button:hover, .nav button:focus-visible, .nav button.active { color: var(--green); }
+  .nav .sep { color: #333; }
+  #label { color: var(--purple); font-size: clamp(13px, 2vw, 16px); min-width: 12em; text-align: center; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+  .stat { background: #0a0a0a; border: 2px solid #222; padding: 6px 8px; }
+  .stat .k { color: var(--grey); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+  .stat .v { font-size: clamp(17px, 2.6vw, 23px); }
+  .pv .v { color: var(--yellow); } .vb .v { color: var(--red); } .nb .v { color: var(--red); } .es .v { color: var(--green); }
+  .au .v, .ev .v { color: var(--cyan); } .ko .v { color: var(--red); } .er .v { color: var(--green); } .sa .v { color: var(--purple); } .ab .v { color: var(--grey); }
+  canvas { display: block; width: 100%; image-rendering: pixelated; image-rendering: crisp-edges; }
+  .charts { margin-top: 12px; display: grid; gap: 8px; }
+  .legend { font-size: 12px; color: var(--grey); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: -1px; }
+  footer { margin-top: 10px; font-size: 11px; color: #666; text-align: center; }
+  footer a { color: #888; }
+  @media (max-width: 600px) { body { padding: 0; } .monitor { border-width: 3px; border-radius: 0; padding: 6px; } }
+</style>
+</head>
+<body>
+<main class="monitor">
+  <div id="talk" aria-live="polite">Ich blättere im Logbuch…</div>
+  <h1><span>homi · Logbuch</span><a href="./">← zurück ins Haus</a></h1>
+  <div class="nav">
+    <button data-p="tag">Tag</button><button data-p="woche">Woche</button><button data-p="monat">Monat</button><button data-p="jahr">Jahr</button><button data-p="alles">Alles</button>
+    <span class="sep">|</span>
+    <button id="prev" aria-label="früher">◄</button><span id="label">–</span><button id="next" aria-label="später">►</button><button id="heute">Heute</button>
+  </div>
+  <div class="stats">
+    <div class="stat pv"><div class="k">Erzeugt</div><div class="v" id="s-pv">–</div></div>
+    <div class="stat vb"><div class="k">Verbraucht</div><div class="v" id="s-vb">–</div></div>
+    <div class="stat nb"><div class="k">Netzbezug</div><div class="v" id="s-nb">–</div></div>
+    <div class="stat es"><div class="k">Eingespeist</div><div class="v" id="s-es">–</div></div>
+    <div class="stat au"><div class="k">Autarkie</div><div class="v" id="s-au">–</div></div>
+    <div class="stat ev"><div class="k">Eigenverbrauch</div><div class="v" id="s-ev">–</div></div>
+    <div class="stat ko"><div class="k">Kosten GWS</div><div class="v" id="s-ko">–</div></div>
+    <div class="stat er"><div class="k">Erlös Einspeisung</div><div class="v" id="s-er">–</div></div>
+    <div class="stat sa"><div class="k">Saldo</div><div class="v" id="s-sa">–</div></div>
+    <div class="stat ab"><div class="k">Gemessen</div><div class="v" id="s-ab">–</div></div>
+  </div>
+  <div class="charts">
+    <div class="legend"><span><i style="background:#ffdd33"></i>Erzeugt</span><span><i style="background:#ff5555"></i>Verbraucht</span><span id="unitE">kWh</span></div>
+    <canvas id="cE" width="320" height="80" aria-label="Diagramm Erzeugung und Verbrauch"></canvas>
+    <div class="legend"><span><i style="background:#55ff55"></i>Eingespeist</span><span><i style="background:#ff5555"></i>Netzbezug</span><span>kWh</span></div>
+    <canvas id="cN" width="320" height="60" aria-label="Diagramm Netz"></canvas>
+    <div class="legend"><span><i style="background:#55ff55"></i>Erlös</span><span><i style="background:#ff5555"></i>Kosten</span><span>CHF</span><span id="legB" hidden><i style="background:#55ffff"></i>Börsenpreis (Rp/kWh, rechte Skala)</span></div>
+    <canvas id="cG" width="320" height="60" aria-label="Diagramm Geld"></canvas>
+  </div>
+  <footer>10-Minuten-Archiv von homi, 5 Jahre aufbewahrt · Werte vor dem 1.10.2026 aus Home Assistant übernommen · Lücken = keine Messung (z. B. Nächte vor dem 30.9.)</footer>
+</main>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const FONT = {0:"111101101101111",1:"010110010010111",2:"110001010100111",3:"110001010001110",4:"101101111001001",5:"111100110001110",6:"011100111101111",7:"111001010010010",8:"111101111101111",9:"111101111001110",".":"000000000000010","-":"000000111000000","+":"000010111010000",":":"000010000010000","/":"001001010100100"," ":"000000000000000",
+  A:"010101111101101",D:"110101101101110",F:"111100110100100",H:"101101111101101",I:"111010010010111",J:"001001001101010",K:"101101110101101",M:"101111111101101",N:"110101101101101",O:"010101101101010",P:"110101110100100",R:"110101110101101",S:"011100010001110",T:"111010010010010",U:"101101101101111",W:"101101111111101",Z:"111001010100111",C:"011100100100011",E:"111100110100111",G:"011100101101011",L:"100100100100111",B:"110101110101110",X:"101101010101101",Y:"101101010010010",V:"101101101101010"};
+function ptext(ctx, s, x, y, c) { s = String(s).toUpperCase().replace(/Ä/g, "A").replace(/Ö/g, "O").replace(/Ü/g, "U"); ctx.fillStyle = c; for (const ch of s) { const p = FONT[ch]; if (p) for (let i = 0; i < 15; i++) if (p[i] === "1") ctx.fillRect(x + i % 3, y + (i / 3 | 0), 1, 1); x += 4; } }
+const pad = n => String(n).padStart(2, "0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const MON = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+const WT = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+const kwh = v => v == null ? "–" : (v >= 100 ? v.toFixed(0) : v.toFixed(1)) + " kWh";
+const chf = v => v == null ? "–" : v.toFixed(2) + " CHF";
+const pct = v => v == null ? "–" : Math.round(v) + " %";
+
+const PERIODEN = ["tag", "woche", "monat", "jahr", "alles"];
+let periode = PERIODEN.includes(location.hash.slice(1)) ? location.hash.slice(1) : "tag", ref = new Date(); ref.setHours(12, 0, 0, 0);
+
+// Zeitraum, Abfrage und feste X-Achse je Ansicht
+function bereich() {
+  const d = new Date(ref);
+  if (periode === "tag") {
+    const keys = []; for (let i = 0; i < 144; i++) keys.push(`${iso(d)}T${pad(i / 6 | 0)}:${pad(i % 6 * 10)}`);
+    return { von: iso(d), bis: iso(d), aufl: "10min", keys, label: `${WT[d.getDay()]} ${d.getDate()}. ${MON[d.getMonth()]} ${d.getFullYear()}`,
+      tick: (k, i) => i % 18 === 0 ? k.slice(11, 13) : null, sekunden: 600 };
+  }
+  if (periode === "woche") {
+    const mo = new Date(d); mo.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    const keys = []; for (let i = 0; i < 7; i++) { const x = new Date(mo); x.setDate(mo.getDate() + i); keys.push(iso(x)); }
+    return { von: keys[0], bis: keys[6], aufl: "tag", keys, label: `Woche ${+keys[0].slice(8)}.${+keys[0].slice(5, 7)}. – ${+keys[6].slice(8)}.${+keys[6].slice(5, 7)}.${keys[6].slice(0, 4)}`,
+      tick: (k, i) => ["MO", "DI", "MI", "DO", "FR", "SA", "SO"].at(i), sekunden: 86400 };
+  }
+  if (periode === "monat") {
+    const n = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(), keys = [];
+    for (let i = 1; i <= n; i++) keys.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(i)}`);
+    return { von: keys[0], bis: keys.at(-1), aufl: "tag", keys, label: `${MON[d.getMonth()]} ${d.getFullYear()}`,
+      tick: (k, i) => (i === 0 || (i + 1) % 5 === 0) ? String(i + 1) : null, sekunden: 86400 };
+  }
+  if (periode === "jahr") {
+    const keys = []; for (let m = 1; m <= 12; m++) keys.push(`${d.getFullYear()}-${pad(m)}`);
+    return { von: `${d.getFullYear()}-01-01`, bis: `${d.getFullYear()}-12-31`, aufl: "monat", keys, label: String(d.getFullYear()),
+      tick: (k, i) => ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"].at(i), sekunden: 30.44 * 86400 };
+  }
+  const heute = new Date(), von = new Date(heute); von.setFullYear(heute.getFullYear() - 5); von.setDate(von.getDate() + 3);
+  return { von: iso(von), bis: iso(heute), aufl: "monat", keys: null, label: "Alles (bis 5 Jahre)", tick: null, sekunden: 30.44 * 86400 };
+}
+
+function verschieben(r) {
+  const d = new Date(ref);
+  if (periode === "tag") d.setDate(d.getDate() + r);
+  else if (periode === "woche") d.setDate(d.getDate() + 7 * r);
+  else if (periode === "monat") d.setMonth(d.getMonth() + r, 1);
+  else if (periode === "jahr") d.setFullYear(d.getFullYear() + r);
+  ref = d; laden();
+}
+
+async function laden() {
+  document.querySelectorAll(".nav button[data-p]").forEach(b => b.classList.toggle("active", b.dataset.p === periode));
+  $("prev").hidden = $("next").hidden = periode === "alles";
+  const B = bereich();
+  $("label").textContent = B.label;
+  let data;
+  try {
+    const r = await fetch(`api/archiv?von=${B.von}&bis=${B.bis}&aufloesung=${B.aufl}`, { cache: "no-store" });
+    data = await r.json();
+  } catch { $("talk").textContent = "Das Logbuch klemmt. Keine Verbindung zu homi."; return; }
+  let keys = B.keys;
+  if (!keys) { // Alles: Monate ab den ersten Daten
+    keys = [];
+    const start = data.erste_daten ? new Date(+data.erste_daten.slice(0, 4), +data.erste_daten.slice(5, 7) - 1, 1) : new Date();
+    for (const d = new Date(start); d <= new Date(); d.setMonth(d.getMonth() + 1)) keys.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`);
+    B.tick = (k, i) => (k.slice(5) === "01" || i === 0) ? k.slice(2, 4) + "/" + k.slice(5) : null;
+  }
+  const byKey = Object.fromEntries(data.zeilen.map(z => [z.zeit, z]));
+  const rows = keys.map(k => ({ key: k, z: byKey[k] || null }));
+  stats(data.summe, B, keys.length);
+  kommentar(data, rows, B);
+  zeichnen(rows, B);
+}
+
+function stats(s, B, n) {
+  const leer = !s || !s.sekunden;
+  $("s-pv").textContent = leer ? "–" : kwh(s.pv_kwh);
+  $("s-vb").textContent = leer ? "–" : kwh(s.verbrauch_kwh);
+  $("s-nb").textContent = leer ? "–" : kwh(s.bezug_kwh);
+  $("s-es").textContent = leer ? "–" : kwh(s.einspeisung_kwh);
+  $("s-au").textContent = leer ? "–" : pct(s.autarkie_pct);
+  $("s-ev").textContent = leer ? "–" : pct(s.eigenverbrauch_pct);
+  $("s-ko").textContent = leer ? "–" : chf(s.kosten_chf);
+  $("s-er").textContent = leer ? "–" : chf(s.erloes_chf);
+  $("s-sa").textContent = leer ? "–" : (s.saldo_chf >= 0 ? "+" : "") + chf(s.saldo_chf);
+  const moeglich = Math.min(n * B.sekunden, Math.max(1, (Date.now() - new Date(B.von + "T00:00").getTime()) / 1000));
+  $("s-ab").textContent = leer ? "0 %" : pct(Math.min(100, 100 * s.sekunden / moeglich));
+}
+
+function kommentar(data, rows, B) {
+  const s = data.summe, t = $("talk");
+  if (!s || !s.sekunden) { t.textContent = "Hier steht noch nichts. Leere Seiten im Logbuch."; t.style.color = "#aaaaff"; return; }
+  if (s.pv_kwh < 0.05) { t.textContent = `Noch keine Sonne in diesem Zeitraum. ${kwh(s.bezug_kwh)} aus dem Netz, ${chf(s.kosten_chf)}. Das Sparschwein wartet.`; t.style.color = "#aaddff"; return; }
+  const voll = rows.filter(r => r.z && r.z.sekunden);
+  const best = voll.reduce((a, r) => !a || r.z.pv_kwh > a.z.pv_kwh ? r : a, null);
+  const was = { tag: "Am meisten Sonne gab es um", woche: "Bester Sonnentag:", monat: "Bester Sonnentag:", jahr: "Bester Monat:", alles: "Bester Monat:" }[periode];
+  const wann = periode === "tag" ? best.key.slice(11) + " Uhr" : periode === "jahr" || periode === "alles" ? `${MON[+best.key.slice(5, 7) - 1]} ${best.key.slice(0, 4)}` : `${+best.key.slice(8)}.${+best.key.slice(5, 7)}.`;
+  const bestWert = periode === "tag" ? `${(best.z.pv_kwh * 6).toFixed(1)} kW` : kwh(best.z.pv_kwh);
+  const zeilen = [
+    `${kwh(s.pv_kwh)} erzeugt, ${pct(s.eigenverbrauch_pct)} davon selbst genutzt. ${was} ${wann} mit ${bestWert}.`,
+    s.saldo_chf >= 0 ? `Saldo mit der GWS: +${chf(s.saldo_chf)}. Das Sparschwein ist zufrieden.` : `Saldo mit der GWS: ${chf(s.saldo_chf)}. Das Sparschwein schaut traurig.`,
+  ];
+  t.textContent = zeilen.join(" "); t.style.color = "#ffff55";
+}
+
+function achse(ctx, rows, B, w, h, X, bw) {
+  rows.forEach((r, i) => { const l = B.tick && B.tick(r.key, i); if (l) { ctx.fillStyle = "#1a1a1a"; ctx.fillRect(X(i), 0, 1, h - 7); ptext(ctx, l, X(i) + Math.max(0, bw / 2 - l.length * 2), h - 6, "#666"); } });
+}
+
+function zeichnen(rows, B) {
+  const n = rows.length, W = 320, x0 = 4, bw = (W - x0 - 4) / n, X = i => Math.round(x0 + i * bw), BW = Math.max(1, Math.floor(bw) - (bw > 4 ? 1 : 0));
+  const v = (r, k) => r.z ? r.z[k] || 0 : 0;
+  // Energie
+  { const c = $("cE"), g = c.getContext("2d"), h = c.height, top = 9, bot = h - 9;
+    g.fillStyle = "#050505"; g.fillRect(0, 0, W, h); achse(g, rows, B, W, h, X, bw);
+    const max = Math.max(0.01, ...rows.map(r => Math.max(v(r, "pv_kwh"), v(r, "verbrauch_kwh"))));
+    const Y = val => bot - val / max * (bot - top);
+    rows.forEach((r, i) => { if (!r.z) return; const dim = r.z.sekunden < B.sekunden * .5;
+      g.fillStyle = dim ? "#806e1a" : "#ffdd33"; g.fillRect(X(i), Y(v(r, "pv_kwh")), BW, bot - Y(v(r, "pv_kwh")));
+      g.fillStyle = "#ff5555"; g.fillRect(X(i), Math.round(Y(v(r, "verbrauch_kwh"))) - 1, BW, 2); });
+    ptext(g, max.toFixed(max < 1 ? 2 : 1) + " KWH", 4, 2, "#aaa"); }
+  // Netz
+  { const c = $("cN"), g = c.getContext("2d"), h = c.height, mid = Math.floor((h - 8) / 2);
+    g.fillStyle = "#050505"; g.fillRect(0, 0, W, h); achse(g, rows, B, W, h, X, bw);
+    const max = Math.max(0.01, ...rows.map(r => Math.max(v(r, "bezug_kwh"), v(r, "einspeisung_kwh"))));
+    rows.forEach((r, i) => { if (!r.z) return; const e = Math.round(v(r, "einspeisung_kwh") / max * (mid - 2)), b = Math.round(v(r, "bezug_kwh") / max * (mid - 2));
+      g.fillStyle = "#55ff55"; g.fillRect(X(i), mid - e, BW, e); g.fillStyle = "#ff5555"; g.fillRect(X(i), mid + 1, BW, b); });
+    g.fillStyle = "#444"; g.fillRect(0, mid, W, 1); ptext(g, "+" + max.toFixed(max < 1 ? 2 : 1), 4, 2, "#55ff55"); ptext(g, "-" + max.toFixed(max < 1 ? 2 : 1), 4, h - 14, "#ff5555"); }
+  // Geld (+ Börse in der Tagesansicht)
+  { const c = $("cG"), g = c.getContext("2d"), h = c.height, mid = Math.floor((h - 8) / 2);
+    g.fillStyle = "#050505"; g.fillRect(0, 0, W, h); achse(g, rows, B, W, h, X, bw);
+    const max = Math.max(0.001, ...rows.map(r => Math.max(v(r, "kosten_chf"), v(r, "erloes_chf"))));
+    rows.forEach((r, i) => { if (!r.z) return; const e = Math.round(v(r, "erloes_chf") / max * (mid - 2)), k = Math.round(v(r, "kosten_chf") / max * (mid - 2));
+      g.fillStyle = "#55ff55"; g.fillRect(X(i), mid - e, BW, e); g.fillStyle = "#ff5555"; g.fillRect(X(i), mid + 1, BW, k); });
+    g.fillStyle = "#444"; g.fillRect(0, mid, W, 1);
+    ptext(g, "+" + max.toFixed(2), 4, 2, "#55ff55"); ptext(g, "-" + max.toFixed(2), 4, h - 14, "#ff5555");
+    const zeigeB = periode === "tag" && rows.some(r => r.z && r.z.boerse_rp != null);
+    $("legB").hidden = !zeigeB;
+    if (zeigeB) { const bm = Math.max(1, ...rows.map(r => Math.abs(r.z && r.z.boerse_rp || 0)));
+      rows.forEach((r, i) => { if (!r.z || r.z.boerse_rp == null) return; const y = mid - r.z.boerse_rp / bm * (mid - 2); g.fillStyle = r.z.boerse_rp < 0 ? "#ff5555" : "#55ffff"; g.fillRect(X(i), Math.round(y), BW, 1); });
+      ptext(g, bm.toFixed(0) + " RP", W - 28, 2, "#55ffff"); } }
+}
+
+document.querySelectorAll(".nav button[data-p]").forEach(b => b.onclick = () => { periode = b.dataset.p; history.replaceState(null, "", "#" + periode); laden(); });
+$("prev").onclick = () => verschieben(-1);
+$("next").onclick = () => verschieben(1);
+$("heute").onclick = () => { ref = new Date(); ref.setHours(12, 0, 0, 0); laden(); };
+document.addEventListener("keydown", e => { if (e.key === "ArrowLeft") verschieben(-1); if (e.key === "ArrowRight") verschieben(1); });
+laden();
+setInterval(() => { if (periode === "tag" && iso(ref) === iso(new Date())) laden(); }, 120000);
+</script>
+</body>
+</html>

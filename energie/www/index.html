@@ -89,7 +89,7 @@
   </div>
 
   <section class="panel">
-    <h2>Kassenbuch – live</h2>
+    <h2>Kassenbuch – live · <a href="logbuch.html" style="color:var(--green-dim)">Logbuch (Archiv) →</a></h2>
     <div class="stats">
       <div class="stat pv"><div class="k">Solaranlage (Fronius)</div><div class="v" id="s-pv">–</div><div class="s" id="s-pvday">&nbsp;</div></div>
       <div class="stat haus"><div class="k">Haus verbraucht</div><div class="v" id="s-haus">–</div><div class="s" id="s-autark">&nbsp;</div></div>
@@ -747,13 +747,14 @@ function drawCharts() {
   for (const p of hist) {
     const x = X(Date.parse(p.zeit));
     if (x < 0) continue;
+    const wpx = Math.max(1, Math.round((p.dauer_min || 1) / 1440 * pw)); // Archivpunkte decken 10 Minuten ab
     const hp = Math.round((p.pv_w || 0) / maxP * plotH);
-    P.fillStyle = "#ffdd33"; P.fillRect(x, plotH - hp + 1, 1, hp);
+    P.fillStyle = "#ffdd33"; P.fillRect(x, plotH - hp + 1, wpx, hp);
     const hv = Math.round((p.verbrauch_w || 0) / maxP * plotH);
-    P.fillStyle = "#ff5555"; P.fillRect(x, plotH - hv, 1, 2);
+    P.fillStyle = "#ff5555"; P.fillRect(x, plotH - hv, wpx, 2);
     const e = Math.round((p.erloes_chf_h || 0) / maxM * (mid - 2)), k = Math.round((p.kosten_chf_h || 0) / maxM * (mid - 2));
-    M.fillStyle = "#55ff55"; M.fillRect(x, mid - e, 1, e);
-    M.fillStyle = "#ff5555"; M.fillRect(x, mid + 1, 1, k);
+    M.fillStyle = "#55ff55"; M.fillRect(x, mid - e, wpx, e);
+    M.fillStyle = "#ff5555"; M.fillRect(x, mid + 1, wpx, k);
   }
   M.fillStyle = "#444"; M.fillRect(0, mid, mw, 1);
   ptext(P, fmtW(maxP).replace(" ", ""), 2, 2, "#aaa");

@@ -124,7 +124,9 @@ Geplant: `mosquitto/` (MQTT), `zigbee2mqtt/` (Zigbee-Stick folgt), Philips Hue �
   26.68 Rp/kWh (2026) bzw. 24.65 Rp/kWh (2027) inkl. MWST.
 - Endpunkte: `/api/status` (live), `/api/history` (Minutenwerte der letzten 24 h, nur im Speicher),
   `/api/boerse` (Day-Ahead-Börsenpreise CH von Energy-Charts, in Rp/kWh zum EZB-Kurs),
-  `/api/speicher` (Speicher-Simulation: 2, 5 und 10 kWh virtuell mit echten Netzwerten, Ersparnis in CHF).
+  `/api/speicher` (Speicher-Simulation: 2, 5 und 10 kWh virtuell mit echten Netzwerten, Ersparnis in CHF),
+  `/api/archiv` (10-Minuten-Archiv, 5 Jahre, ~5 MB) mit der Logbuch-Ansicht `logbuch.html`.
+- Die Webseite heisst intern **homi**.
 - Der Wechselrichter läuft im Nachtmodus und liefert rund um die Uhr Werte; fällt er aus, meldet die API `fronius_ok: false`.
 
 ### 4.5 Retro-Webseite https://home.biber.solar
@@ -201,6 +203,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 29.09.2026 | Day-Ahead-Börsenpreise in Home Assistant und auf home.biber.solar, Dashboard „Energie & Börse“ |
 | 30.09.2026 | Nachtmodus am Wechselrichter, Nachtansicht und Passwortschutz für home.biber.solar |
 | 30.09.2026 | Speicher-Simulation (2/5/10 kWh) in Energie-Dienst und Home Assistant |
+| 01.10.2026 | Log-Rotation, Backup-Rotation, 10-Minuten-Archiv (5 Jahre) und Logbuch in homi |
 
 ## 8. Offene Punkte
 

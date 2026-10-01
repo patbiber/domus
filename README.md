@@ -112,6 +112,12 @@ Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen):
   je 95 % Wirkungsgrad pro Richtung) werden alle 5 s mit dem echten Netzsaldo geladen/entladen; Ersparnis =
   vermiedener Bezug × Bezugspreis − beim Entladen anteilig verrechnete entgangene Rückliefervergütung.
   Stand in `energie/data/speicher.json` (nicht im Repo, übersteht Neustarts). Zurücksetzen: Dienst stoppen, Datei löschen.
+- `/api/archiv`: **10-Minuten-Archiv**, 5 Jahre: pro Tag eine CSV unter `energie/data/archiv/<Jahr>/<Datum>.csv`
+  (vergangene Tage gzip, ~3 KB/Tag, ~5 MB für 5 Jahre; ältere Tage löscht homi selbst). Spalten: Zeit, gemessene
+  Sekunden, PV/Verbrauch/Bezug/Einspeisung in kWh, Kosten/Erlös in CHF, Börsenpreis, Quelle (`live` | `ha`).
+  Abfrage `?von=&bis=&aufloesung=10min|stunde|tag|monat|jahr`. Die 24-h-Diagramme füllen Lücken nach Neustarts daraus.
+  Werte 27.09.–01.10.2026 einmalig aus den 5-min-Statistiken von Home Assistant übernommen (`energie/import_ha.py`).
+- **Logbuch** `logbuch.html` (Link im Kassenbuch): Tag (10 min), Woche, Monat, Jahr, Alles; Ansicht per `#tag`, `#monat` …
 - liefert die Webseite `energie/www/index.html` aus (Retro-Adventure-Look, zufällige Geräte passend zum Smart-Meter-Verbrauch).
   Tag/Nacht richtet sich nach der PV-Leistung: nachts Mond, Sterne, beleuchtete Räume, Nachtstrom-Sprüche;
   der Schlafmodus erscheint nur noch, wenn der Fronius keine Daten liefert.
@@ -193,6 +199,7 @@ docker compose logs -f
 |---|---|---|
 | Livewerte, 24-h-Diagramm, Börsenpreise | Arbeitsspeicher Energie-Dienst | bis zum nächsten Abruf bzw. 24 h, nach Neustart leer |
 | Speicher-Simulation | `energie/data/speicher.json` | unbegrenzt (ein Eintrag pro Tag) |
+| homi-Archiv (10 min) | `energie/data/archiv/` | 5 Jahre, danach automatisch gelöscht |
 | HA-Zustände und 5-min-Werte | `home-assistant_v2.db` | 10 Tage (HA-Standard) |
 | HA-Stundenstatistik (Energie, Kosten) | `home-assistant_v2.db` | unbegrenzt |
 | Tarifarchiv GWS | `strompreise/data/` | unbegrenzt |
