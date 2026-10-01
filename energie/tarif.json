@@ -5,11 +5,18 @@
   "mwst": 0.081,
   "gemeindeabgabe_exkl": 0.001,
   "bezug_exkl_override": {
-    "_kommentar": "Falls das JSON vom PDF abweicht, gilt das PDF (Total exkl. MWST pro Jahr).",
-    "2027": 0.2280
+    "_kommentar": "Falls das JSON vom PDF abweicht, gilt das PDF (Total exkl. MWST pro Jahr). 2027: 22.80 Rp./kWh exkl. MWST gemäss GWS-Tarifinformation, bestätigt von Patrick.",
+    "2027": 0.228
   },
   "rueckliefer": {
-    "_kommentar": "Rückliefervergütung < 100 kW, erneuerbar. Sommer = 1.4.–30.9. Fehlt ein Jahr, gilt das letzte bekannte.",
-    "2026": { "sommer": 0.07, "winter": 0.15 }
+    "_kommentar": "Rückliefervergütung < 100 kW, erneuerbar. Sommer = 1.4.–30.9. 2027 noch nicht publiziert: Annahme = Werte 2026 (Vorgabe Patrick, 01.10.2026). Fehlt ein Jahr, gilt das letzte bekannte.",
+    "2026": {
+      "sommer": 0.07,
+      "winter": 0.15
+    },
+    "2027": {
+      "sommer": 0.07,
+      "winter": 0.15
+    }
   }
 }
