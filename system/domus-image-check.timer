@@ -1,0 +1,10 @@
+# Jeden Montag 07:12; verpasste Läufe werden nachgeholt
+[Unit]
+Description=domus: wöchentliche Prüfung auf neue Docker-Images
+
+[Timer]
+OnCalendar=Mon *-*-* 07:12:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

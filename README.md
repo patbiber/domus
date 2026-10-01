@@ -16,6 +16,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | – | Hue über die Hue Bridge (Integration in Home Assistant) | geplant |
 | `proxy/` | nginx (Reverse Proxy für Home Assistant) + certbot (Let's Encrypt) | läuft |
 | `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control (systemd-User-Dienst, kein Docker) | läuft |
+| `system/` | Neustart-Bericht und Prüfung auf neue Docker-Images (systemd-User-Dienste) | läuft |
 | `energie/` | Energie-API (Fronius live + GWS-Tarif) und Retro-Webseite https://home.biber.solar | läuft |
 | `strompreise/` | Monatliches Archiv der GWS-Stromtarife (Skript + systemd-User-Timer, kein Docker) | läuft |
 
@@ -191,6 +192,22 @@ docker compose logs -f
 
 ```bash
 ~/domus/homeassistant/backup.sh   # sichert config/ nach backups/, behält die letzten 10 (KEEP=20 ./backup.sh für mehr)
+```
+
+### Updates und Neustarts (`system/`)
+
+- **Ubuntu** (`unattended-upgrades`, Ergänzung in `/etc/apt/apt.conf.d/52domus-unattended`): täglich ~06:00
+  Sicherheitsupdates, Fehlerbehebungen (`-updates`) und Docker CE. Neustart **nur wenn nötig**, dann um **03:30**.
+  Bericht per Mail an root (→ patrick@biber.solar), wenn sich etwas geändert hat. Release-Upgrades (z. B. 28.04) nie automatisch.
+- **Nach jedem Neustart** schickt `system/boot-report.sh` (User-Dienst `domus-boot-report`, 3 min nach dem Start) eine Mail:
+  Kernel, Grund, Home Assistant, homi/Fronius, nginx, Container.
+- **Docker-Images** werden nicht automatisch aktualisiert. `system/image-check.sh` (Timer `domus-image-check`, Montag 07:12)
+  meldet per Mail, wenn es neuere Images gibt. Home Assistant nur mit Backup (`homeassistant/backup.sh`) und nach Rückfrage.
+
+```bash
+ln -sf ~/domus/system/domus-boot-report.service ~/domus/system/domus-image-check.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable domus-boot-report.service && systemctl --user enable --now domus-image-check.timer
+cat /var/run/reboot-required 2>/dev/null   # Neustart nötig?
 ```
 
 ### Aufbewahrung von Daten und Logs

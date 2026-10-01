@@ -1,0 +1,11 @@
+# Nach jedem Systemstart: Status-Mail an root (-> patrick@biber.solar). Startet dank Linger auch ohne Login.
+[Unit]
+Description=domus: Status-Mail nach Neustart
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/system/boot-report.sh
+
+[Install]
+WantedBy=default.target
