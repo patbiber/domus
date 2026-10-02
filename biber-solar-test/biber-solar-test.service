@@ -1,0 +1,7 @@
+[Unit]
+Description=domus: Testseite test.biber.solar von GitHub aktualisieren
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/biber-solar-test/update.sh

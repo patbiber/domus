@@ -32,3 +32,6 @@ proxy/conf.d/*.htpasswd
 # Python
 __pycache__/
 energie/data/
+
+# Testseite: Klon von github.com/patbiber/biber-solar
+biber-solar-test/site/

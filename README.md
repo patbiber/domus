@@ -16,6 +16,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | – | Hue über die Hue Bridge (Integration in Home Assistant) | geplant |
 | `proxy/` | nginx (Reverse Proxy für Home Assistant) + certbot (Let's Encrypt) | läuft |
 | `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control (systemd-User-Dienst, kein Docker) | läuft |
+| `biber-solar-test/` | Testseite https://test.biber.solar aus github.com/patbiber/biber-solar (nginx-Container, Update alle 15 min) | läuft |
 | `system/` | Neustart-Bericht und wöchentliches Docker-Image-Update mit Prüfung und Zurückrollen (systemd-User-Dienste) | läuft |
 | `energie/` | Energie-API (Fronius live + GWS-Tarif) und Retro-Webseite https://home.biber.solar | läuft |
 | `strompreise/` | Monatliches Archiv der GWS-Stromtarife (Skript + systemd-User-Timer, kein Docker) | läuft |
@@ -198,6 +199,23 @@ docker compose logs -f
 ~/domus/homeassistant/backup.sh   # sichert config/ nach backups/, behält die letzten 10 (KEEP=20 ./backup.sh für mehr)
 ```
 
+### Testseite test.biber.solar (`biber-solar-test/`)
+
+Statische Webseite aus https://github.com/patbiber/biber-solar (öffentlich, kein Build-Schritt).
+- Container `biber-solar-test` (nginx, read-only, kein eigener Port) im Netz `proxy_default`; der Proxy
+  (`proxy/conf.d/test.biber.solar.conf`) leitet `test.biber.solar` dorthin, mit eigenem Let's-Encrypt-Zertifikat.
+- Inhalt: Klon in `biber-solar-test/site/` (nicht im Repo). `update.sh` holt per Timer `biber-solar-test` alle 15 min
+  den neuesten Stand von GitHub; Änderungen sind sofort sichtbar.
+- `.git` und andere Punktdateien werden nicht ausgeliefert; `X-Robots-Tag: noindex`, damit die Testseite nicht in
+  Suchmaschinen landet.
+
+```bash
+cd ~/domus/biber-solar-test && ./update.sh && docker compose up -d
+ln -sf ~/domus/biber-solar-test/biber-solar-test.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now biber-solar-test.timer
+docker exec certbot certbot certonly --webroot -w /var/www/certbot -d test.biber.solar --email … --agree-tos -n
+```
+
 ### Updates und Neustarts (`system/`)
 
 - **Ubuntu** (`unattended-upgrades`, Ergänzung in `/etc/apt/apt.conf.d/52domus-unattended`): täglich ~06:00
@@ -208,7 +226,7 @@ docker compose logs -f
 - **Docker-Images** (Home Assistant, nginx, certbot, Python): `system/image-update.sh` (Timer `domus-image-update`,
   Montag 04:15) holt neue Images, macht vor einem Home-Assistant-Update automatisch ein Backup, merkt das alte Image
   als `domus-rollback/<dienst>:letzte`, erstellt nur geänderte Container neu und prüft danach (bis 5 min):
-  HA antwortet (200), homi liefert `/api/status`, domus.biber.solar 200 und home.biber.solar 401, certbot läuft.
+  HA antwortet (200), homi liefert `/api/status`, domus.biber.solar 200, home.biber.solar 401, test.biber.solar 200, certbot läuft.
   Schlägt die Prüfung fehl, wird automatisch die alte Version wiederhergestellt. Mail an root nur bei Änderung/Fehler.
   Test des Zurückrollens: `NO_PULL=1 PRUEF_VERSUCHE=6 system/image-update.sh` mit absichtlich falsch getaggtem Image.
 

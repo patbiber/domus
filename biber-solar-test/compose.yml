@@ -1,0 +1,27 @@
+# Testseite https://test.biber.solar: statische Webseite aus github.com/patbiber/biber-solar
+# Inhalt = Klon in ./site (nicht im Repo), aktualisiert per update.sh (Timer biber-solar-test, alle 15 min).
+# Kein eigener Port: erreichbar nur über den Proxy (nginx in proxy/) im Netz proxy_default.
+services:
+  web:
+    container_name: biber-solar-test
+    image: nginx:stable-alpine
+    restart: unless-stopped
+    env_file: ../.env
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    volumes:
+      - ./site:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - proxy_default
+    logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  proxy_default:
+    external: true

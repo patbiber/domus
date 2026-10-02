@@ -206,6 +206,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 30.09.2026 | Speicher-Simulation (2/5/10 kWh) in Energie-Dienst und Home Assistant |
 | 01.10.2026 | Log-Rotation, Backup-Rotation, 10-Minuten-Archiv (5 Jahre) und Logbuch in homi |
 | 01.10.2026 | Automatische OS- und Docker-Image-Updates mit Prüfung und Zurückrollen, Neustart-Bericht |
+| 02.10.2026 | Testseite https://test.biber.solar aus github.com/patbiber/biber-solar im eigenen Container |
 
 ## 8. Offene Punkte
 
