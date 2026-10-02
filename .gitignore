@@ -32,3 +32,6 @@ proxy/conf.d/*.htpasswd
 # Python
 __pycache__/
 energie/data/
+
+# Arbeitskopie der Testseite (Dienst-Daten)
+website/site/

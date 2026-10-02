@@ -1,0 +1,48 @@
+services:
+  # Statische Webseite https://test.biber.solar (Inhalt: github.com/patbiber/biber-solar)
+  website:
+    container_name: website
+    image: nginx:stable-alpine
+    restart: unless-stopped
+    env_file: ../.env
+    # Port 8097 ist nur im LAN offen (keine Router-Freigabe); nginx aus proxy/ leitet über host.docker.internal:8097 weiter
+    ports:
+      - "8097:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./site:/usr/share/nginx/html:ro
+    logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Holt den Stand von GitHub: beim Start und danach alle 5 Minuten
+  website-sync:
+    container_name: website-sync
+    image: alpine/git:latest
+    restart: unless-stopped
+    environment:
+      REPO: https://github.com/patbiber/biber-solar.git
+      BRANCH: main
+    volumes:
+      - ./site:/site                   # Arbeitskopie (nicht im Repo)
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        trap exit TERM
+        git config --global --add safe.directory /site
+        while :; do
+          if [ -d /site/.git ]; then
+            git -C /site fetch -q --depth 1 origin "$$BRANCH" && git -C /site reset -q --hard FETCH_HEAD
+          else
+            git clone -q --depth 1 -b "$$BRANCH" "$$REPO" /site
+          fi
+          sleep 300 & wait $$!
+        done
+    logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

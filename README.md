@@ -19,6 +19,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | `system/` | Neustart-Bericht und wöchentliches Docker-Image-Update mit Prüfung und Zurückrollen (systemd-User-Dienste) | läuft |
 | `energie/` | Energie-API (Fronius live + GWS-Tarif) und Retro-Webseite https://home.biber.solar | läuft |
 | `strompreise/` | Monatliches Archiv der GWS-Stromtarife (Skript + systemd-User-Timer, kein Docker) | läuft |
+| `website/` | Testseite https://test.biber.solar (statisch, Inhalt aus `patbiber/biber-solar`) | neu |
 
 ## Einrichtung
 
@@ -164,6 +165,23 @@ und Tabelle der kommenden Börsenpreise (🟩 unter GWS-Vergütung, 🟨 darübe
 
 Neue Tarife: Wenn das JSON vom PDF abweicht, `bezug_exkl_override` in `energie/tarif.json` setzen;
 neue Rückliefervergütung pro Jahr unter `rueckliefer` eintragen. Danach `cd energie && docker compose restart`.
+
+### Testseite test.biber.solar (`website/`)
+
+Eigener nginx-Container (`website`, Port 8097, nur im LAN offen) liefert die Arbeitskopie `website/site/` aus.
+Der Container `website-sync` klont `github.com/patbiber/biber-solar` (Branch `main`) und holt alle 5 Minuten den neuen Stand.
+Anderer Branch: `BRANCH` in `website/compose.yml` ändern. `.git`, `CLAUDE.md` und `package.json` werden nicht ausgeliefert.
+
+https://test.biber.solar – nginx (`proxy/conf.d/test.biber.solar.conf`) leitet an `host.docker.internal:8097`,
+nur GET/HEAD, `X-Robots-Tag: noindex`. Einrichtung (Zertifikat zuerst, sonst kann nginx die neue Konfiguration nicht laden):
+
+```bash
+docker exec certbot certbot certonly --webroot -w /var/www/certbot -d test.biber.solar --email … --agree-tos -n
+cd ~/domus/website && docker compose up -d
+docker exec nginx nginx -t && docker exec nginx nginx -s reload
+```
+
+Sofort aktualisieren statt 5 Minuten warten: `docker restart website-sync`.
 
 ### E-Mail-Versand (Proton SMTP)
 
