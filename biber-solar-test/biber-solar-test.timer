@@ -1,6 +1,6 @@
-# Alle 15 Minuten neuesten Stand von GitHub holen
+# Alle 15 Minuten neue Commits von GitHub in die Vorschau holen (nur wenn nichts in Arbeit ist)
 [Unit]
-Description=domus: Testseite test.biber.solar aktualisieren (alle 15 min)
+Description=domus: Vorschau test.biber.solar aktualisieren (alle 15 min)
 
 [Timer]
 OnBootSec=2min

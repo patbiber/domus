@@ -1,5 +1,5 @@
 [Unit]
-Description=domus: Testseite test.biber.solar von GitHub aktualisieren
+Description=domus: Vorschau test.biber.solar – neue Commits von GitHub holen, wenn nichts in Arbeit ist
 After=network-online.target
 
 [Service]
