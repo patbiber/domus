@@ -1,0 +1,10 @@
+# Alle 10 Minuten prüfen, ob der DNS von biber.solar schon auf den NUC zeigt; schaltet sich nach Erfolg ab
+[Unit]
+Description=domus: Wache für die DNS-Umstellung von biber.solar
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=10min
+
+[Install]
+WantedBy=timers.target

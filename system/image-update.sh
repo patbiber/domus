@@ -8,7 +8,7 @@
 # Aufruf: system/image-update.sh   (Timer domus-image-update, Montag 04:15)
 set -uo pipefail
 cd "$(dirname "$0")/.."
-PROJEKTE=(homeassistant proxy energie biber-solar-test)
+PROJEKTE=(homeassistant proxy energie biber-solar biber-solar-test)
 bericht=""
 fehler=0
 geaendert=0
@@ -29,7 +29,8 @@ gesund() {    # gesund <projekt>: 0 = läuft, sonst Fehler; wartet bis 5 Minuten
     case $p in
       homeassistant) code=$(curl -s -o /dev/null -m 5 -w '%{http_code}' http://127.0.0.1:8123/) ; [ "$code" = 200 ] && return 0 ;;
       energie)       curl -s -m 5 http://127.0.0.1:8099/api/status | grep -q '"zeit"' && return 0 ;;
-      biber-solar-test) [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' --resolve test.biber.solar:443:127.0.0.1 https://test.biber.solar/)" = 200 ] && return 0 ;;
+      biber-solar|biber-solar-test)   # intern über das Proxy-Netz prüfen (geht auch vor der DNS-Umstellung)
+                     docker exec nginx wget -q -O /dev/null "http://$(cd "$p" && docker compose ps --format '{{.Name}}' | head -1)/" 2>/dev/null && return 0 ;;
       proxy)         [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' --resolve domus.biber.solar:443:127.0.0.1 https://domus.biber.solar/)" = 200 ] \
                        && [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' --resolve home.biber.solar:443:127.0.0.1 https://home.biber.solar/)" = 401 ] \
                        && [ "$(docker inspect -f '{{.State.Running}}' certbot)" = true ] && return 0 ;;

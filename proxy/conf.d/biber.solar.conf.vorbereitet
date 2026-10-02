@@ -1,0 +1,63 @@
+# biber.solar + www.biber.solar: Hauptseite aus github.com/patbiber/biber-solar (Container biber-solar, Ordner biber-solar/)
+# Wird von proxy/biber-solar-aktivieren.sh zu biber.solar.conf umbenannt, sobald DNS auf den NUC zeigt
+# und das Zertifikat da ist (vorher würde nginx ohne Zertifikat nicht starten).
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name biber.solar www.biber.solar;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://biber.solar$request_uri;
+    }
+}
+
+# www -> ohne www (eine kanonische Adresse)
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name www.biber.solar;
+
+    ssl_certificate     /etc/letsencrypt/live/biber.solar/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/biber.solar/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    server_tokens off;
+
+    return 301 https://biber.solar$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name biber.solar;
+
+    ssl_certificate     /etc/letsencrypt/live/biber.solar/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/biber.solar/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    add_header Strict-Transport-Security "max-age=15768000" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    server_tokens off;
+
+    # Nur lesende Anfragen (statische Seite, kein Backend)
+    if ($request_method !~ ^(GET|HEAD)$) { return 405; }
+
+    # Container-Name erst bei der Anfrage auflösen: fehlt der Container, gibt es 502, nginx startet trotzdem
+    resolver 127.0.0.11 valid=30s ipv6=off;
+    set $hauptseite http://biber-solar:80;
+
+    location / {
+        proxy_pass $hauptseite;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

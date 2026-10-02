@@ -1,0 +1,7 @@
+[Unit]
+Description=domus: Hauptseite biber.solar von GitHub (main) veröffentlichen
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/biber-solar/update.sh

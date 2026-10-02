@@ -1,9 +1,9 @@
-# Vorschau https://test.biber.solar: Arbeitskopie von github.com/patbiber/biber-solar (Änderungen hier ansehen, dann pushen)
-# Inhalt = Arbeitskopie ./site (nicht im Repo); update.sh holt neue Commits nur, wenn nichts in Arbeit ist (Timer, 15 min).
+# Hauptseite https://biber.solar (und www): statische Webseite aus github.com/patbiber/biber-solar, Branch main
+# Inhalt = Klon in ./site (nicht im Repo), aktualisiert per update.sh (Timer biber-solar, alle 5 min).
 # Kein eigener Port: erreichbar nur über den Proxy (nginx in proxy/) im Netz proxy_default.
 services:
   web:
-    container_name: biber-solar-test
+    container_name: biber-solar
     image: nginx:stable-alpine
     restart: unless-stopped
     env_file: ../.env

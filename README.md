@@ -16,7 +16,8 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | – | Hue über die Hue Bridge (Integration in Home Assistant) | geplant |
 | `proxy/` | nginx (Reverse Proxy für Home Assistant) + certbot (Let's Encrypt) | läuft |
 | `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control (systemd-User-Dienst, kein Docker) | läuft |
-| `biber-solar-test/` | Testseite https://test.biber.solar aus github.com/patbiber/biber-solar (nginx-Container, Update alle 15 min) | läuft |
+| `biber-solar/` | Hauptseite https://biber.solar aus github.com/patbiber/biber-solar, main (nginx-Container, Veröffentlichung alle 5 min) | bereit, live nach DNS-Umstellung |
+| `biber-solar-test/` | Vorschau https://test.biber.solar = Arbeitskopie von biber-solar (Änderungen ansehen, dann pushen) | läuft |
 | `system/` | Neustart-Bericht und wöchentliches Docker-Image-Update mit Prüfung und Zurückrollen (systemd-User-Dienste) | läuft |
 | `energie/` | Energie-API (Fronius live + GWS-Tarif) und Retro-Webseite https://home.biber.solar | läuft |
 | `strompreise/` | Monatliches Archiv der GWS-Stromtarife (Skript + systemd-User-Timer, kein Docker) | läuft |
@@ -199,21 +200,32 @@ docker compose logs -f
 ~/domus/homeassistant/backup.sh   # sichert config/ nach backups/, behält die letzten 10 (KEEP=20 ./backup.sh für mehr)
 ```
 
-### Testseite test.biber.solar (`biber-solar-test/`)
+### Webseite biber.solar (`biber-solar/`, `biber-solar-test/`)
 
-Statische Webseite aus https://github.com/patbiber/biber-solar (öffentlich, kein Build-Schritt).
-- Container `biber-solar-test` (nginx, read-only, kein eigener Port) im Netz `proxy_default`; der Proxy
-  (`proxy/conf.d/test.biber.solar.conf`) leitet `test.biber.solar` dorthin, mit eigenem Let's-Encrypt-Zertifikat.
-- Inhalt: Klon in `biber-solar-test/site/` (nicht im Repo). `update.sh` holt per Timer `biber-solar-test` alle 15 min
-  den neuesten Stand von GitHub; Änderungen sind sofort sichtbar.
-- `.git` und andere Punktdateien werden nicht ausgeliefert; `X-Robots-Tag: noindex`, damit die Testseite nicht in
-  Suchmaschinen landet.
+Statische Webseite aus https://github.com/patbiber/biber-solar (kein Build-Schritt). Zwei nginx-Container im Netz
+`proxy_default`, ohne eigene Ports; der Proxy leitet weiter und hält die Let's-Encrypt-Zertifikate.
+
+| | Hauptseite `biber-solar/` | Vorschau `biber-solar-test/` |
+|---|---|---|
+| Adresse | https://biber.solar (www → 301 auf ohne www) | https://test.biber.solar (`noindex`) |
+| Inhalt | Klon von `main` in `site/`, Timer `biber-solar` alle 5 min (`update.sh`) | **Arbeitskopie** `site/`, Timer `biber-solar-test` holt neue Commits nur, wenn nichts in Arbeit ist |
+| Zweck | was veröffentlicht ist | Änderungen von Claude sofort ansehen, erst danach `git push` |
+
+Ändern von hier: in `biber-solar-test/site` bearbeiten → auf test.biber.solar prüfen → commit → `git -C biber-solar-test/site push`
+(Push über eigenen Deploy-Key `~/.ssh/github_biber_solar`, Host-Alias `github-biber-solar` in `~/.ssh/config`;
+der öffentliche Schlüssel muss in GitHub unter biber-solar → Settings → Deploy keys mit **Allow write access** eingetragen sein).
+Höchstens 5 Minuten nach dem Push ist die Änderung auf biber.solar.
+
+**Umzug von OVH:** `proxy/conf.d/biber.solar.conf.vorbereitet` ist bereit. Der Timer `biber-solar-aktivieren` prüft alle 10 min,
+ob `biber.solar` **und** `www.biber.solar` auf die IP des NUC zeigen; dann holt `proxy/biber-solar-aktivieren.sh` das Zertifikat,
+aktiviert die Konfiguration, prüft und meldet per Mail – und schaltet sich ab. Manuell: `proxy/biber-solar-aktivieren.sh`.
+Bei OVH nur die **A-Einträge** von `biber.solar` und `www` ändern; MX, SPF, DKIM, DMARC und die Proton-TXT-Einträge bleiben.
+`training.biber.solar` liegt weiterhin auf dem OVH-Server.
 
 ```bash
-cd ~/domus/biber-solar-test && ./update.sh && docker compose up -d
-ln -sf ~/domus/biber-solar-test/biber-solar-test.{service,timer} ~/.config/systemd/user/
-systemctl --user daemon-reload && systemctl --user enable --now biber-solar-test.timer
-docker exec certbot certbot certonly --webroot -w /var/www/certbot -d test.biber.solar --email … --agree-tos -n
+ln -sf ~/domus/biber-solar/biber-solar.{service,timer} ~/domus/biber-solar-test/biber-solar-test.{service,timer} \
+       ~/domus/proxy/biber-solar-aktivieren.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now biber-solar.timer biber-solar-test.timer biber-solar-aktivieren.timer
 ```
 
 ### Updates und Neustarts (`system/`)
@@ -226,7 +238,7 @@ docker exec certbot certbot certonly --webroot -w /var/www/certbot -d test.biber
 - **Docker-Images** (Home Assistant, nginx, certbot, Python): `system/image-update.sh` (Timer `domus-image-update`,
   Montag 04:15) holt neue Images, macht vor einem Home-Assistant-Update automatisch ein Backup, merkt das alte Image
   als `domus-rollback/<dienst>:letzte`, erstellt nur geänderte Container neu und prüft danach (bis 5 min):
-  HA antwortet (200), homi liefert `/api/status`, domus.biber.solar 200, home.biber.solar 401, test.biber.solar 200, certbot läuft.
+  HA antwortet (200), homi liefert `/api/status`, domus.biber.solar 200, home.biber.solar 401, die beiden Webseiten-Container antworten im Proxy-Netz, certbot läuft.
   Schlägt die Prüfung fehl, wird automatisch die alte Version wiederhergestellt. Mail an root nur bei Änderung/Fehler.
   Test des Zurückrollens: `NO_PULL=1 PRUEF_VERSUCHE=6 system/image-update.sh` mit absichtlich falsch getaggtem Image.
 

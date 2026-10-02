@@ -1,0 +1,10 @@
+# Alle 5 Minuten neuesten Stand von main holen (ein Push ist damit nach höchstens 5 min live)
+[Unit]
+Description=domus: Hauptseite biber.solar aktualisieren (alle 5 min)
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

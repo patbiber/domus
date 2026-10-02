@@ -1,0 +1,7 @@
+[Unit]
+Description=domus: biber.solar freischalten, sobald DNS auf den NUC zeigt
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/proxy/biber-solar-aktivieren.sh --auto
