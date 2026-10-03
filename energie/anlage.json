@@ -1,0 +1,10 @@
+{
+  "_kommentar": "PV-Anlage für die Solarprognose (Open-Meteo). Ausrichtung am 03.10.2026 aus Messdaten bestimmt: beste Übereinstimmung Süd-Südwest, ca. 25° Neigung. Azimut: 0 = Süd, -90 = Ost, +90 = West. faktor_start = kWh pro (kW/m² Einstrahlung · h), wird laufend aus den echten Werten nachgeeicht.",
+  "breite": 47.240,
+  "laenge": 8.724,
+  "neigung": 25,
+  "azimut": 30,
+  "faktor_start": 5.98,
+  "max_kw": 8.2,
+  "geraet_stunden": 2
+}

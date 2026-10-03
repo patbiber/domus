@@ -60,6 +60,7 @@
   .pv .v { color: var(--yellow); } .haus .v { color: var(--red); } .netz .v { color: var(--cyan); }
   .zahle .v { color: var(--red); } .bekomme .v { color: var(--green); } .session .v { color: var(--purple); }
   .srv .v { color: var(--cyan); }
+  .prog .v { color: var(--yellow); }
   .boerse .v { color: var(--cyan); } .boerse.neg { border-color: var(--red); } .boerse.neg .v { color: var(--red); animation: blink 1s steps(2) infinite; }
   @keyframes blink { 50% { opacity: .35; } }
   .charts { margin-top: 10px; display: grid; gap: 8px; }
@@ -98,6 +99,7 @@
       <div class="stat zahle"><div class="k">Ich bezahle gerade</div><div class="v" id="s-zahle">–</div><div class="s" id="s-tarif">&nbsp;</div></div>
       <div class="stat bekomme"><div class="k">Ich bekomme gerade</div><div class="v" id="s-bekomme">–</div><div class="s" id="s-rueck">&nbsp;</div></div>
       <div class="stat session"><div class="k">Seit du zuschaust</div><div class="v" id="s-session">0.0000 CHF</div><div class="s" id="s-sessiont">&nbsp;</div></div>
+      <div class="stat prog"><div class="k">Solarprognose morgen</div><div class="v" id="s-prog">–</div><div class="s" id="s-prog2">&nbsp;</div></div>
       <div class="stat srv"><div class="k">homi-Server (unter der Treppe)</div><div class="v" id="s-srv">–</div><div class="s" id="s-srv2">&nbsp;</div></div>
       <div class="stat boerse" id="t-boerse"><div class="k">Strombörse Day-Ahead CH</div><div class="v" id="s-boerse">–</div><div class="s" id="s-boerse2">&nbsp;</div></div>
     </div>
@@ -369,6 +371,12 @@ function updateStats() {
     $("s-rueck").textContent = t.rueckliefer_chf_kwh != null
       ? `Vergütung ${(t.rueckliefer_chf_kwh * 100).toFixed(2)} Rp/kWh (${t.saison})` : "Vergütung unbekannt";
   }
+  const pg = S && S.prognose;
+  if (pg && pg.morgen) {
+    const m = pg.morgen, f = m.bestes_fenster;
+    $("s-prog").textContent = `${m.kwh.toFixed(1)} kWh ${m.kwh >= 20 ? "☀" : m.kwh >= 8 ? "⛅" : "☁"}`;
+    $("s-prog2").textContent = (f ? `beste Zeit ${f.von}–${f.bis} Uhr · ` : "") + `heute ${pg.heute.kwh.toFixed(1)} kWh erwartet`;
+  }
   const sv = S && S.server;
   if (sv && sv.leistung_w != null) {
     $("s-srv").textContent = `${sv.leistung_w.toFixed(1)} W`;
@@ -444,6 +452,14 @@ function chatter() {
     [bo.naechster_negativer ? `Achtung, ab ${bo.naechster_negativer.slice(11, 16)} Uhr wird der Börsenpreis negativ!` : "Keine negativen Börsenpreise in Sicht."]);
   lines.push(["Ich sollte mal wieder die Panels putzen."], ["Wenn ich nur einen gelben Kristall hätte…"],
     ["Zweiköpfige Eichhörnchen? Nicht in diesem Haus."], ["Irgendwas brummt hier. Hoffentlich nur der Kühlschrank."]);
+  const pm = S.prognose && S.prognose.morgen;
+  if (pm) {
+    const f = pm.bestes_fenster;
+    lines.push(pm.kwh >= 20 ? [`Morgen gibt's ${pm.kwh.toFixed(0)} kWh Sonne! Waschmaschine um ${f ? f.von : "Mittag"}?`, "#ffff55"]
+      : pm.kwh >= 8 ? [`Morgen gemischt: ${pm.kwh.toFixed(0)} kWh. ${f ? "Am besten " + f.von + "–" + f.bis + " Uhr." : ""}`, "#ffff55"]
+      : [`Morgen eher grau. Nur ${pm.kwh.toFixed(0)} kWh. Ich lese ein Buch.`, "#aaaaff"]);
+    if (isNight()) lines.push([`Die Wetterfee sagt: morgen ${pm.kwh.toFixed(1)} kWh. Ich glaube ihr. Meistens.`]);
+  }
   if (S.server && S.server.leistung_w) lines.push(
     [`Der Server unter der Treppe läuft seit ${fmtUptime(S.server.uptime_s)}. Respekt.`, "#55ffff"],
     [`homi braucht nur ${S.server.leistung_w.toFixed(1)} W. Weniger als die Stehlampe.`, "#55ffff"]);

@@ -1,0 +1,7 @@
+[Unit]
+Description=homi: Abendmail mit Solarprognose für morgen
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/energie/prognose-mail.py

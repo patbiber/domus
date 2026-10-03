@@ -16,6 +16,7 @@ services:
     volumes:
       - ./server.py:/app/server.py:ro
       - ./tarif.json:/app/tarif.json:ro
+      - ./anlage.json:/app/anlage.json:ro                     # Standort/Ausrichtung für die Solarprognose
       - ./www:/app/www:ro
       - ../strompreise/data:/strompreise:ro
       - ./data:/data                      # Stand der Speicher-Simulation (nicht im Repo)

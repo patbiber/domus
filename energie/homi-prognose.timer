@@ -1,0 +1,10 @@
+# Jeden Abend um 19:00 die Solarprognose für morgen per Mail
+[Unit]
+Description=homi: Solarprognose-Mail (täglich 19:00)
+
+[Timer]
+OnCalendar=*-*-* 19:00:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target

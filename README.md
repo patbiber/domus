@@ -125,6 +125,13 @@ Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen):
   (`/sys/devices/virtual/powercap/intel-rapl`, read-only gemountet) + 4 W geschätzt für Platine/SSD/Netzteil
   (`NUC_REST_W`), CPU-Last, Temperatur, RAM, Uptime, Erreichbarkeit HA/nginx, kWh und CHF pro Jahr.
   Auf der Seite: Server im Schrank unter der Treppe (fest im Inventar, eigene Antworten auf alle Verben) und eigene Kachel.
+- **Solarprognose** `/api/prognose`: Open-Meteo-Einstrahlung auf die Modulebene (`energie/anlage.json`: Stäfa,
+  25° Neigung, Azimut +30° = Süd-Südwest, aus den Messdaten bestimmt) × Eichfaktor, der stündlich aus den eigenen
+  Messwerten der letzten 14 Tage nachgeführt wird. Heute/morgen/übermorgen in kWh, Spitze, Bewölkung und bestes
+  2-Stunden-Fenster. Abendprognose und Messung werden in `energie/data/prognose_log.json` verglichen (Treffsicherheit).
+  Rückblick 27.09.–03.10.2026: sonnige Tage ±6 %, trübe Tage bis +23 %.
+  Mail jeden Abend um 19:00 (`energie/prognose-mail.py`, Timer `homi-prognose`). HA: `sensor.pv_prognose_heute`,
+  `sensor.pv_prognose_morgen`, `sensor.pv_prognose_bestes_zeitfenster_morgen`. Auf homi: Kachel und Sprüche.
 - **Logbuch** `logbuch.html` (Link im Kassenbuch): Tag (10 min), Woche, Monat, Jahr, Alles; Ansicht per `#tag`, `#monat` …
 - liefert die Webseite `energie/www/index.html` aus (Retro-Adventure-Look, zufällige Geräte passend zum Smart-Meter-Verbrauch).
   Tag/Nacht richtet sich nach der PV-Leistung: nachts Mond, Sterne, beleuchtete Räume, Nachtstrom-Sprüche;
