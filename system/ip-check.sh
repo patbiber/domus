@@ -2,7 +2,8 @@
 # Überwacht die öffentliche IPv4-Adresse des Anschlusses (alle 5 min per Timer domus-ip-check).
 # Ändert sie sich, geht sofort eine Mail an root (-> patrick@biber.solar) mit der neuen IP und den DNS-Einträgen,
 # die bei OVH angepasst werden müssen. Zusätzlich: Mail, wenn ein DNS-Eintrag nicht (mehr) auf die aktuelle IP zeigt.
-# Jede Meldung kommt einmal pro neuem Zustand, danach höchstens alle 6 Stunden eine Erinnerung.
+# Stimmt der DNS nicht und sind OVH-API-Zugangsdaten in ~/domus/.env, werden die A-Einträge automatisch
+# per system/ovh-dns.py nachgeführt. Jede Meldung kommt einmal pro neuem Zustand, danach höchstens alle 6 h.
 set -uo pipefail
 NAMEN=(${IP_CHECK_NAMEN:-biber.solar www.biber.solar training.biber.solar domus.biber.solar home.biber.solar test.biber.solar})
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/domus"
@@ -30,6 +31,12 @@ for n in "${NAMEN[@]}"; do
   [ "$a" != "$neu" ] && falsch+="  $n  zeigt auf ${a:-(nichts)}  -> neu: $neu"$'\n'
 done
 
+# Automatisch bei OVH nachführen (falls Zugangsdaten vorhanden)
+auto=""; auto_ok=0
+if [ -n "$falsch" ] && [ -x "$(dirname "$0")/ovh-dns.py" ]; then
+  auto=$("$(dirname "$0")/ovh-dns.py" --setzen "$neu" 2>&1) && auto_ok=1
+fi
+
 zustand="ip=$neu;dns=$( [ -z "$falsch" ] && echo ok || echo falsch )"
 read -r letzt_zustand letzt_zeit < <( [ -f "$MELDUNG_FILE" ] && tr '|' ' ' < "$MELDUNG_FILE" || echo "- 0")
 jetzt=$(date +%s)
@@ -54,7 +61,14 @@ fi
     echo "   NEU: $neu"
     echo
   fi
-  if [ -n "$falsch" ]; then
+  if [ -n "$falsch" ] && [ $auto_ok = 1 ]; then
+    echo "Die DNS-Einträge wurden AUTOMATISCH per OVH-API angepasst – du musst nichts tun:"
+    echo
+    echo "$auto" | sed 's/^/  /'
+    echo
+    echo "Je nach TTL sind die Seiten in wenigen Minuten wieder erreichbar. Entwarnung folgt per Mail."
+  elif [ -n "$falsch" ]; then
+    [ -n "$auto" ] && printf 'Automatische Anpassung über OVH nicht möglich:\n  %s\n\n' "$auto"
     echo "Diese DNS-Einträge (Typ A) bitte bei OVH auf $neu ändern:"
     echo
     printf '%s' "$falsch"

@@ -271,6 +271,11 @@ müssen übereinstimmen) und prüft, ob biber.solar, www, training, domus, home 
 - IP geändert → **sofort** Mail „ÖFFENTLICHE IP GEÄNDERT -> <neue IP>“ mit allen anzupassenden A-Einträgen (OVH).
 - DNS zeigt nicht auf die IP → Mail, danach Erinnerung höchstens alle 6 h; wieder in Ordnung → Entwarnung.
 - Zustand in `~/.local/state/domus/` (`public_ip`, `ip_meldung`).
+- **Automatische DNS-Nachführung:** Stimmt ein A-Eintrag nicht, setzt `system/ovh-dns.py --setzen <ip>` die Einträge
+  über die OVH-API neu (nur A-Einträge von biber.solar, www, training, domus, home, test; MX/TXT bleiben unberührt) und
+  lädt die Zone neu. Zugangsdaten `OVH_*` in `.env` (Vorlage `.env.example`, Token-Rechte dort beschrieben).
+  Ohne Zugangsdaten oder bei Fehler: Mail mit Anleitung für die manuelle Änderung. `system/ovh-dns.py` ohne
+  Argument zeigt die aktuellen A-Einträge laut OVH.
 
 ```bash
 ln -sf ~/domus/system/domus-ip-check.{service,timer} ~/.config/systemd/user/
