@@ -1,0 +1,7 @@
+[Unit]
+Description=domus: öffentliche IP und DNS-Einträge prüfen, bei Änderung Mail
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/system/ip-check.sh

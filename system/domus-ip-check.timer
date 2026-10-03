@@ -1,0 +1,10 @@
+# Alle 5 Minuten die öffentliche IP prüfen
+[Unit]
+Description=domus: Überwachung der öffentlichen IP (alle 5 min)
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

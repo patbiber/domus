@@ -210,6 +210,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 02.10.2026 | Umzug biber.solar von OVH auf den NUC vorbereitet (Container, Vorschau, automatische Aktivierung nach DNS-Wechsel) |
 | 03.10.2026 | https://biber.solar live auf dem NUC (www → biber.solar, Let's Encrypt) |
 | 03.10.2026 | https://training.biber.solar (MkDocs, github.com/patbiber/solartech) auf den NUC umgezogen |
+| 03.10.2026 | Überwachung der öffentlichen IP mit sofortiger Mail bei Änderung |
 
 ## 8. Offene Punkte
 

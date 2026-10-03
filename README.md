@@ -19,7 +19,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | `biber-solar/` | Hauptseite https://biber.solar aus github.com/patbiber/biber-solar, main (nginx-Container, Veröffentlichung alle 5 min) | läuft (seit 03.10.2026) |
 | `training/` | https://training.biber.solar: MkDocs-Material-Seite aus github.com/patbiber/solartech (Build bei neuem Commit, nginx-Container) | läuft (seit 03.10.2026) |
 | `biber-solar-test/` | Vorschau https://test.biber.solar = Arbeitskopie von biber-solar (Änderungen ansehen, dann pushen) | läuft |
-| `system/` | Neustart-Bericht und wöchentliches Docker-Image-Update mit Prüfung und Zurückrollen (systemd-User-Dienste) | läuft |
+| `system/` | Neustart-Bericht, wöchentliches Docker-Image-Update mit Prüfung und Zurückrollen, Überwachung der öffentlichen IP (systemd-User-Dienste) | läuft |
 | `energie/` | Energie-API (Fronius live + GWS-Tarif) und Retro-Webseite https://home.biber.solar | läuft |
 | `strompreise/` | Monatliches Archiv der GWS-Stromtarife (Skript + systemd-User-Timer, kein Docker) | läuft |
 
@@ -262,6 +262,19 @@ ln -sf ~/domus/system/domus-boot-report.service ~/domus/system/domus-image-updat
 systemctl --user daemon-reload && systemctl --user enable domus-boot-report.service && systemctl --user enable --now domus-image-update.timer
 systemctl --user start domus-image-update.service   # Update sofort ausführen
 cat /var/run/reboot-required 2>/dev/null   # Neustart nötig?
+```
+
+### Überwachung der öffentlichen IP (`system/ip-check.sh`)
+
+Timer `domus-ip-check` alle 5 min: ermittelt die öffentliche IPv4 (mindestens zwei von ipify, icanhazip, ifconfig.me
+müssen übereinstimmen) und prüft, ob biber.solar, www, training, domus, home und test darauf zeigen.
+- IP geändert → **sofort** Mail „ÖFFENTLICHE IP GEÄNDERT -> <neue IP>“ mit allen anzupassenden A-Einträgen (OVH).
+- DNS zeigt nicht auf die IP → Mail, danach Erinnerung höchstens alle 6 h; wieder in Ordnung → Entwarnung.
+- Zustand in `~/.local/state/domus/` (`public_ip`, `ip_meldung`).
+
+```bash
+ln -sf ~/domus/system/domus-ip-check.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now domus-ip-check.timer
 ```
 
 ### Aufbewahrung von Daten und Logs
