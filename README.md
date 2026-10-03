@@ -16,7 +16,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | – | Hue über die Hue Bridge (Integration in Home Assistant) | geplant |
 | `proxy/` | nginx (Reverse Proxy für Home Assistant) + certbot (Let's Encrypt) | läuft |
 | `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control (systemd-User-Dienst, kein Docker) | läuft |
-| `biber-solar/` | Hauptseite https://biber.solar aus github.com/patbiber/biber-solar, main (nginx-Container, Veröffentlichung alle 5 min) | bereit, live nach DNS-Umstellung |
+| `biber-solar/` | Hauptseite https://biber.solar aus github.com/patbiber/biber-solar, main (nginx-Container, Veröffentlichung alle 5 min) | läuft (seit 03.10.2026) |
 | `biber-solar-test/` | Vorschau https://test.biber.solar = Arbeitskopie von biber-solar (Änderungen ansehen, dann pushen) | läuft |
 | `system/` | Neustart-Bericht und wöchentliches Docker-Image-Update mit Prüfung und Zurückrollen (systemd-User-Dienste) | läuft |
 | `energie/` | Energie-API (Fronius live + GWS-Tarif) und Retro-Webseite https://home.biber.solar | läuft |
@@ -216,11 +216,9 @@ Statische Webseite aus https://github.com/patbiber/biber-solar (kein Build-Schri
 der öffentliche Schlüssel muss in GitHub unter biber-solar → Settings → Deploy keys mit **Allow write access** eingetragen sein).
 Höchstens 5 Minuten nach dem Push ist die Änderung auf biber.solar.
 
-**Umzug von OVH:** `proxy/conf.d/biber.solar.conf.vorbereitet` ist bereit. Der Timer `biber-solar-aktivieren` prüft alle 10 min,
-ob `biber.solar` **und** `www.biber.solar` auf die IP des NUC zeigen; dann holt `proxy/biber-solar-aktivieren.sh` das Zertifikat,
-aktiviert die Konfiguration, prüft und meldet per Mail – und schaltet sich ab. Manuell: `proxy/biber-solar-aktivieren.sh`.
-Bei OVH nur die **A-Einträge** von `biber.solar` und `www` ändern; MX, SPF, DKIM, DMARC und die Proton-TXT-Einträge bleiben.
-`training.biber.solar` liegt weiterhin auf dem OVH-Server.
+**Umzug von OVH:** seit 03.10.2026 live auf dem NUC (`proxy/conf.d/biber.solar.conf`, Zertifikat für biber.solar +
+www.biber.solar, Erneuerung automatisch). Bei OVH zeigen nur die **A-Einträge** von `biber.solar` und `www` auf den NUC;
+MX, SPF, DKIM, DMARC und die Proton-TXT-Einträge bleiben unverändert. `training.biber.solar` liegt weiterhin auf dem OVH-Server.
 
 ```bash
 ln -sf ~/domus/biber-solar/biber-solar.{service,timer} ~/domus/biber-solar-test/biber-solar-test.{service,timer} \

@@ -208,6 +208,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 01.10.2026 | Automatische OS- und Docker-Image-Updates mit Prüfung und Zurückrollen, Neustart-Bericht |
 | 02.10.2026 | Testseite https://test.biber.solar aus github.com/patbiber/biber-solar im eigenen Container |
 | 02.10.2026 | Umzug biber.solar von OVH auf den NUC vorbereitet (Container, Vorschau, automatische Aktivierung nach DNS-Wechsel) |
+| 03.10.2026 | https://biber.solar live auf dem NUC (www → biber.solar, Let's Encrypt) |
 
 ## 8. Offene Punkte
 
