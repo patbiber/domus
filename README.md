@@ -276,6 +276,8 @@ müssen übereinstimmen) und prüft, ob biber.solar, www, training, domus, home 
   lädt die Zone neu. Zugangsdaten `OVH_*` in `.env` (Vorlage `.env.example`, Token-Rechte dort beschrieben).
   Ohne Zugangsdaten oder bei Fehler: Mail mit Anleitung für die manuelle Änderung. `system/ovh-dns.py` ohne
   Argument zeigt die aktuellen A-Einträge laut OVH.
+- TTL der A-Einträge: 300 s (home.biber.solar 60 s), gesetzt am 03.10.2026 – nach einem IP-Wechsel sind die Seiten
+  so nach spätestens ca. 10 Minuten wieder erreichbar.
 
 ```bash
 ln -sf ~/domus/system/domus-ip-check.{service,timer} ~/.config/systemd/user/
