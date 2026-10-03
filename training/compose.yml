@@ -1,0 +1,28 @@
+# https://training.biber.solar: Solar- & Haustechnik-Wissen, MkDocs-Material-Seite aus github.com/patbiber/solartech
+# update.sh (Timer training, alle 15 min) holt neue Commits nach ./src, baut mit squidfunk/mkdocs-material nach
+# ./ausgabe/build-<commit> und schaltet den Link ./ausgabe/aktuell um – nginx liefert nie eine halbfertige Seite aus.
+# Kein eigener Port: erreichbar nur über den Proxy (nginx in proxy/) im Netz proxy_default.
+services:
+  web:
+    container_name: training
+    image: nginx:stable-alpine
+    restart: unless-stopped
+    env_file: ../.env
+    read_only: true
+    tmpfs:
+      - /var/cache/nginx
+      - /var/run
+    volumes:
+      - ./ausgabe:/srv:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - proxy_default
+    logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  proxy_default:
+    external: true

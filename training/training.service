@@ -1,0 +1,8 @@
+[Unit]
+Description=domus: training.biber.solar von GitHub (solartech) holen und mit MkDocs bauen
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/training/update.sh
+TimeoutStartSec=15min

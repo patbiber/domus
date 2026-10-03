@@ -17,6 +17,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | `proxy/` | nginx (Reverse Proxy für Home Assistant) + certbot (Let's Encrypt) | läuft |
 | `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control (systemd-User-Dienst, kein Docker) | läuft |
 | `biber-solar/` | Hauptseite https://biber.solar aus github.com/patbiber/biber-solar, main (nginx-Container, Veröffentlichung alle 5 min) | läuft (seit 03.10.2026) |
+| `training/` | https://training.biber.solar: MkDocs-Material-Seite aus github.com/patbiber/solartech (Build bei neuem Commit, nginx-Container) | läuft (seit 03.10.2026) |
 | `biber-solar-test/` | Vorschau https://test.biber.solar = Arbeitskopie von biber-solar (Änderungen ansehen, dann pushen) | läuft |
 | `system/` | Neustart-Bericht und wöchentliches Docker-Image-Update mit Prüfung und Zurückrollen (systemd-User-Dienste) | läuft |
 | `energie/` | Energie-API (Fronius live + GWS-Tarif) und Retro-Webseite https://home.biber.solar | läuft |
@@ -218,11 +219,28 @@ Höchstens 5 Minuten nach dem Push ist die Änderung auf biber.solar.
 
 **Umzug von OVH:** seit 03.10.2026 live auf dem NUC (`proxy/conf.d/biber.solar.conf`, Zertifikat für biber.solar +
 www.biber.solar, Erneuerung automatisch). Bei OVH zeigen nur die **A-Einträge** von `biber.solar` und `www` auf den NUC;
-MX, SPF, DKIM, DMARC und die Proton-TXT-Einträge bleiben unverändert. `training.biber.solar` liegt weiterhin auf dem OVH-Server.
+MX, SPF, DKIM, DMARC und die Proton-TXT-Einträge bleiben unverändert. `training.biber.solar` ist ebenfalls umgezogen (siehe unten).
 
 ```bash
 ln -sf ~/domus/biber-solar/biber-solar.{service,timer} ~/domus/biber-solar-test/biber-solar-test.{service,timer} ~/.config/systemd/user/
 systemctl --user daemon-reload && systemctl --user enable --now biber-solar.timer biber-solar-test.timer
+```
+
+### Trainingsseite training.biber.solar (`training/`)
+
+Solar- & Haustechnik-Wissen, MkDocs Material, Quelle https://github.com/patbiber/solartech (`docs/`, `mkdocs.yml`).
+- `update.sh` (Timer `training`, alle 15 min): holt neue Commits nach `training/src/`, baut mit dem Image
+  `squidfunk/mkdocs-material:9` nach `training/ausgabe/build-<commit>/` und schaltet erst danach den Link
+  `ausgabe/aktuell` um (nie eine halbfertige Seite). Erzwingen: `training/update.sh --neu`.
+- Die Bilder in `docs/` sind im Repo als **absolute Symlinks auf den alten OVH-Pfad**
+  `/var/www/html/training.biber.solar/solartech/…` angelegt; der Build hängt den Klon deshalb zusätzlich unter
+  diesem Pfad ein. Wer die Links im Repo relativ macht (`../Bild.png`), braucht das nicht mehr.
+- Container `training` (nginx, read-only) im Netz `proxy_default`; Proxy `proxy/conf.d/training.biber.solar.conf`,
+  Let's Encrypt. Seit 03.10.2026 auf dem NUC (vorher OVH), Inhalt beim Umzug mit der OVH-Seite verglichen (identisch).
+
+```bash
+ln -sf ~/domus/training/training.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now training.timer
 ```
 
 ### Updates und Neustarts (`system/`)

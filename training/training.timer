@@ -1,0 +1,10 @@
+# Alle 15 Minuten auf neue Commits prüfen und bei Bedarf neu bauen
+[Unit]
+Description=domus: training.biber.solar aktualisieren (alle 15 min)
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=15min
+
+[Install]
+WantedBy=timers.target
