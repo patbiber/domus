@@ -221,9 +221,8 @@ www.biber.solar, Erneuerung automatisch). Bei OVH zeigen nur die **A-Einträge**
 MX, SPF, DKIM, DMARC und die Proton-TXT-Einträge bleiben unverändert. `training.biber.solar` liegt weiterhin auf dem OVH-Server.
 
 ```bash
-ln -sf ~/domus/biber-solar/biber-solar.{service,timer} ~/domus/biber-solar-test/biber-solar-test.{service,timer} \
-       ~/domus/proxy/biber-solar-aktivieren.{service,timer} ~/.config/systemd/user/
-systemctl --user daemon-reload && systemctl --user enable --now biber-solar.timer biber-solar-test.timer biber-solar-aktivieren.timer
+ln -sf ~/domus/biber-solar/biber-solar.{service,timer} ~/domus/biber-solar-test/biber-solar-test.{service,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now biber-solar.timer biber-solar-test.timer
 ```
 
 ### Updates und Neustarts (`system/`)
