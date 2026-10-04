@@ -132,6 +132,10 @@ Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen):
   Rückblick 27.09.–03.10.2026: sonnige Tage ±6 %, trübe Tage bis +23 %.
   Mail jeden Abend um 19:00 (`energie/prognose-mail.py`, Timer `homi-prognose`). HA: `sensor.pv_prognose_heute`,
   `sensor.pv_prognose_morgen`, `sensor.pv_prognose_bestes_zeitfenster_morgen`. Auf homi: Kachel und Sprüche.
+- **Messperioden** `energie/messungen.json` (z. B. „Grundlast Abwesenheit“ 04.–09.10.2026, niemand zu Hause):
+  `energie/messung-bericht.py "<name>"` wertet das 10-Minuten-Archiv aus (Mittel, Nacht-Median, Minimum, Tage,
+  Tagesprofil, Spitzen, Hochrechnung pro Jahr, Vergleich mit bewohnten Tagen) und mailt den Bericht;
+  `--nur-anzeigen` gibt ihn nur aus. Einmal-Timer `homi-messung` am 09.10.2026 12:15.
 - **Logbuch** `logbuch.html` (Link im Kassenbuch): Tag (10 min), Woche, Monat, Jahr, Alles; Ansicht per `#tag`, `#monat` …
 - liefert die Webseite `energie/www/index.html` aus (Retro-Adventure-Look, zufällige Geräte passend zum Smart-Meter-Verbrauch).
   Tag/Nacht richtet sich nach der PV-Leistung: nachts Mond, Sterne, beleuchtete Räume, Nachtstrom-Sprüche;

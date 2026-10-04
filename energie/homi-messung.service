@@ -1,0 +1,8 @@
+# Bericht zur Messperiode "Grundlast Abwesenheit" (energie/messungen.json) per Mail
+[Unit]
+Description=homi: Bericht Grundlast-Messung (Abwesenheit 04.–09.10.2026)
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/energie/messung-bericht.py "Grundlast Abwesenheit"

@@ -1,0 +1,10 @@
+# Einmalig am Freitag 09.10.2026 um 12:15 (Ende der Messung 12:00); war der NUC aus, wird nachgeholt
+[Unit]
+Description=homi: Bericht Grundlast-Messung am 09.10.2026
+
+[Timer]
+OnCalendar=2026-10-09 12:15:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

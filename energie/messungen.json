@@ -1,0 +1,10 @@
+[
+  {
+    "name": "Grundlast Abwesenheit",
+    "von": "2026-10-04T09:40",
+    "bis": "2026-10-09T12:00",
+    "notiz": "Niemand zu Hause (Angabe Patrick, 04.10.2026). Verbrauch = Grundbedarf des Hauses: Kühlgeräte, Router, Standby, Server, evtl. Boiler/Heizung.",
+    "vergleich": {"name": "bewohnt", "von": "2026-09-30T00:00", "bis": "2026-10-03T00:00"},
+    "bericht": "2026-10-09T12:15"
+  }
+]
