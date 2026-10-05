@@ -185,9 +185,9 @@ svg.chart { width: 100%; height: auto; display: block; margin-top: 8px; }
 /* ---------- Pilot ---------- */
 #pilot { background: var(--navy); color: #fff; }
 #pilot .sub { color: #9fb0cc; }
-.pilot-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 36px; align-items: center; }
+.pilot-grid { display: grid; grid-template-columns: 1fr 1.1fr; gap: 40px; align-items: center; }
 @media (max-width: 900px) { .pilot-grid { grid-template-columns: 1fr; } }
-.pilot-bild { border-radius: 18px; overflow: hidden; border: 1px solid rgba(255,255,255,.14); box-shadow: var(--shadow-lg); image-rendering: pixelated; }
+.pilot-bild { width: 100%; max-width: 440px; height: auto; margin-inline: auto; border-radius: 16px; border: 1px solid rgba(255,255,255,.14); box-shadow: var(--shadow-lg); }
 .fakten { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 22px 0; }
 .fakt { background: rgba(255,255,255,.06); border-radius: 14px; padding: 12px 14px; }
 .fakt b { display: block; font-size: 1.35rem; color: #ffd36b; }

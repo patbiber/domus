@@ -346,7 +346,7 @@
       case "retro": return {
         schritte: ["Nehme dieselben Daten", "Zeichne alles in 8-Bit-Pixeln", "Füge eine Figur und ein Sparschwein hinzu"],
         text: "Gleiche Daten, anderes Design. So sieht unser Pilot in Stäfa aus – dein homi kann aussehen, wie du willst.",
-        karte: `<h3>👾 Retro-Look</h3><img src="img/pilot-retro.png" alt="Retro-Dashboard des Pilots in Stäfa" style="border-radius:12px;margin:8px 0;image-rendering:pixelated" loading="lazy"><p class="s">Das echte homi in Stäfa, mit Live-Daten vom Fronius-Wechselrichter.</p>` };
+        karte: `<h3>👾 Retro-Look</h3><img src="img/pilot-retro.png" alt="Retro-Dashboard des Pilots in Stäfa" style="border-radius:12px;margin:8px 0;width:100%;max-width:320px;height:auto" loading="lazy"><p class="s">Das echte homi in Stäfa, mit Live-Daten vom Fronius-Wechselrichter.</p>` };
       default: return {
         schritte: ["Verstehe deinen Wunsch", "Prüfe, welche Daten dafür nötig sind"],
         text: "Gute Idee! Genau solche Wünsche setze ich mit KI-Unterstützung für dich um – oft in wenigen Stunden. Ich habe ihn ins Anfrageformular übernommen.",
