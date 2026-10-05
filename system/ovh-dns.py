@@ -20,7 +20,7 @@ import urllib.error
 import urllib.request
 
 ZONE = "biber.solar"
-SUBDOMAINS = ["", "www", "training", "domus", "home", "test"]     # "" = biber.solar selbst
+SUBDOMAINS = ["", "www", "training", "domus", "home", "test", "energy"]     # "" = biber.solar selbst
 ENV = os.path.expanduser("~/domus/.env")
 
 

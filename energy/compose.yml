@@ -1,0 +1,28 @@
+# Verkaufsseite https://energy.biber.solar: homi als Angebot für Haus & Betrieb (simulierte Demo-Daten)
+# server.py liefert www/ aus und legt Anfragen aus dem Formular in ./anfragen/neu ab;
+# der Host verschickt sie per Mail (anfrage-mail.py, Pfad-Unit energy-anfrage.path).
+# Kein eigener Port: erreichbar nur über den Proxy (nginx in proxy/) im Netz proxy_default.
+services:
+  web:
+    container_name: energy
+    image: python:3.13-alpine
+    restart: unless-stopped
+    env_file: ../.env
+    working_dir: /app
+    command: python -u server.py
+    read_only: true
+    volumes:
+      - ./server.py:/app/server.py:ro
+      - ./www:/app/www:ro
+      - ./anfragen/neu:/anfragen/neu
+    networks:
+      - proxy_default
+    logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  proxy_default:
+    external: true

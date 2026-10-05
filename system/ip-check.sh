@@ -5,7 +5,7 @@
 # Stimmt der DNS nicht und sind OVH-API-Zugangsdaten in ~/domus/.env, werden die A-Einträge automatisch
 # per system/ovh-dns.py nachgeführt. Jede Meldung kommt einmal pro neuem Zustand, danach höchstens alle 6 h.
 set -uo pipefail
-NAMEN=(${IP_CHECK_NAMEN:-biber.solar www.biber.solar training.biber.solar domus.biber.solar home.biber.solar test.biber.solar})
+NAMEN=(${IP_CHECK_NAMEN:-biber.solar www.biber.solar training.biber.solar domus.biber.solar home.biber.solar test.biber.solar energy.biber.solar})
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/domus"
 mkdir -p "$STATE_DIR"
 IP_FILE="$STATE_DIR/public_ip"

@@ -8,7 +8,7 @@
 # Aufruf: system/image-update.sh   (Timer domus-image-update, Montag 04:15)
 set -uo pipefail
 cd "$(dirname "$0")/.."
-PROJEKTE=(homeassistant proxy energie biber-solar biber-solar-test training)
+PROJEKTE=(homeassistant proxy energie biber-solar biber-solar-test training energy)
 bericht=""
 fehler=0
 geaendert=0
@@ -29,6 +29,7 @@ gesund() {    # gesund <projekt>: 0 = läuft, sonst Fehler; wartet bis 5 Minuten
     case $p in
       homeassistant) code=$(curl -s -o /dev/null -m 5 -w '%{http_code}' http://127.0.0.1:8123/) ; [ "$code" = 200 ] && return 0 ;;
       energie)       curl -s -m 5 http://127.0.0.1:8099/api/status | grep -q '"zeit"' && return 0 ;;
+      energy)        docker exec nginx wget -q -O - http://energy:8080/api/health 2>/dev/null | grep -q '"ok": true' && return 0 ;;
       biber-solar|biber-solar-test|training)   # intern über das Proxy-Netz prüfen
                      docker exec nginx wget -q -O /dev/null "http://$(cd "$p" && docker compose ps --format '{{.Name}}' | head -1)/" 2>/dev/null && return 0 ;;
       proxy)         [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' --resolve domus.biber.solar:443:127.0.0.1 https://domus.biber.solar/)" = 200 ] \

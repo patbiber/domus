@@ -1,0 +1,10 @@
+# Stündlich nachschauen, falls ein Versand fehlgeschlagen ist (z. B. Mailserver kurz weg)
+[Unit]
+Description=homi: Anfragen-Versand nachholen
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+
+[Install]
+WantedBy=timers.target

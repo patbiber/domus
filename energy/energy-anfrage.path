@@ -1,0 +1,10 @@
+# Sobald eine Anfrage-Datei liegt: sofort verschicken
+[Unit]
+Description=homi: auf neue Anfragen von energy.biber.solar warten
+
+[Path]
+PathExistsGlob=%h/domus/energy/anfragen/neu/*.json
+Unit=energy-anfrage.service
+
+[Install]
+WantedBy=default.target

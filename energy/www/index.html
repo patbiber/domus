@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>homi – Energie-Management für Haus & Betrieb | Biber Solar</title>
+<meta name="description" content="homi zeigt live, was Solaranlage, Batterie, Wärmepumpe und Stromnetz gerade machen – in Franken. Mit echten Tarifen, Börsenpreisen und Solarprognose. Von einer KI auf dein Zuhause oder deinen Betrieb zugeschnitten.">
+<meta property="og:title" content="homi – Sieh, was deine Energie gerade macht. In Franken.">
+<meta property="og:description" content="Energie-Management für Haus & Betrieb, von einer KI auf dich zugeschnitten. Live-Demo ansehen und kostenlose Beratung anfragen.">
+<meta property="og:image" content="https://energy.biber.solar/img/vorschau.png">
+<meta property="og:url" content="https://energy.biber.solar/">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b1730">
+<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="homi Startseite">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="23" cy="9" r="5.5" fill="#FFB020"/><path d="M3 18 14 8.5 25 18v11H3z" fill="#fff"/><rect x="11" y="20" width="6" height="9" rx="1" fill="#FFB020"/></svg>
+      homi <small>von Biber Solar</small>
+    </a>
+    <nav aria-label="Hauptnavigation">
+      <a href="#demo">Live-Demo</a><a href="#ki">KI</a><a href="#ablauf">So geht's</a><a href="#preise">Preise</a><a href="#faq">Fragen</a>
+    </nav>
+    <a class="btn btn-sun btn-small" href="#kontakt">Beratung anfragen</a>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Energie-Management für Haus & Betrieb</span>
+      <h1>Sieh, was deine Energie gerade macht. <span class="gold">In Franken.</span></h1>
+      <p class="lead">homi verbindet Solaranlage, Batterie, Wärmepumpe, E-Auto und Stromnetz zu einem einzigen Live-Bild – mit den echten Tarifen deines Energieversorgers, Börsenpreisen und Solarprognose. Und weil eine KI mitbaut, passt sich homi an dein Zuhause an. Nicht umgekehrt.</p>
+      <div class="ctas">
+        <a class="btn btn-sun" href="#kontakt">Kostenlose Erstberatung</a>
+        <a class="btn btn-ghost" href="#demo">▶ Live-Demo ansehen</a>
+      </div>
+      <ul class="trust">
+        <li>Herstellerunabhängig</li><li>Daten bleiben in der Schweiz</li><li>Läuft schon in Stäfa</li>
+      </ul>
+    </div>
+
+    <div class="flow-card" aria-label="Energiefluss, simulierte Live-Werte">
+      <div class="flow-top"><span class="live">Live</span><span id="flow-uhr" class="num">–</span><span>Simulation</span></div>
+      <svg id="flow" viewBox="0 -16 560 436" role="img" aria-label="Energiefluss zwischen Sonne, Haus, Batterie, Netz und E-Auto">
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFB020" stop-opacity=".55"/><stop offset="1" stop-color="#FFB020" stop-opacity="0"/></radialGradient>
+        </defs>
+        <circle id="sun-glow" cx="280" cy="62" r="80" fill="url(#glow)" opacity=".2"/>
+        <!-- Leitungen: jeweils vom äusseren Knoten zum Haus gezeichnet -->
+        <path class="flow-line" d="M280 106V157"/><path id="d-pv" class="flow-dash" stroke="#FFB020" d="M280 106V157"/>
+        <path class="flow-line" d="M124 215H222"/><path id="d-bat" class="flow-dash" stroke="#A48BFF" d="M124 215H222"/>
+        <path class="flow-line" d="M436 215H338"/><path id="d-netz" class="flow-dash" stroke="#F97066" d="M436 215H338"/>
+        <path class="flow-line" d="M280 273V321"/><path id="d-auto" class="flow-dash" stroke="#53B1FD" d="M280 273V321"/>
+        <!-- Sonne -->
+        <g transform="translate(280 62)">
+          <circle r="44" class="node-bg"/>
+          <g id="sun-icon" stroke="#FFB020" stroke-width="3" stroke-linecap="round"><circle r="9" fill="#FFB020" stroke="none" cy="-12"/><path d="M0-31v4M0 3v4M-19-12h4M15-12h4M-13-25l3 3M10 1l3 3M13-25l-3 3M-10 1l-3 3"/></g>
+          <text class="node-value" y="24" id="v-pv">–</text>
+          <text class="node-label" y="-52">Solaranlage</text>
+        </g>
+        <!-- Haus -->
+        <g transform="translate(280 215)">
+          <circle r="58" class="node-bg" style="stroke:rgba(255,176,32,.5)"/>
+          <path d="M-20-6-1-24 18-6v22h-38z" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round" transform="translate(1 -6)"/>
+          <text class="node-value" y="32" id="v-haus">–</text>
+          <text class="node-sub" y="49" id="s-haus">Verbrauch</text>
+        </g>
+        <!-- Batterie -->
+        <g transform="translate(80 215)">
+          <circle r="44" class="node-bg"/>
+          <rect x="-13" y="-30" width="26" height="34" rx="4" fill="none" stroke="#A48BFF" stroke-width="3"/><rect x="-5" y="-35" width="10" height="5" rx="1" fill="#A48BFF"/>
+          <rect id="bat-fill" x="-9" y="-26" width="18" height="26" rx="2" fill="#A48BFF"/>
+          <text class="node-value" y="26" id="v-soc">–</text>
+          <text class="node-label" y="-52">Batterie</text>
+          <text class="node-sub" y="62" id="s-bat">–</text>
+        </g>
+        <!-- Netz -->
+        <g transform="translate(480 215)">
+          <circle r="44" class="node-bg"/>
+          <path d="M-12 6 0-30 12 6M-8-8H8M-10-1h20M-14 6h28M0-30v-4" fill="none" stroke="#F97066" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" id="netz-icon"/>
+          <text class="node-value" y="28" id="v-netz">–</text>
+          <text class="node-label" y="-52">Stromnetz</text>
+          <text class="node-sub" y="62" id="s-netz">–</text>
+        </g>
+        <!-- E-Auto -->
+        <g transform="translate(280 365)">
+          <circle r="44" class="node-bg"/>
+          <path d="M-20 0v-8l6-11h28l6 11v8z" fill="none" stroke="#53B1FD" stroke-width="3" stroke-linejoin="round" transform="translate(0 -6)"/>
+          <circle cx="-11" cy="-4" r="4" fill="#53B1FD"/><circle cx="11" cy="-4" r="4" fill="#53B1FD"/>
+          <text class="node-value" y="22" id="v-auto">–</text>
+          <text class="node-sub" x="54" y="4" style="text-anchor:start" id="s-auto">–</text>
+        </g>
+      </svg>
+      <div class="flow-bottom">
+        <div class="mini"><div class="k">Heute gespart</div><div class="v green num" id="m-gespart">–</div></div>
+        <div class="mini"><div class="k">Selbst versorgt heute</div><div class="v gold num" id="m-autarkie">–</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="demo">
+  <div class="wrap">
+    <div class="section-head rein">
+      <span class="kicker">Live-Demo</span>
+      <h2>So sieht dein Energie-Tag mit homi aus</h2>
+      <p class="sub">Alles auf einen Blick: Was die Sonne liefert, was du verbrauchst, was die Batterie macht – und was das in Franken bedeutet. Schalte zwischen Haus und Betrieb um oder lass einen ganzen Tag in 30 Sekunden ablaufen.</p>
+    </div>
+    <div class="demo-bar">
+      <div class="seg" role="tablist" aria-label="Beispiel wählen">
+        <button class="on" data-profil="heim" role="tab" aria-selected="true">🏠 Einfamilienhaus</button>
+        <button data-profil="betrieb" role="tab" aria-selected="false">🏭 Gewerbebetrieb</button>
+      </div>
+      <div class="demo-actions">
+        <span class="uhr num" id="uhr">–</span>
+        <button class="btn btn-dark btn-small" id="zeitraffer">▶ Ein Tag in 30 Sekunden</button>
+      </div>
+    </div>
+
+    <div class="dash">
+      <div class="card tile t-3"><div class="k"><span class="dot" style="background:var(--sun)"></span>Solaranlage jetzt</div><div class="v num" id="t-pv">–</div><div class="s" id="t-pv-s">–</div></div>
+      <div class="card tile t-3"><div class="k"><span class="dot" style="background:var(--ink)"></span>Verbrauch jetzt</div><div class="v num" id="t-last">–</div><div class="s" id="t-last-s">–</div></div>
+      <div class="card tile t-3"><div class="k"><span class="dot" style="background:var(--violet)"></span>Batterie</div><div class="v num" id="t-soc">–</div><div class="soc"><i id="t-soc-bar"></i></div><div class="s" id="t-soc-s" style="margin-top:6px">–</div></div>
+      <div class="card tile t-3"><div class="k"><span class="dot" id="t-netz-dot" style="background:var(--green)"></span>Stromnetz</div><div class="v num" id="t-netz">–</div><div class="s" id="t-netz-s">–</div></div>
+
+      <div class="card tile t-8">
+        <div class="chart-head"><h3>Tagesverlauf</h3>
+          <div class="legend"><span><i class="dot" style="background:var(--sun)"></i>Solar</span><span><i class="dot" style="background:var(--ink)"></i>Verbrauch</span><span><i class="dot" style="background:var(--violet)"></i>Batterie %</span><span style="opacity:.6">heller = Prognose</span></div>
+        </div>
+        <svg class="chart" id="chart" viewBox="0 0 800 280" aria-label="Tagesverlauf Solar und Verbrauch"></svg>
+      </div>
+      <div class="card tile t-4">
+        <div class="k">💰 Heute gespart</div>
+        <div class="v num" style="color:var(--green)" id="t-gespart">–</div>
+        <div class="s" id="t-gespart-s">gegenüber ohne Solaranlage</div>
+        <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+        <div class="k">🌤️ Solarprognose morgen</div>
+        <div class="v num" id="t-prog">–</div>
+        <div class="big-hint"><span style="font-size:1.6rem">🧺</span><div><div class="s" style="color:var(--ink-2)">Beste Zeit für Waschmaschine & Co.</div><b class="num" id="t-fenster">–</b></div></div>
+      </div>
+
+      <div class="card tile t-4">
+        <h3>Strompreis jetzt</h3>
+        <div class="s" id="t-preis-s">–</div>
+        <svg class="chart" id="boerse-chart" viewBox="0 0 360 150" aria-label="Börsenpreise heute"></svg>
+        <div class="legend"><span><i class="dot" style="background:var(--blue)"></i>Börse (Rp/kWh)</span><span><i class="dot" style="background:var(--red)"></i>dein Tarif</span><span><i class="dot" style="background:var(--green)"></i>Vergütung</span></div>
+      </div>
+      <div class="card tile t-4">
+        <h3>Wer braucht wie viel? <span class="s">heute</span></h3>
+        <div class="bars" id="verbraucher"></div>
+      </div>
+      <div class="card tile t-4">
+        <h3>homi meldet</h3>
+        <ul class="feed" id="feed"></ul>
+      </div>
+    </div>
+    <p class="demo-note" id="demo-note">–</p>
+  </div>
+</section>
+
+<section id="ki">
+  <div class="wrap">
+    <div class="section-head center rein">
+      <span class="kicker">KI-gestützt</span>
+      <h2>Dein Dashboard wächst mit deinen Wünschen</h2>
+      <p class="sub">Statt Standard-Software, die nur halb passt: Du sagst in normalen Worten, was du sehen oder steuern willst. Eine KI programmiert die passende Auswertung – ich prüfe sie und spiele sie bei dir ein. Probier es aus:</p>
+    </div>
+    <div class="ki-grid">
+      <div class="card chat rein">
+        <div class="chat-head"><span class="ava">✦</span>homi-KI <span class="s" style="font-weight:500">· Demo</span></div>
+        <div class="chat-log" id="chat-log" aria-live="polite"></div>
+        <div class="chips" id="chips">
+          <button class="chip" data-w="waschen">Wann soll ich waschen?</button>
+          <button class="chip" data-w="boiler">Was kostet mich der Boiler?</button>
+          <button class="chip" data-w="negativ">Warn mich bei negativen Strompreisen</button>
+          <button class="chip" data-w="batterie">Lohnt sich eine Batterie?</button>
+          <button class="chip" data-w="retro">Zeig es im Retro-Look</button>
+        </div>
+        <form class="wunsch" id="wunsch-form"><input id="wunsch-text" maxlength="200" placeholder="Eigener Wunsch, z. B. «Verbrauch der Sauna anzeigen»" aria-label="Eigener Wunsch"><button class="btn btn-dark btn-small">Senden</button></form>
+      </div>
+      <div>
+        <div class="ki-out" id="ki-out"><div class="leer">Hier erscheinen die Kacheln, die die KI für dich baut.</div></div>
+        <ol class="so-gehts">
+          <li><span class="n">1</span><div><b>Du sagst, was du willst</b><br><span class="s">Am Telefon, per Mail oder direkt hier – in ganz normalen Worten.</span></div></li>
+          <li><span class="n">2</span><div><b>Die KI programmiert es</b><br><span class="s">Sie schreibt die Auswertung oder Steuerung und testet sie mit deinen echten Daten.</span></div></li>
+          <li><span class="n">3</span><div><b>Ich prüfe und installiere</b><br><span class="s">Jede Änderung geht über meinen Tisch. Steuerungen laufen zuerst im Testmodus.</span></div></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="vorteile">
+  <div class="wrap">
+    <div class="section-head rein">
+      <span class="kicker">Was du davon hast</span>
+      <h2>Mehr aus jeder Kilowattstunde</h2>
+    </div>
+    <div class="grid-3">
+      <div class="card feature rein"><div class="ic" style="background:#fff4df">💰</div><h3>Franken statt Kilowatt</h3><p>Du siehst auf einen Blick, was dich dein Strom gerade kostet und was dir die Sonne einbringt – mit dem echten Tarif deines Energieversorgers.</p></div>
+      <div class="card feature rein"><div class="ic" style="background:#fff8e5">🌤️</div><h3>Weiss, was morgen kommt</h3><p>Solarprognose für morgen und das beste Zeitfenster für Waschmaschine, Boiler oder E-Auto – jeden Abend per Mail.</p></div>
+      <div class="card feature rein"><div class="ic" style="background:var(--blue-soft)">📈</div><h3>Strombörse im Blick</h3><p>Die Day-Ahead-Preise der Schweiz live. Bei negativen Preisen kann homi automatisch das E-Auto oder den Boiler laden.</p></div>
+      <div class="card feature rein"><div class="ic" style="background:#f1edff">🔌</div><h3>Herstellerunabhängig</h3><p>Wechselrichter, Batterie, Wärmepumpe, Wallbox und Smart Meter verschiedener Marken – vereint in einem einzigen Bild.</p></div>
+      <div class="card feature rein"><div class="ic" style="background:var(--green-soft)">🇨🇭</div><h3>Daten bleiben in der Schweiz</h3><p>Kein internationaler Cloud-Konzern: Deine Messdaten liegen bei dir oder auf meinem Server in der Schweiz. Kein Tracking.</p></div>
+      <div class="card feature rein"><div class="ic" style="background:#ffeceb">⚙️</div><h3>Steuert, wenn du willst</h3><p>Überschuss nutzen statt billig einspeisen: Boiler, Wärmepumpe oder Wallbox laufen nach Sonne und Preis – immer zuerst im Testmodus.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="fuer-wen" style="padding-top:0">
+  <div class="wrap grid-2">
+    <div class="card wer rein">
+      <span class="tag">Einfamilienhaus · Wohnung</span>
+      <h3 style="font-size:1.5rem;margin-top:12px">Für dein Zuhause</h3>
+      <p class="sub">Mehr aus deiner Solaranlage holen und endlich verstehen, wohin der Strom fliesst.</p>
+      <ul><li>Eigenverbrauch steigern, statt Strom für ein paar Rappen einzuspeisen</li><li>Klarheit vor dem Batteriekauf – mit deinen Daten statt Verkaufsprospekt</li><li>Wärmepumpe und E-Auto mit der Sonne laufen lassen</li><li>Grundlast und Stromfresser finden</li></ul>
+    </div>
+    <div class="card wer rein">
+      <span class="tag" style="background:#fff4df;color:#b54708">Gewerbe · Landwirtschaft · ZEV/LEG</span>
+      <h3 style="font-size:1.5rem;margin-top:12px">Für deinen Betrieb</h3>
+      <p class="sub">Energiekosten senken, Lastspitzen vermeiden, sauber abrechnen.</p>
+      <ul><li>Lastspitzen erkennen und vermeiden</li><li>Verbrauch pro Maschine, Halle oder Mieter</li><li>Abrechnung für ZEV, vZEV und LEG vorbereiten</li><li>Börsenpreise nutzen: verschiebbare Lasten automatisch planen</li></ul>
+    </div>
+  </div>
+</section>
+
+<section id="ablauf" style="padding-top:20px">
+  <div class="wrap">
+    <div class="section-head center rein">
+      <span class="kicker">So geht's</span>
+      <h2>In drei Schritten zu deinem homi</h2>
+      <p class="sub">Kein Umbau, kein Software-Abo von der Stange, kein Fachchinesisch.</p>
+    </div>
+    <div class="steps">
+      <div class="card step rein"><h3>Kostenloses Erstgespräch</h3><p>Am Telefon oder per Video: Was hast du, was willst du wissen? Danach erhältst du eine klare Offerte.</p><span class="dauer">⏱ 20 Minuten</span></div>
+      <div class="card step rein"><h3>Anschluss vor Ort</h3><p>Ein kleines Gateway kommt per Kabel an deinen Router – kein Bohren, keine Portfreigabe. Es verbindet deine Geräte verschlüsselt mit homi.</p><span class="dauer">⏱ ca. 1 Stunde</span></div>
+      <div class="card step rein"><h3>Dein homi läuft</h3><p>Dashboard auf Handy und Computer, Berichte per Mail. Neue Wünsche setze ich mit KI-Unterstützung laufend um.</p><span class="dauer">⏱ ab Tag 1</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="pilot">
+  <div class="wrap pilot-grid">
+    <div class="rein">
+      <img class="pilot-bild" src="img/pilot-retro.png" width="1000" height="960" alt="Echtes homi-Dashboard in Stäfa im 8-Bit-Retro-Stil: Haus mit Solardach, Figur, Sparschwein und Gemeindewerk" loading="lazy">
+    </div>
+    <div class="rein">
+      <span class="kicker">Läuft bereits</span>
+      <h2>homi in Stäfa – jeden Tag im Einsatz</h2>
+      <p class="sub">homi ist kein Prototyp aus dem Labor. Seit Herbst 2026 läuft es bei mir zu Hause – mit Fronius-Wechselrichter, Smart Meter, den echten Tarifen der Gemeindewerke Stäfa und den Börsenpreisen. Das Bild zeigt dieselbe Technik im verspielten Retro-Look: Gleiche Daten, anderes Design – genau so individuell wird auch dein homi.</p>
+      <div class="fakten">
+        <div class="fakt"><b>alle 5 s</b><span>Live-Werte vom Wechselrichter</span></div>
+        <div class="fakt"><b>± 6 %</b><span>Solarprognose an Sonnentagen</span></div>
+        <div class="fakt"><b>5 Jahre</b><span>Messdaten in 10-Minuten-Schritten</span></div>
+        <div class="fakt"><b>&lt; 6 W</b><span>Stromverbrauch des homi-Servers</span></div>
+      </div>
+      <a class="btn btn-ghost" href="https://biber.solar/domus-projekt.html" target="_blank" rel="noopener">Mehr über das Projekt →</a>
+    </div>
+  </div>
+</section>
+
+<section id="preise">
+  <div class="wrap">
+    <div class="section-head center rein">
+      <span class="kicker">Preise</span>
+      <h2>Faire Preise, klar gerechnet</h2>
+      <p class="sub">Einmal einrichten, dann monatlich. Gateway, Einrichtung, Updates und Support per Mail sind immer dabei.</p>
+    </div>
+    <div class="preise">
+      <div class="card paket rein"><h3>Einblick</h3><div class="preis">CHF 390 <small>einmalig</small></div><div class="abo">+ CHF 12 / Monat</div>
+        <ul><li>Live-Dashboard auf Handy & PC</li><li>Echte Tarife deines Energieversorgers</li><li>Monatsbericht per Mail</li><li>Gateway inklusive</li></ul>
+        <a class="btn btn-dark" href="#kontakt" data-paket="Einblick">Anfragen</a></div>
+      <div class="card paket beliebt rein"><h3>Kosten & Börse</h3><div class="preis">CHF 690 <small>einmalig</small></div><div class="abo">+ CHF 24 / Monat</div>
+        <ul><li>Alles aus «Einblick»</li><li>Day-Ahead-Börsenpreise</li><li>Solarprognose & beste Zeitfenster</li><li>Warnungen bei Ausfall & negativen Preisen</li><li>Speicher-Rechner mit deinen Daten</li></ul>
+        <a class="btn btn-sun" href="#kontakt" data-paket="Kosten & Börse">Anfragen</a></div>
+      <div class="card paket rein"><h3>Steuerung</h3><div class="preis">ab CHF 1'290 <small>einmalig</small></div><div class="abo">+ CHF 39 / Monat</div>
+        <ul><li>Alles aus «Kosten & Börse»</li><li>Steuerung von Boiler, Wärmepumpe oder Wallbox</li><li>Überschussladen & Börsenregeln</li><li>Testmodus mit Nutzennachweis</li></ul>
+        <a class="btn btn-dark" href="#kontakt" data-paket="Steuerung">Anfragen</a></div>
+      <div class="card paket rein"><h3>Betrieb</h3><div class="preis">Offerte</div><div class="abo">Gewerbe, Landwirtschaft, ZEV/LEG</div>
+        <ul><li>Mehrere Zähler & Gebäude</li><li>Lastspitzen-Management</li><li>Abrechnung ZEV, vZEV, LEG</li><li>Individuelle Auswertungen</li></ul>
+        <a class="btn btn-dark" href="#kontakt" data-paket="Betrieb">Anfragen</a></div>
+    </div>
+    <p class="preis-note">Pilotpreise 2026/27 in CHF. Die verbindliche Offerte erhältst du nach dem kostenlosen Erstgespräch. Zusätzliche Wünsche nach Absprache.</p>
+  </div>
+</section>
+
+<section id="faq" style="padding-top:20px">
+  <div class="wrap">
+    <div class="section-head center rein"><span class="kicker">Fragen</span><h2>Gut zu wissen</h2></div>
+    <div class="faq">
+      <details><summary>Brauche ich eine Solaranlage?</summary><p>Nein. homi zeigt auch ohne Solaranlage, was dich Strom wann kostet, und findet Stromfresser. Richtig spannend wird es mit Solaranlage, Batterie, Wärmepumpe oder E-Auto.</p></details>
+      <details><summary>Welche Geräte werden unterstützt?</summary><p>Die meisten gängigen Wechselrichter, Smart Meter, Batteriespeicher, Wärmepumpen und Wallboxen mit lokaler Schnittstelle. Im Erstgespräch prüfe ich deine Geräte. Fehlt eine Anbindung, wird sie mit KI-Unterstützung programmiert.</p></details>
+      <details><summary>Was macht die KI genau?</summary><p>Die KI schreibt den Programmcode für neue Auswertungen und Steuerungen nach deinen Wünschen und testet ihn mit deinen Daten. Ich prüfe jede Änderung, bevor sie bei dir läuft, und Steuerungen starten immer im Testmodus. Die KI entscheidet nicht selbständig über deine Geräte.</p></details>
+      <details><summary>Wo liegen meine Daten?</summary><p>Bei dir zu Hause oder auf meinem Server in der Schweiz – nicht bei einem internationalen Cloud-Anbieter. Kein Tracking, keine Weitergabe an Dritte.</p></details>
+      <details><summary>Muss ich etwas umbauen?</summary><p>Nein. Ein kleines Gateway kommt per Kabel an deinen Router, ohne Portfreigabe und ohne Eingriff in deine Elektroinstallation. Wo eine Steuerung einen Eingriff in die Installation braucht, übernimmt das ein konzessionierter Elektroinstallateur.</p></details>
+      <details><summary>Was kostet es?</summary><p>Einmalig ab CHF 390 inklusive Gateway und Einrichtung, danach ab CHF 12 pro Monat. Die genaue Offerte erhältst du nach dem kostenlosen Erstgespräch.</p></details>
+      <details><summary>Wer steckt dahinter?</summary><p>Patrick Biber aus Uerikon am Zürichsee – Solarberater und IT-Profi. homi ist aus meinem eigenen Haus entstanden. Mehr über mich auf <a href="https://biber.solar" target="_blank" rel="noopener">biber.solar</a>.</p></details>
+    </div>
+  </div>
+</section>
+
+<section id="kontakt">
+  <div class="wrap kontakt-grid">
+    <div class="rein">
+      <span class="kicker">Kontakt</span>
+      <h2>Holen wir mehr aus deiner Energie</h2>
+      <p class="sub">Erzähl mir kurz von deinem Haus oder Betrieb. Das Erstgespräch ist kostenlos und unverbindlich – ich melde mich innerhalb von zwei Arbeitstagen.</p>
+      <div class="person"><span class="ava">PB</span><div><b>Patrick Biber</b><br><span class="s">Solarberater & IT · Uerikon am Zürichsee</span></div></div>
+      <div class="kanal">
+        <a href="mailto:patrick@biber.solar?subject=homi%20Anfrage">✉️ patrick@biber.solar</a>
+        <a href="tel:+41786625921">📞 +41 78 662 59 21</a>
+        <a href="https://threema.id/FX8MF3J8" target="_blank" rel="noopener">💬 Threema</a>
+        <a href="https://wa.link/jnpgdy" target="_blank" rel="noopener">💬 WhatsApp</a>
+      </div>
+    </div>
+    <div class="rein">
+      <form class="card anfrage" id="anfrage" novalidate>
+        <div class="reihe">
+          <label>Name *<input name="name" autocomplete="name" required maxlength="100"></label>
+          <label>E-Mail *<input name="email" type="email" autocomplete="email" required maxlength="150"></label>
+        </div>
+        <div class="reihe">
+          <label>Telefon<input name="telefon" type="tel" autocomplete="tel" maxlength="40"></label>
+          <label>PLZ / Ort<input name="ort" autocomplete="address-level2" maxlength="80"></label>
+        </div>
+        <div class="reihe">
+          <label>Objekt<select name="objekt"><option>Einfamilienhaus</option><option>Mehrfamilienhaus / Wohnung</option><option>Gewerbe</option><option>Landwirtschaft</option><option>ZEV / LEG / Gemeinschaft</option><option>Anderes</option></select></label>
+          <label>Interesse<select name="paket" id="paket"><option>Noch offen</option><option>Einblick</option><option>Kosten & Börse</option><option>Steuerung</option><option>Betrieb</option></select></label>
+        </div>
+        <fieldset><legend>Was ist schon vorhanden?</legend>
+          <div class="checks">
+            <label><input type="checkbox" name="vorhanden" value="Solaranlage">Solaranlage</label>
+            <label><input type="checkbox" name="vorhanden" value="Batterie">Batterie</label>
+            <label><input type="checkbox" name="vorhanden" value="Wärmepumpe">Wärmepumpe</label>
+            <label><input type="checkbox" name="vorhanden" value="E-Auto / Wallbox">E-Auto / Wallbox</label>
+            <label><input type="checkbox" name="vorhanden" value="Smart Meter">Smart Meter</label>
+            <label><input type="checkbox" name="vorhanden" value="Noch nichts">Noch nichts</label>
+          </div>
+        </fieldset>
+        <label>Was möchtest du sehen oder steuern?<textarea name="wunsch" id="wunsch-feld" maxlength="3000" placeholder="z. B. «Ich will wissen, ob sich eine Batterie lohnt» oder «Das E-Auto soll nur mit Sonne laden»"></textarea></label>
+        <div class="honig" aria-hidden="true"><label>Webseite<input name="website" tabindex="-1" autocomplete="off"></label></div>
+        <label class="einwilligung"><input type="checkbox" name="einwilligung" required><span>Ich bin einverstanden, dass meine Angaben zur Bearbeitung meiner Anfrage gespeichert werden. Sie werden nicht weitergegeben. <a href="https://biber.solar/datenschutzerklaerung_de.html" target="_blank" rel="noopener">Datenschutz</a></span></label>
+        <button class="btn btn-sun" type="submit">Kostenlose Beratung anfragen</button>
+        <div class="form-status" id="form-status" role="status"></div>
+      </form>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>© 2026 homi · ein Angebot von <a href="https://biber.solar">Biber Solar</a>, Patrick Biber, Uerikon</div>
+    <nav aria-label="Rechtliches"><a href="https://biber.solar/impressum_de.html">Impressum</a><a href="https://biber.solar/datenschutzerklaerung_de.html">Datenschutz</a><a href="mailto:patrick@biber.solar">Kontakt</a></nav>
+  </div>
+</footer>
+
+<script src="app.js" defer></script>
+</body>
+</html>

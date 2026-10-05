@@ -212,6 +212,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 03.10.2026 | https://training.biber.solar (MkDocs, github.com/patbiber/solartech) auf den NUC umgezogen |
 | 03.10.2026 | Überwachung der öffentlichen IP mit sofortiger Mail bei Änderung, automatische DNS-Nachführung über die OVH-API |
 | 03.10.2026 | Solarprognose (Open-Meteo, selbstgeeicht) mit Abendmail, HA-Sensoren und Anzeige auf homi |
+| 05.10.2026 | Verkaufsseite https://energy.biber.solar: homi als Angebot mit simulierter Live-Demo, KI-Demo und Anfrageformular |
 
 ## 8. Offene Punkte
 

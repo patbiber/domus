@@ -1,0 +1,9 @@
+[Unit]
+Description=homi: neue Anfragen von energy.biber.solar per Mail verschicken
+After=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/energy/anfrage-mail.py

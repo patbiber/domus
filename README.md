@@ -17,6 +17,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | `proxy/` | nginx (Reverse Proxy für Home Assistant) + certbot (Let's Encrypt) | läuft |
 | `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control (systemd-User-Dienst, kein Docker) | läuft |
 | `biber-solar/` | Hauptseite https://biber.solar aus github.com/patbiber/biber-solar, main (nginx-Container, Veröffentlichung alle 5 min) | läuft (seit 03.10.2026) |
+| `energy/` | https://energy.biber.solar: homi-Verkaufsseite mit simulierter Live-Demo, KI-Demo und Anfrageformular | läuft (seit 05.10.2026) |
 | `training/` | https://training.biber.solar: MkDocs-Material-Seite aus github.com/patbiber/solartech (Build bei neuem Commit, nginx-Container) | läuft (seit 03.10.2026) |
 | `biber-solar-test/` | Vorschau https://test.biber.solar = Arbeitskopie von biber-solar (Änderungen ansehen, dann pushen) | läuft |
 | `system/` | Neustart-Bericht, wöchentliches Docker-Image-Update mit Prüfung und Zurückrollen, Überwachung der öffentlichen IP (systemd-User-Dienste) | läuft |
@@ -237,6 +238,28 @@ ln -sf ~/domus/biber-solar/biber-solar.{service,timer} ~/domus/biber-solar-test/
 systemctl --user daemon-reload && systemctl --user enable --now biber-solar.timer biber-solar-test.timer
 ```
 
+### Verkaufsseite energy.biber.solar (`energy/`)
+
+homi als Angebot für Haus & Betrieb – Start des Geschäfts. Statische Seite `energy/www/` (index.html, style.css, app.js,
+keine externen Ressourcen, kein Tracking) und kleiner Python-Server `energy/server.py` (Container `energy`, Port 8080
+nur im Netz `proxy_default`).
+- **Simulierte Live-Demo** (app.js): echte Zürcher Uhrzeit und Sonnenstand für Stäfa, Wetter/Verbrauch pro Tag
+  reproduzierbar simuliert; Profile Einfamilienhaus (9.8 kWp, 10 kWh Batterie, WP, E-Auto) und Gewerbebetrieb (60 kWp).
+  Energiefluss, Tagesverlauf mit Prognose, Börsenpreise, Verbraucher, Meldungen, Zeitraffer „Ein Tag in 30 Sekunden“.
+- **KI-Demo**: Wunsch-Chips bauen sichtbar neue Kacheln; freier Wunsch wird ins Formular übernommen.
+- **Preise** aus dem Businessplan (Pilotpreise, anpassen in index.html, Abschnitt `#preise`).
+- **Anfrageformular** → `POST /api/anfrage` (Pflichtfelder, Honigtopf, Mindestzeit; nginx: max. 2/min pro IP) →
+  `energy/anfragen/neu/*.json` (nicht im Repo) → Pfad-Unit `energy-anfrage.path` ruft sofort `energy/anfrage-mail.py`
+  auf: Mail an root (→ patrick@biber.solar) mit Reply-To des Interessenten, Datei nach `anfragen/versendet/`.
+  Timer `energy-anfrage.timer` holt stündlich fehlgeschlagene Sendungen nach. Der Container braucht keine Mail-Zugangsdaten.
+- Proxy `proxy/conf.d/energy.biber.solar.conf`: Let's Encrypt, strenge CSP, nur GET bzw. POST fürs Formular.
+
+```bash
+cd ~/domus/energy && docker compose up -d
+ln -sf ~/domus/energy/energy-anfrage.{service,path,timer} ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now energy-anfrage.path energy-anfrage.timer
+```
+
 ### Trainingsseite training.biber.solar (`training/`)
 
 Solar- & Haustechnik-Wissen, MkDocs Material, Quelle https://github.com/patbiber/solartech (`docs/`, `mkdocs.yml`).
@@ -278,12 +301,12 @@ cat /var/run/reboot-required 2>/dev/null   # Neustart nötig?
 ### Überwachung der öffentlichen IP (`system/ip-check.sh`)
 
 Timer `domus-ip-check` alle 5 min: ermittelt die öffentliche IPv4 (mindestens zwei von ipify, icanhazip, ifconfig.me
-müssen übereinstimmen) und prüft, ob biber.solar, www, training, domus, home und test darauf zeigen.
+müssen übereinstimmen) und prüft, ob biber.solar, www, training, domus, home, test und energy darauf zeigen.
 - IP geändert → **sofort** Mail „ÖFFENTLICHE IP GEÄNDERT -> <neue IP>“ mit allen anzupassenden A-Einträgen (OVH).
 - DNS zeigt nicht auf die IP → Mail, danach Erinnerung höchstens alle 6 h; wieder in Ordnung → Entwarnung.
 - Zustand in `~/.local/state/domus/` (`public_ip`, `ip_meldung`).
 - **Automatische DNS-Nachführung:** Stimmt ein A-Eintrag nicht, setzt `system/ovh-dns.py --setzen <ip>` die Einträge
-  über die OVH-API neu (nur A-Einträge von biber.solar, www, training, domus, home, test; MX/TXT bleiben unberührt) und
+  über die OVH-API neu (nur A-Einträge von biber.solar, www, training, domus, home, test, energy; MX/TXT bleiben unberührt) und
   lädt die Zone neu. Zugangsdaten `OVH_*` in `.env` (Vorlage `.env.example`, Token-Rechte dort beschrieben).
   Ohne Zugangsdaten oder bei Fehler: Mail mit Anleitung für die manuelle Änderung. `system/ovh-dns.py` ohne
   Argument zeigt die aktuellen A-Einträge laut OVH.
