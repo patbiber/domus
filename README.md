@@ -352,7 +352,7 @@ müssen übereinstimmen) und prüft, ob biber.solar, www, training, domus, home,
   lädt die Zone neu. Zugangsdaten `OVH_*` in `.env` (Vorlage `.env.example`, Token-Rechte dort beschrieben).
   Ohne Zugangsdaten oder bei Fehler: Mail mit Anleitung für die manuelle Änderung. `system/ovh-dns.py` ohne
   Argument zeigt die aktuellen A-Einträge laut OVH.
-- Wildcard `*.biber.solar` (A, seit 07.10.2026, TTL = OVH-Standard): neue Subdomains brauchen keinen DNS-Eintrag mehr,
+- Wildcard `*.biber.solar` (A, seit 07.10.2026, TTL 300 s): neue Subdomains brauchen keinen DNS-Eintrag mehr,
   nur eine nginx-Datei mit Zertifikat. Unbekannte Namen lehnt `proxy/conf.d/00-default.conf` ab (HTTP 444, HTTPS
   `ssl_reject_handshake`), damit nie das Zertifikat einer anderen Seite erscheint.
 - TTL der A-Einträge: 300 s (home.biber.solar 60 s), gesetzt am 03.10.2026 – nach einem IP-Wechsel sind die Seiten
