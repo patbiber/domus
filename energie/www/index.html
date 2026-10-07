@@ -74,6 +74,8 @@
   #app button { font: inherit; font-size: 13px; background: #000; color: var(--green); border: 2px solid var(--green-dim); padding: 4px 10px; cursor: pointer; }
   #app button:hover, #app button:focus-visible { border-color: var(--green); }
   #app button[hidden] { display: none; }
+  #push-status { font-size: 14px; color: var(--grey); margin: 4px 0; }
+  #push-status.an { color: var(--green); }
   #app-meldung { color: var(--yellow); font-size: 13px; min-height: 1.2em; margin-top: 6px; }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
   .stat { background: #0a0a0a; border: 2px solid #222; padding: 6px 8px; }
@@ -140,6 +142,7 @@
   <section class="panel" id="app">
     <h2>homi als App · Push-Nachrichten</h2>
     <p id="app-install-text">Auf dem Handy installieren: <b>Android/Chrome</b> Menü ⋮ → «App installieren». <b>iPhone</b> Teilen ⬆ → «Zum Home-Bildschirm».</p>
+    <div id="push-status">🔕 Push ist auf diesem Gerät aus</div>
     <div class="themen">
       <label><input type="checkbox" value="minuspreis" checked> Minuspreise (06:45)</label>
       <label><input type="checkbox" value="prognose" checked> Prognose (19:00)</label>
@@ -957,17 +960,27 @@ async function pushApi(aktion, abo) {
   if (!r.ok) throw new Error("Server antwortet " + r.status);
   return r.json();
 }
+const THEMA_NAME = { minuspreis: "Minuspreise", prognose: "Prognose", ausfall: "Störungen" };
+function pushAnzeigen(an) {
+  $("push-an").hidden = an; $("push-aus").hidden = !an; $("push-test").hidden = !an;
+  const st = $("push-status"), themen = themenBoxen().filter(x => x.checked).map(x => THEMA_NAME[x.value]);
+  st.className = an ? "an" : "";
+  st.textContent = an ? `🔔 Push ist aktiv auf diesem Gerät${themen.length ? " – " + themen.join(", ") : " – kein Thema gewählt"}`
+                      : "🔕 Push ist auf diesem Gerät aus";
+}
 async function pushZustand() {
   const abo = app.reg && await app.reg.pushManager.getSubscription();
-  let an = false;
-  if (abo) {
+  const imBrowser = !!abo && Notification.permission === "granted";
+  pushAnzeigen(imBrowser);          // sofort anzeigen, was der Browser weiss …
+  if (!imBrowser) return abo;
+  for (let versuch = 0; versuch < 3; versuch++) {   // … und beim Server bestätigen (Themen holen)
     try {
       const z = await pushApi("lesen", abo.toJSON());
-      an = z.angemeldet;
-      if (an) themenBoxen().forEach(x => { x.checked = z.themen.includes(x.value); });
-    } catch {}
+      if (z.angemeldet) themenBoxen().forEach(x => { x.checked = z.themen.includes(x.value); });
+      pushAnzeigen(z.angemeldet);
+      break;
+    } catch { await new Promise(r => setTimeout(r, 1500 * (versuch + 1))); }
   }
-  $("push-an").hidden = an; $("push-aus").hidden = !an; $("push-test").hidden = !an;
   return abo;
 }
 async function pushAn() {
@@ -1010,7 +1023,7 @@ $("push-test").onclick = async () => {
 themenBoxen().forEach(x => x.onchange = async () => {   // Themen sofort speichern, wenn Push schon an ist
   const abo = app.reg && await app.reg.pushManager.getSubscription();
   if (abo && !$("push-aus").hidden) {
-    try { await pushApi("anmelden", abo.toJSON()); appMeldung("Gespeichert."); } catch (e) { appMeldung("Fehler: " + e.message); }
+    try { await pushApi("anmelden", abo.toJSON()); await pushZustand(); appMeldung("Gespeichert."); } catch (e) { appMeldung("Fehler: " + e.message); }
   }
 });
 window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); app.installEvent = e; $("app-install").hidden = false; });

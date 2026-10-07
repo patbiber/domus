@@ -166,7 +166,7 @@ Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen):
   der Schlafmodus erscheint nur noch, wenn der Fronius keine Daten liefert.
 
 https://home.biber.solar – nginx (`proxy/conf.d/home.biber.solar.conf`) leitet an `host.docker.internal:8099`,
-nur GET/HEAD (Ausnahme: `POST /api/push`, max. 4 kB), API mit Rate-Limit.
+nur GET/HEAD (Ausnahme: `POST /api/push`, max. 4 kB, eigenes Rate-Limit `home_push`), API mit Rate-Limit.
 Manifest, Service Worker, Icons und Offline-Seite sind ohne Passwort abrufbar (keine Daten, nötig für Installation/Push). Zertifikat einmalig geholt mit
 `docker exec certbot certbot certonly --webroot -w /var/www/certbot -d home.biber.solar --email … --agree-tos -n`
 (Erneuerung automatisch).
