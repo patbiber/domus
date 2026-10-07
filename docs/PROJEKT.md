@@ -140,6 +140,9 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
 - Börsenticker mit Day-Ahead-Preisen für heute/morgen; bei negativen Preisen schwitzt das GWS-Gebäude.
 - Klickbare Verb-Leiste („Schalte aus“, „Lies“, „Nimm“ …), Kassenbuch mit Leistung und CHF/h, 24-h-Diagramme.
 - Eine einzige Datei (`energie/www/index.html`), ohne externe Ressourcen.
+- **Als App installierbar (PWA)** mit Push-Nachrichten: Minuspreis-Alarm 06:45, Solarprognose 19:00, Störungsmeldung.
+  Web Push mit VAPID, Ende-zu-Ende verschlüsselt (RFC 8291), Versand vom NUC aus (`energie/push.py`); kein App Store,
+  kein Konto bei Google/Apple nötig. Ein App-Store-Auftritt (Capacitor-Hülle) lohnt sich erst mit Kundenkonten.
 
 ### 4.6 E-Mail-Versand
 
@@ -165,7 +168,8 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
 | Aufbewahrung | Container-Logs max. 3 × 10 MB, keine Protokollierung der laufenden API-Abrufe, HA-Backups: letzte 10 |
 | Öffentliche Ports | Nur 80/443 (Router → NUC); Port 8099 nur im LAN |
 | Home Assistant | TLS, IP-Sperre, 2-Faktor-Login |
-| Energie-Seite | Passwortschutz (Basic Auth), nur lesend, Rate-Limit, CSP |
+| Energie-Seite | Passwortschutz (Basic Auth), nur lesend (ausser Push-Anmeldung, nur bekannte Push-Dienste), Rate-Limit, CSP |
+| Push | VAPID-Privatschlüssel nur in `energie/data/push/`; Inhalte für Google/Apple/Mozilla unlesbar verschlüsselt |
 
 ## 6. Betrieb
 
@@ -214,6 +218,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 03.10.2026 | Solarprognose (Open-Meteo, selbstgeeicht) mit Abendmail, HA-Sensoren und Anzeige auf homi |
 | 05.10.2026 | Verkaufsseite https://energy.biber.solar: homi als Angebot mit simulierter Live-Demo, KI-Demo und Anfrageformular |
 | 07.10.2026 | Dynamische Einspeisetarife: Einspeise-Fahrplan mit Batterie-Optimierung, Minuspreis-Warnband in homi, Gratis-Warnung per Mail (Double-Opt-in) und Abo-Angebot auf energy |
+| 07.10.2026 | homi als App (PWA): installierbar, Push bei Minuspreisen, Prognose und Störungen; Abschnitt «homi als App» auf energy |
 
 ## 8. Offene Punkte
 

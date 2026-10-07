@@ -14,6 +14,7 @@ Endpunkte:
 
 import csv
 import gzip
+import hashlib
 import json
 import os
 import re
@@ -43,6 +44,11 @@ NUC_REST_W = float(os.environ.get("NUC_REST_W", "4.0"))          # geschätzt: P
 ANLAGE_CFG = os.environ.get("ANLAGE_CFG", "/app/anlage.json")
 PROGNOSE_LOG = os.environ.get("PROGNOSE_LOG", "/data/prognose_log.json")
 PROGNOSE_REFRESH_S = 3600
+PUSH_DIR = os.environ.get("PUSH_DIR", "/data/push")     # Push-Abos der App; Versand macht push.py auf dem Host
+PUSH_THEMEN = ["minuspreis", "prognose", "ausfall"]
+# Nur Adressen der bekannten Push-Dienste annehmen (Chrome/Android, Firefox, Safari/iOS, Edge)
+PUSH_HOSTS = re.compile(r"^(fcm\.googleapis\.com|[a-z0-9.-]+\.push\.services\.mozilla\.com|web\.push\.apple\.com"
+                        r"|[a-z0-9.-]+\.notify\.windows\.com)$")
 OPEN_METEO = ("https://api.open-meteo.com/v1/forecast?latitude={breite}&longitude={laenge}"
               "&hourly=global_tilted_irradiance,cloud_cover&tilt={neigung}&azimuth={azimut}"
               "&past_days=14&forecast_days=3&timezone=Europe%2FZurich")
@@ -772,9 +778,42 @@ def poll():
         time.sleep(POLL_S)
 
 
+def push_schluessel():
+    """Öffentlicher VAPID-Schlüssel (von push.py erzeugt), None solange keiner da ist"""
+    try:
+        with open(os.path.join(PUSH_DIR, "vapid_public.txt"), encoding="ascii") as f:
+            return f.read().strip() or None
+    except OSError:
+        return None
+
+
+def push_lesen(datei):
+    try:
+        with open(datei, encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return {}
+
+
+def push_schreiben(datei, inhalt):
+    tmp = datei + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(inhalt, f, ensure_ascii=False)
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, datei)
+
+
 class Handler(SimpleHTTPRequestHandler):
     server_version = "domus"
     sys_version = ""
+    extensions_map = {**SimpleHTTPRequestHandler.extensions_map, ".webmanifest": "application/manifest+json",
+                      ".js": "text/javascript"}
+
+    def end_headers(self):
+        # Service Worker immer frisch prüfen, damit Änderungen an sw.js sofort ankommen
+        if self.path.split("?")[0] == "/sw.js":
+            self.send_header("Cache-Control", "no-cache")
+        super().end_headers()
 
     def send_json(self, obj):
         body = json.dumps(obj, ensure_ascii=False).encode()
@@ -820,7 +859,52 @@ class Handler(SimpleHTTPRequestHandler):
                    for r in archiv.lesen((jetzt - timedelta(hours=24)).date(), jetzt.date())
                    if ab <= r["zeit"] < bis and r["sekunden"] and r["sekunden"] >= 60]
             return self.send_json(alt + h)
+        if path == "/api/push":
+            return self.send_json({"schluessel": push_schluessel(), "themen": PUSH_THEMEN})
         return super().do_GET()
+
+    def do_POST(self):
+        """App-Push: {"aktion": "anmelden"|"abmelden"|"lesen"|"test", "abo": PushSubscription, "themen": [...]}"""
+        if self.path != "/api/push":
+            return self.send_error(405)
+        try:
+            laenge = int(self.headers.get("Content-Length", "0"))
+            if not 0 < laenge <= 4096:
+                raise ValueError
+            d = json.loads(self.rfile.read(laenge))
+            abo, aktion = d["abo"], d["aktion"]
+            endpoint = abo["endpoint"]
+            teile = urlsplit(endpoint)
+            if teile.scheme != "https" or not PUSH_HOSTS.match(teile.hostname or "") or len(endpoint) > 1024:
+                raise ValueError
+            datei = os.path.join(PUSH_DIR, "abos", hashlib.sha256(endpoint.encode()).hexdigest()[:32] + ".json")
+            if aktion == "anmelden":
+                keys = {k: str(abo["keys"][k]) for k in ("p256dh", "auth")}
+                if not all(re.fullmatch(r"[A-Za-z0-9_-]{16,200}={0,2}", v) for v in keys.values()):
+                    raise ValueError
+                themen = [t for t in d.get("themen", PUSH_THEMEN) if t in PUSH_THEMEN]
+                alt = push_lesen(datei)
+                neu = {"endpoint": endpoint, "keys": keys, "themen": themen,
+                       "geraet": str(self.headers.get("User-Agent", ""))[:200],
+                       "seit": alt.get("seit") or datetime.now().isoformat(timespec="seconds")}
+                push_schreiben(datei, neu)
+                return self.send_json({"ok": True, "themen": themen})
+            if aktion == "abmelden":
+                if os.path.exists(datei):
+                    os.remove(datei)
+                return self.send_json({"ok": True})
+            if aktion == "lesen":
+                return self.send_json({"angemeldet": os.path.exists(datei), "themen": push_lesen(datei).get("themen", [])})
+            if aktion == "test" and os.path.exists(datei):
+                # push.py (Pfad-Unit homi-push-test) schickt sofort eine Testnachricht an genau dieses Gerät
+                push_schreiben(os.path.join(PUSH_DIR, "test", os.path.basename(datei)), {"abo": os.path.basename(datei)})
+                return self.send_json({"ok": True})
+            raise ValueError
+        except (KeyError, TypeError, ValueError, AttributeError):
+            return self.send_error(400)
+        except OSError as e:
+            print("Push-Abo:", e, flush=True)
+            return self.send_error(503)
 
     def send_archiv(self):
         q = {k: v[0] for k, v in parse_qs(urlsplit(self.path).query).items()}

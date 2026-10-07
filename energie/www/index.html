@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Domus Energie-Abenteuer</title>
 <meta name="description" content="Live: Was die Solaranlage erzeugt, was das Haus verbraucht und was das kostet – im Retro-Adventure-Look.">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="homi">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23000'/%3E%3Cpath d='M2 8 8 2l6 6v6H2z' fill='%23a50'/%3E%3Crect x='6' y='10' width='4' height='4' fill='%23ff5'/%3E%3C/svg%3E">
 <style>
   :root {
@@ -59,6 +66,15 @@
   .inv li:hover { color: var(--purple); }
   .inv .sum { color: var(--purple); border-top: 1px dashed #444; margin-top: 4px; padding-top: 2px; display: flex; justify-content: space-between; }
   .panel { margin-top: 12px; border-top: 2px solid #222; padding-top: 10px; }
+  #app p { margin: 0 0 6px; font-size: 13px; color: var(--grey); font-weight: normal; }
+  #app .themen { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 6px 0; font-size: 13px; }
+  #app label { cursor: pointer; color: var(--cyan); }
+  #app input { accent-color: var(--green); }
+  #app .knoepfe { display: flex; flex-wrap: wrap; gap: 8px; }
+  #app button { font: inherit; font-size: 13px; background: #000; color: var(--green); border: 2px solid var(--green-dim); padding: 4px 10px; cursor: pointer; }
+  #app button:hover, #app button:focus-visible { border-color: var(--green); }
+  #app button[hidden] { display: none; }
+  #app-meldung { color: var(--yellow); font-size: 13px; min-height: 1.2em; margin-top: 6px; }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
   .stat { background: #0a0a0a; border: 2px solid #222; padding: 6px 8px; }
   .stat .k { color: var(--grey); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
@@ -120,6 +136,22 @@
       <div class="legend"><span><i style="background:#55ffff"></i>Börsenpreis (Rp/kWh)</span><span><i style="background:#ff5555"></i>negativ</span><span><i style="background:#ffff55"></i>jetzt</span><span>heute und morgen</span></div>
       <canvas id="chartB" width="320" height="50" aria-label="Diagramm Börsenpreise"></canvas>
     </div>
+  </section>
+  <section class="panel" id="app">
+    <h2>homi als App · Push-Nachrichten</h2>
+    <p id="app-install-text">Auf dem Handy installieren: <b>Android/Chrome</b> Menü ⋮ → «App installieren». <b>iPhone</b> Teilen ⬆ → «Zum Home-Bildschirm».</p>
+    <div class="themen">
+      <label><input type="checkbox" value="minuspreis" checked> Minuspreise (06:45)</label>
+      <label><input type="checkbox" value="prognose" checked> Prognose (19:00)</label>
+      <label><input type="checkbox" value="ausfall" checked> Störungen</label>
+    </div>
+    <div class="knoepfe">
+      <button type="button" id="app-install" hidden>📲 Installieren</button>
+      <button type="button" id="push-an">🔔 Push einschalten</button>
+      <button type="button" id="push-aus" hidden>🔕 Push ausschalten</button>
+      <button type="button" id="push-test" hidden>👋 Testnachricht</button>
+    </div>
+    <div id="app-meldung" aria-live="polite"></div>
   </section>
   <footer>Daten: Fronius Solar API (live) · Tarife: Gemeindewerke Stäfa · Preise inkl. MWST · Börsenpreise: EPEX Spot Day-Ahead CH via <a href="https://energy-charts.info">Energy-Charts</a> (CC BY 4.0), EUR→CHF zum EZB-Kurs · <span id="stand"></span></footer>
 </main>
@@ -907,6 +939,94 @@ function frame(now) {
 
 say("Willkommen im Haus! Klick auf Verben und Dinge. Oder schau einfach zu.", "#ffff55", 6000);
 poll(); pollHist();
+// ---- App (PWA) und Push-Nachrichten
+const app = {
+  reg: null, installEvent: null,
+  istIos: /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1),
+  installiert: matchMedia("(display-mode: standalone)").matches || navigator.standalone === true,
+};
+function appMeldung(t) { $("app-meldung").textContent = t; }
+function u8(b64) {
+  const s = atob((b64 + "=".repeat((4 - b64.length % 4) % 4)).replace(/-/g, "+").replace(/_/g, "/"));
+  return Uint8Array.from(s, c => c.charCodeAt(0));
+}
+const themenBoxen = () => [...document.querySelectorAll("#app .themen input")];
+async function pushApi(aktion, abo) {
+  const r = await fetch("api/push", { method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ aktion, abo, themen: themenBoxen().filter(x => x.checked).map(x => x.value) }) });
+  if (!r.ok) throw new Error("Server antwortet " + r.status);
+  return r.json();
+}
+async function pushZustand() {
+  const abo = app.reg && await app.reg.pushManager.getSubscription();
+  let an = false;
+  if (abo) {
+    try {
+      const z = await pushApi("lesen", abo.toJSON());
+      an = z.angemeldet;
+      if (an) themenBoxen().forEach(x => { x.checked = z.themen.includes(x.value); });
+    } catch {}
+  }
+  $("push-an").hidden = an; $("push-aus").hidden = !an; $("push-test").hidden = !an;
+  return abo;
+}
+async function pushAn() {
+  try {
+    if (!app.reg || !("PushManager" in window)) {
+      return appMeldung(app.istIos && !app.installiert
+        ? "Auf dem iPhone geht Push erst, wenn homi auf dem Home-Bildschirm ist (ab iOS 16.4). Danach dort öffnen."
+        : "Dieser Browser kann leider keine Push-Nachrichten.");
+    }
+    if (await Notification.requestPermission() !== "granted") return appMeldung("Benachrichtigungen sind blockiert – in den Browser-Einstellungen erlauben.");
+    const { schluessel } = await (await fetch("api/push", { cache: "no-store" })).json();
+    if (!schluessel) return appMeldung("Push ist auf dem Server noch nicht eingerichtet.");
+    appMeldung("Einen Moment, ich melde dein Gerät an…");
+    const abo = await app.reg.pushManager.getSubscription()
+      || await Promise.race([
+        app.reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: u8(schluessel) }),
+        new Promise((_, nein) => setTimeout(() => nein(new Error("der Push-Dienst des Browsers antwortet nicht")), 20000)),
+      ]);
+    await pushApi("anmelden", abo.toJSON());
+    await pushZustand();
+    appMeldung("Push ist eingeschaltet. Drück «Testnachricht», um es auszuprobieren.");
+  } catch (e) { appMeldung("Push einschalten hat nicht geklappt: " + e.message); }
+}
+async function pushAus() {
+  try {
+    const abo = await app.reg.pushManager.getSubscription();
+    if (abo) { await pushApi("abmelden", abo.toJSON()).catch(() => {}); await abo.unsubscribe(); }
+    await pushZustand();
+    appMeldung("Push ist ausgeschaltet.");
+  } catch (e) { appMeldung("Fehler: " + e.message); }
+}
+$("push-an").onclick = pushAn;
+$("push-aus").onclick = pushAus;
+$("push-test").onclick = async () => {
+  try {
+    await pushApi("test", (await app.reg.pushManager.getSubscription()).toJSON());
+    appMeldung("Unterwegs – die Nachricht sollte in ein paar Sekunden ankommen.");
+  } catch (e) { appMeldung("Test hat nicht geklappt: " + e.message); }
+};
+themenBoxen().forEach(x => x.onchange = async () => {   // Themen sofort speichern, wenn Push schon an ist
+  const abo = app.reg && await app.reg.pushManager.getSubscription();
+  if (abo && !$("push-aus").hidden) {
+    try { await pushApi("anmelden", abo.toJSON()); appMeldung("Gespeichert."); } catch (e) { appMeldung("Fehler: " + e.message); }
+  }
+});
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); app.installEvent = e; $("app-install").hidden = false; });
+$("app-install").onclick = async () => {
+  if (!app.installEvent) return;
+  app.installEvent.prompt();
+  await app.installEvent.userChoice;
+  app.installEvent = null; $("app-install").hidden = true;
+};
+window.addEventListener("appinstalled", () => appMeldung("homi ist installiert – du findest es bei deinen Apps."));
+if (app.installiert) $("app-install-text").textContent = "homi läuft als App. Wähle, worüber ich dich benachrichtigen soll:";
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js").then(r => { app.reg = r; return navigator.serviceWorker.ready; })
+    .then(r => { app.reg = r; pushZustand(); }).catch(() => {});
+}
+
 setInterval(poll, 5000);
 setInterval(pollHist, 60000);
 pollBoerse(); setInterval(pollBoerse, 15 * 60000);

@@ -1,0 +1,10 @@
+# Jeden Morgen um 06:45: Push, falls heute negative Börsenpreise kommen
+[Unit]
+Description=homi: Push bei Minuspreisen (täglich 06:45)
+
+[Timer]
+OnCalendar=*-*-* 06:45:00
+Unit=homi-push@minuspreis.service
+
+[Install]
+WantedBy=timers.target

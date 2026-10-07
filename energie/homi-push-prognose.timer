@@ -1,0 +1,10 @@
+# Jeden Abend um 19:00: Solarprognose für morgen (wie die Abendmail)
+[Unit]
+Description=homi: Push mit Solarprognose (täglich 19:00)
+
+[Timer]
+OnCalendar=*-*-* 19:00:00
+Unit=homi-push@prognose.service
+
+[Install]
+WantedBy=timers.target

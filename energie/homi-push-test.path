@@ -1,0 +1,10 @@
+# Jemand hat auf der Seite «Testnachricht» gedrückt: sofort an dieses Gerät senden
+[Unit]
+Description=homi: auf Push-Testanfragen warten
+
+[Path]
+PathExistsGlob=%h/domus/energie/data/push/test/*.json
+Unit=homi-push@test.service
+
+[Install]
+WantedBy=default.target

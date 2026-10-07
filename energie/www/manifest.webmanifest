@@ -1,0 +1,21 @@
+{
+  "name": "homi – Energie-Abenteuer",
+  "short_name": "homi",
+  "description": "Solaranlage, Verbrauch, Kosten und Strompreise live – mit Push bei negativen Strompreisen.",
+  "id": "/",
+  "start_url": "/?app=1",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "de-CH",
+  "icons": [
+    {"src": "/icons/homi-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/homi-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/homi-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "Logbuch", "url": "/logbuch.html", "icons": [{"src": "/icons/homi-192.png", "sizes": "192x192"}]}
+  ]
+}

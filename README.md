@@ -142,13 +142,32 @@ Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen):
   `energie/messung-bericht.py "<name>"` wertet das 10-Minuten-Archiv aus (Mittel, Nacht-Median, Minimum, Tage,
   Tagesprofil, Spitzen, Hochrechnung pro Jahr, Vergleich mit bewohnten Tagen) und mailt den Bericht;
   `--nur-anzeigen` gibt ihn nur aus. Einmal-Timer `homi-messung` am 09.10.2026 12:15.
+- **App (PWA) mit Push-Nachrichten**: homi ist installierbar (Android: Menü → «App installieren», iPhone: Teilen →
+  «Zum Home-Bildschirm», Push ab iOS 16.4). `www/manifest.webmanifest`, `www/sw.js` (Push anzeigen, Offline-Seite
+  `www/offline.html`, keine Live-Daten im Cache), Icons `www/icons/` (erzeugt mit `energie/icons.py`, Pixel-Art).
+  Abschnitt «homi als App» unten auf der Seite: Push ein/aus, Themen (Minuspreise, Prognose, Störungen), Testnachricht.
+  - Anmelden: `POST /api/push` (`anmelden`/`abmelden`/`lesen`/`test`; nur Endpunkte der bekannten Push-Dienste
+    Google, Mozilla, Apple, Microsoft) → `energie/data/push/abos/<hash>.json` (nicht im Repo).
+  - Versand auf dem Host: `energie/push.py` (Web Push mit VAPID, RFC 8291/8292, `python3-cryptography`), Unit-Vorlage
+    `homi-push@.service`; Timer `homi-push-minuspreis` (06:45), `homi-push-prognose` (19:00), `homi-push-ausfall`
+    (alle 5 min: homi weg oder Dienst aus ≥ 15 min, Fronius tagsüber 9–16 Uhr ≥ 30 min; meldet auch die Erholung),
+    Pfad-Unit `homi-push-test.path` (Testknopf). Abgelaufene Abos (HTTP 404/410) werden automatisch gelöscht.
+  - VAPID-Schlüssel: `energie/data/push/vapid_private.pem` (Secret, nicht im Repo; einmalig `./push.py schluessel`).
+    Geht er verloren, müssen alle Geräte Push neu einschalten. `./push.py liste` zeigt die angemeldeten Geräte,
+    `./push.py minuspreis --test` schickt einen Test-Alarm.
+
+  ```bash
+  cd ~/.config/systemd/user && for u in 'homi-push@.service' homi-push-{minuspreis,prognose,ausfall}.timer homi-push-test.path; do ln -sf ~/domus/energie/$u $u; done
+  systemctl --user daemon-reload && systemctl --user enable --now homi-push-{minuspreis,prognose,ausfall}.timer homi-push-test.path
+  ```
 - **Logbuch** `logbuch.html` (Link im Kassenbuch): Tag (10 min), Woche, Monat, Jahr, Alles; Ansicht per `#tag`, `#monat` …
 - liefert die Webseite `energie/www/index.html` aus (Retro-Adventure-Look, zufällige Geräte passend zum Smart-Meter-Verbrauch).
   Tag/Nacht richtet sich nach der PV-Leistung: nachts Mond, Sterne, beleuchtete Räume, Nachtstrom-Sprüche;
   der Schlafmodus erscheint nur noch, wenn der Fronius keine Daten liefert.
 
 https://home.biber.solar – nginx (`proxy/conf.d/home.biber.solar.conf`) leitet an `host.docker.internal:8099`,
-nur GET/HEAD, API mit Rate-Limit. Zertifikat einmalig geholt mit
+nur GET/HEAD (Ausnahme: `POST /api/push`, max. 4 kB), API mit Rate-Limit.
+Manifest, Service Worker, Icons und Offline-Seite sind ohne Passwort abrufbar (keine Daten, nötig für Installation/Push). Zertifikat einmalig geholt mit
 `docker exec certbot certbot certonly --webroot -w /var/www/certbot -d home.biber.solar --email … --agree-tos -n`
 (Erneuerung automatisch).
 
@@ -257,6 +276,8 @@ nur im Netz `proxy_default`).
   `energy/anfragen/neu/*.json` (nicht im Repo) → Pfad-Unit `energy-anfrage.path` ruft sofort `energy/anfrage-mail.py`
   auf: Mail an root (→ patrick@biber.solar) mit Reply-To des Interessenten, Datei nach `anfragen/versendet/`.
   Timer `energy-anfrage.timer` holt stündlich fehlgeschlagene Sendungen nach. Der Container braucht keine Mail-Zugangsdaten.
+- **Abschnitt «homi als App»** (`#app`): Handy-Rahmen mit echtem homi-Screenshot (`img/app-homi.png`) und
+  eingeblendeter Beispiel-Push-Nachricht.
 - Proxy `proxy/conf.d/energy.biber.solar.conf`: Let's Encrypt, strenge CSP, nur GET bzw. POST fürs Formular.
 
 ```bash

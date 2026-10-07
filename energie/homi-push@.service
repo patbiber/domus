@@ -1,0 +1,8 @@
+# Push-Nachricht an die homi-App: %i = minuspreis | prognose | ausfall | test (siehe push.py)
+[Unit]
+Description=homi: Push %i
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/energie/push.py %i

@@ -1,0 +1,10 @@
+# Alle 5 Minuten: homi, Fronius und Dienste prüfen (gemeldet wird erst nach 15 bzw. 30 min Störung)
+[Unit]
+Description=homi: Störungs-Push prüfen (alle 5 min)
+
+[Timer]
+OnCalendar=*:0/5
+Unit=homi-push@ausfall.service
+
+[Install]
+WantedBy=timers.target
