@@ -1,0 +1,10 @@
+# Neue Anmeldung zur Gratis-Warnung: Bestätigungs-Mail sofort verschicken
+[Unit]
+Description=homi: auf neue Anmeldungen zur Minuspreis-Warnung warten
+
+[Path]
+PathExistsGlob=%h/domus/energy/abos/versand/*.json
+Unit=energy-warnung.service
+
+[Install]
+WantedBy=default.target

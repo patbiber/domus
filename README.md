@@ -126,6 +126,11 @@ Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen):
   (`/sys/devices/virtual/powercap/intel-rapl`, read-only gemountet) + 4 W geschätzt für Platine/SSD/Netzteil
   (`NUC_REST_W`), CPU-Last, Temperatur, RAM, Uptime, Erreichbarkeit HA/nginx, kWh und CHF pro Jahr.
   Auf der Seite: Server im Schrank unter der Treppe (fest im Inventar, eigene Antworten auf alle Verben) und eigene Kachel.
+- **Einspeise-Fahrplan** `/api/einspeisung` (Vorbereitung auf dynamische Einspeisetarife ab 2027): pro Stunde heute/morgen
+  Börsenpreis, PV-Prognose, typischer Verbrauch (Mittel 7 Tage), Empfehlung (einspeisen / Batterie laden /
+  **Einspeisung stoppen** bei Minuspreisen); Wert der Einspeisung dynamisch vs. fix (GWS) und **optimierter
+  Batterie-Fahrplan** (virtuelle 5 kWh: lädt in den billigsten bzw. negativen Stunden) vs. einfaches Laden.
+  Auf homi: rot blinkendes Warnband bei Minuspreisen heute/morgen, Kachel „Einspeisung dynamisch heute“, Sprüche.
 - **Solarprognose** `/api/prognose`: Open-Meteo-Einstrahlung auf die Modulebene (`energie/anlage.json`: Stäfa,
   25° Neigung, Azimut +30° = Süd-Südwest, aus den Messdaten bestimmt) × Eichfaktor, der stündlich aus den eigenen
   Messwerten der letzten 14 Tage nachgeführt wird. Heute/morgen/übermorgen in kWh, Spitze, Bewölkung und bestes
@@ -258,6 +263,22 @@ nur im Netz `proxy_default`).
 cd ~/domus/energy && docker compose up -d
 ln -sf ~/domus/energy/energy-anfrage.{service,path,timer} ~/.config/systemd/user/
 systemctl --user daemon-reload && systemctl --user enable --now energy-anfrage.path energy-anfrage.timer
+```
+
+**Minuspreise (energy.biber.solar `#einspeisung`, prominent nach dem Kopfbereich):** Erklärung dynamische Einspeisetarife,
+Beispieltag mit Rechnung (−CHF 0.98 ohne Steuerung, +CHF 1.26 mit homi), zwei Angebote:
+- **Gratis-Warnung:** Anmeldung `POST /api/warnung` → Double-Opt-in (`energy/abos/ausstehend/`, Versandauftrag
+  `abos/versand/` → Pfad-Unit `energy-warnung.path` → `energy/warnung-versand.py` mailt den Bestätigungslink) →
+  `abos/aktiv/<abmelde-token>.json`. Abmelden per Link in jeder Mail (`/api/warnung/abmelden?t=…`, List-Unsubscribe).
+  Unbestätigte Anmeldungen werden nach 7 Tagen gelöscht. `energy/abos/` ist nicht im Repo.
+- **Morgen-Mail** `energy/minuspreis-warnung.py` (Timer `energy-minuspreis`, 06:45): nur an Tagen mit negativen
+  Day-Ahead-Preisen; an Patrick mit eigenem Fahrplan aus homi, an alle Abonnenten allgemein mit Handlungstipps
+  (Verbrauch verschieben, Wechselrichter per App/Display drosseln). Test: `minuspreis-warnung.py --test` (nur Patrick).
+- **Automatisch im Abo** (Paket «Steuerung», Gateway): Einspeisestopp und Batterie nach Börsenpreis.
+
+```bash
+ln -sf ~/domus/energy/energy-{warnung.service,warnung.path,minuspreis.service,minuspreis.timer} ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable --now energy-warnung.path energy-minuspreis.timer
 ```
 
 ### Trainingsseite training.biber.solar (`training/`)

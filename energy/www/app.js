@@ -413,6 +413,47 @@
     }
   });
 
+  // ---------- Beispiel Minuspreis-Tag (gleiche Daten wie die Beispielrechnung) ----------
+  (function beispielTag() {
+    const ueb = [0, 0, 0, 0, 0, 0, 0, 0, 0.3, 1.4, 2.9, 4.4, 4.9, 4.9, 4.4, 3.4, 1.9, 0.6, 0, 0, 0, 0, 0, 0];
+    const preis = [9, 8, 8, 8, 8, 9, 12, 15, 14, 10, 4, -2, -6, -8, -5, 1, 8, 15, 22, 24, 20, 16, 12, 10];
+    const W = 640, H = 260, L = 54, R = 40, T = 16, B = 28, w = W - L - R, h = H - T - B, bw = w / 24;
+    const pMin = -10, pMax = 26, Yp = v => T + h - (v - pMin) / (pMax - pMin) * h, Yk = v => T + h - v / 5.5 * h;
+    let g = `<rect x="${L + 11 * bw}" y="${T}" width="${4 * bw}" height="${h}" fill="#f04438" opacity=".08"/><text x="${L + 13 * bw}" y="${T + 14}" text-anchor="middle" font-size="12" font-weight="700" fill="#d92d20">Minuspreise: Einspeisen kostet</text>`;
+    g += `<path d="M${L} ${Yk(0)}` + ueb.map((v, i) => `L${L + i * bw + bw / 2} ${Yk(v)}`).join("") + `L${L + w} ${Yk(0)}Z" fill="#FFB020" opacity=".35"/>`;
+    g += `<line x1="${L}" x2="${W - R}" y1="${Yp(0)}" y2="${Yp(0)}" stroke="#98a2b3"/>`;
+    preis.forEach((p, i) => { const y = Yp(p), y0 = Yp(0); g += `<rect x="${L + i * bw + 3}" y="${Math.min(y, y0)}" width="${bw - 6}" height="${Math.max(1, Math.abs(y - y0))}" rx="2" fill="${p < 0 ? "#f04438" : "#2e90fa"}" opacity=".85"><title>${i}:00 · ${p} Rp/kWh</title></rect>`; });
+    [0, 6, 12, 18].forEach(hh => g += `<text x="${L + hh * bw + bw / 2}" y="${H - 8}" text-anchor="middle" font-size="11" fill="#64748b">${hh}h</text>`);
+    [-10, 0, 10, 20].forEach(v => g += `<text x="${L - 6}" y="${Yp(v) + 4}" text-anchor="end" font-size="11" fill="#2e90fa">${v}</text>`);
+    g += `<text x="${L - 6}" y="${T - 4}" text-anchor="end" font-size="10" fill="#2e90fa">Rp/kWh</text><text x="${W - R + 6}" y="${T - 4}" font-size="10" fill="#b54708">kW</text>`;
+    [0, 2.5, 5].forEach(v => g += `<text x="${W - R + 6}" y="${Yk(v) + 4}" font-size="11" fill="#b54708">${v}</text>`);
+    $("ein-chart").innerHTML = g;
+  })();
+
+  // ---------- Gratis-Minuspreis-Warnung ----------
+  const wq = new URLSearchParams(location.search).get("warnung");
+  if (wq) {
+    const t = { aktiv: ["ok", "✓ Bestätigt! Du bekommst ab jetzt an Tagen mit negativen Strompreisen um 6:45 Uhr eine Mail."],
+      abgemeldet: ["ok", "Du bist abgemeldet und bekommst keine Warnungen mehr."],
+      ungueltig: ["nein", "Dieser Link ist nicht (mehr) gültig. Melde dich einfach neu an."] }[wq];
+    if (t) { const d = document.createElement("div"); d.className = "warnung-meldung " + t[0]; d.textContent = t[1]; document.querySelector("#einspeisung .section-head").after(d); }
+  }
+  $("warnung-form").addEventListener("submit", async e => {
+    e.preventDefault();
+    const f = e.target, st = $("warnung-status"), fd = new FormData(f);
+    const daten = { email: fd.get("email").trim(), einwilligung: fd.get("einwilligung") === "on", website: fd.get("website"), t: Date.now() - geladen };
+    st.className = "form-status fehler";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(daten.email)) return st.textContent = "Bitte gib eine gültige E-Mail-Adresse an.";
+    if (!daten.einwilligung) return st.textContent = "Bitte bestätige, dass du die Warnung erhalten möchtest.";
+    st.className = "form-status"; st.textContent = "Wird gesendet …";
+    try {
+      const r = await fetch("api/warnung", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.ok) throw new Error(j.fehler || "Fehler " + r.status);
+      f.innerHTML = `<div class="warnung-meldung ok" style="grid-column:1/-1;margin:0">📬 Fast geschafft! Bitte bestätige den Link in der Mail, die wir dir gerade geschickt haben.</div>`;
+    } catch (err) { st.className = "form-status fehler"; st.textContent = "Das hat nicht geklappt: " + String(err.message).replace(/[<>&]/g, "") + ". Versuch es bitte später nochmals."; }
+  });
+
   // ---------- Einblenden beim Scrollen ----------
   const rein = document.querySelectorAll(".rein");
   if ("IntersectionObserver" in window) {

@@ -1,0 +1,7 @@
+[Unit]
+Description=homi: Morgen-Mail bei negativen Strompreisen (Patrick + Abonnenten)
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/energy/minuspreis-warnung.py

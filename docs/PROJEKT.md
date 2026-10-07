@@ -213,6 +213,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 03.10.2026 | Überwachung der öffentlichen IP mit sofortiger Mail bei Änderung, automatische DNS-Nachführung über die OVH-API |
 | 03.10.2026 | Solarprognose (Open-Meteo, selbstgeeicht) mit Abendmail, HA-Sensoren und Anzeige auf homi |
 | 05.10.2026 | Verkaufsseite https://energy.biber.solar: homi als Angebot mit simulierter Live-Demo, KI-Demo und Anfrageformular |
+| 07.10.2026 | Dynamische Einspeisetarife: Einspeise-Fahrplan mit Batterie-Optimierung, Minuspreis-Warnband in homi, Gratis-Warnung per Mail (Double-Opt-in) und Abo-Angebot auf energy |
 
 ## 8. Offene Punkte
 

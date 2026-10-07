@@ -1,0 +1,9 @@
+[Unit]
+Description=homi: Bestätigungs-Mails für die Gratis-Minuspreis-Warnung verschicken
+After=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/energy/warnung-versand.py

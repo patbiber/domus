@@ -15,6 +15,7 @@ services:
       - ./server.py:/app/server.py:ro
       - ./www:/app/www:ro
       - ./anfragen/neu:/anfragen/neu
+      - ./abos:/abos                     # Gratis-Minuspreis-Warnung: ausstehend/, aktiv/, versand/ (nicht im Repo)
     networks:
       - proxy_default
     logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB

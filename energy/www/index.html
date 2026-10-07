@@ -23,7 +23,7 @@
       homi <small>von Biber Solar</small>
     </a>
     <nav aria-label="Hauptnavigation">
-      <a href="#demo">Live-Demo</a><a href="#ki">KI</a><a href="#ablauf">So geht's</a><a href="#preise">Preise</a><a href="#faq">Fragen</a>
+      <a href="#einspeisung">Minuspreise</a><a href="#demo">Live-Demo</a><a href="#ki">KI</a><a href="#ablauf">So geht's</a><a href="#preise">Preise</a><a href="#faq">Fragen</a>
     </nav>
     <a class="btn btn-sun btn-small" href="#kontakt">Beratung anfragen</a>
   </div>
@@ -33,6 +33,7 @@
 <section class="hero">
   <div class="wrap">
     <div>
+      <a class="neu-pill" href="#einspeisung"><b>Neu</b> Gratis-Warnung bei negativen Strompreisen →</a>
       <span class="eyebrow">Energie-Management für Haus & Betrieb</span>
       <h1>Sieh, was deine Energie gerade macht. <span class="gold">In Franken.</span></h1>
       <p class="lead">homi verbindet Solaranlage, Batterie, Wärmepumpe, E-Auto und Stromnetz zu einem einzigen Live-Bild – mit den echten Tarifen deines Energieversorgers, Börsenpreisen und Solarprognose. Und weil eine KI mitbaut, passt sich homi an dein Zuhause an. Nicht umgekehrt.</p>
@@ -100,6 +101,53 @@
       <div class="flow-bottom">
         <div class="mini"><div class="k">Heute gespart</div><div class="v green num" id="m-gespart">–</div></div>
         <div class="mini"><div class="k">Selbst versorgt heute</div><div class="v gold num" id="m-autarkie">–</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="einspeisung">
+  <div class="wrap">
+    <div class="section-head rein">
+      <span class="kicker">Einspeisung ab 2027</span>
+      <h2>Wenn Einspeisen plötzlich Geld kostet</h2>
+      <p class="sub">Seit 2026 hängt die Rückliefervergütung vom Strommarkt ab, und ab 2027 setzen Energieversorger vermehrt auf <b>dynamische Einspeisetarife</b>: Du bekommst, was der Strom an der Börse gerade wert ist. An sonnigen Tagen fällt dieser Preis mittags unter null – wer dann einspeist, <b>bezahlt drauf</b>. Und eine Batterie, die einfach lädt, sobald die Sonne scheint, ist längst voll, wenn es sich am meisten lohnen würde.</p>
+    </div>
+    <div class="ein-grid">
+      <div class="card tile rein">
+        <div class="chart-head"><h3>Beispiel: ein sonniger Sonntag</h3>
+          <div class="legend"><span><i class="dot" style="background:var(--sun)"></i>Solarüberschuss</span><span><i class="dot" style="background:var(--blue)"></i>Börsenpreis</span><span><i class="dot" style="background:var(--red)"></i>negativ</span></div></div>
+        <svg class="chart" id="ein-chart" viewBox="0 0 640 260" role="img" aria-label="Beispieltag: Solarüberschuss und Börsenpreis, mittags negative Preise"></svg>
+        <div class="vergleich">
+          <div class="vg schlecht"><span class="k">Ohne Steuerung</span><b>– CHF 0.98</b><span>für 18 kWh Einspeisung bei Minuspreisen · Batterie schon um 11 Uhr voll</span></div>
+          <div class="vg gut"><span class="k">Mit homi</span><b>+ CHF 1.26</b><span>mehr am selben Tag: Einspeisung gestoppt, Batterie lädt im tiefsten Minus, abends teurer Strom gespart</span></div>
+        </div>
+        <p class="s" style="margin:10px 0 0">Beispielrechnung mit dem homi-Fahrplan: Solaranlage ca. 9 kWp, Batterie 5 kWh, Vergütung = Day-Ahead-Börsenpreis Schweiz.</p>
+      </div>
+      <div class="ein-angebote">
+        <div class="card angebot gratis rein">
+          <span class="badge-gratis">Gratis</span>
+          <h3>Minuspreis-Warnung per Mail</h3>
+          <p class="s">An Tagen mit negativen Börsenpreisen bekommst du um <b>6:45 Uhr</b> eine Mail: wann es so weit ist und was du tun kannst. Den Wechselrichter drosselst du dann selbst oder lässt Waschmaschine & Co. laufen.</p>
+          <form id="warnung-form" class="warnung-form" novalidate>
+            <input name="email" type="email" autocomplete="email" placeholder="deine@email.ch" aria-label="E-Mail-Adresse" required maxlength="150">
+            <div class="honig" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
+            <button class="btn btn-sun" type="submit">Gratis abonnieren</button>
+            <label class="einwilligung"><input type="checkbox" name="einwilligung" required><span>Ja, schickt mir die Warnung. Nur an Minuspreis-Tagen, Abmeldung jederzeit mit einem Klick. <a href="https://biber.solar/datenschutzerklaerung_de.html" target="_blank" rel="noopener">Datenschutz</a></span></label>
+            <div class="form-status" id="warnung-status" role="status"></div>
+          </form>
+        </div>
+        <div class="card angebot auto rein">
+          <span class="badge-auto">Im Abo · mit Gateway</span>
+          <h3>Vollautomatisch</h3>
+          <ul>
+            <li>Einspeisung stoppt bei Minuspreisen von selbst</li>
+            <li>Batterie lädt in den günstigsten Stunden – nicht einfach bei Sonnenaufgang</li>
+            <li>Boiler, Wärmepumpe oder E-Auto springen bei Minuspreisen ein</li>
+            <li>Zuerst im Testmodus – mit Nachweis, was es bringt</li>
+          </ul>
+          <a class="btn btn-dark" href="#kontakt" data-paket="Steuerung">Paket «Steuerung» anfragen</a>
+        </div>
       </div>
     </div>
   </div>
@@ -277,16 +325,16 @@
         <ul><li>Live-Dashboard auf Handy & PC</li><li>Echte Tarife deines Energieversorgers</li><li>Monatsbericht per Mail</li><li>Gateway inklusive</li></ul>
         <a class="btn btn-dark" href="#kontakt" data-paket="Einblick">Anfragen</a></div>
       <div class="card paket beliebt rein"><h3>Kosten & Börse</h3><div class="preis">CHF 690 <small>einmalig</small></div><div class="abo">+ CHF 24 / Monat</div>
-        <ul><li>Alles aus «Einblick»</li><li>Day-Ahead-Börsenpreise</li><li>Solarprognose & beste Zeitfenster</li><li>Warnungen bei Ausfall & negativen Preisen</li><li>Speicher-Rechner mit deinen Daten</li></ul>
+        <ul><li>Alles aus «Einblick»</li><li>Day-Ahead-Börsenpreise & Einspeise-Fahrplan</li><li>Solarprognose & beste Zeitfenster</li><li>Warnungen bei Ausfall & negativen Preisen</li><li>Speicher-Rechner mit deinen Daten</li></ul>
         <a class="btn btn-sun" href="#kontakt" data-paket="Kosten & Börse">Anfragen</a></div>
       <div class="card paket rein"><h3>Steuerung</h3><div class="preis">ab CHF 1'290 <small>einmalig</small></div><div class="abo">+ CHF 39 / Monat</div>
-        <ul><li>Alles aus «Kosten & Börse»</li><li>Steuerung von Boiler, Wärmepumpe oder Wallbox</li><li>Überschussladen & Börsenregeln</li><li>Testmodus mit Nutzennachweis</li></ul>
+        <ul><li>Alles aus «Kosten & Börse»</li><li><b>Einspeisestopp bei Minuspreisen</b></li><li><b>Batterie nach Börsenpreis optimiert</b></li><li>Steuerung von Boiler, Wärmepumpe oder Wallbox</li><li>Testmodus mit Nutzennachweis</li></ul>
         <a class="btn btn-dark" href="#kontakt" data-paket="Steuerung">Anfragen</a></div>
       <div class="card paket rein"><h3>Betrieb</h3><div class="preis">Offerte</div><div class="abo">Gewerbe, Landwirtschaft, ZEV/LEG</div>
         <ul><li>Mehrere Zähler & Gebäude</li><li>Lastspitzen-Management</li><li>Abrechnung ZEV, vZEV, LEG</li><li>Individuelle Auswertungen</li></ul>
         <a class="btn btn-dark" href="#kontakt" data-paket="Betrieb">Anfragen</a></div>
     </div>
-    <p class="preis-note">Pilotpreise 2026/27 in CHF. Die verbindliche Offerte erhältst du nach dem kostenlosen Erstgespräch. Zusätzliche Wünsche nach Absprache.</p>
+    <p class="preis-note"><b>Gratis:</b> die <a href="#einspeisung">Minuspreis-Warnung per Mail</a> – ohne Gateway, ohne Abo. Pilotpreise 2026/27 in CHF. Die verbindliche Offerte erhältst du nach dem kostenlosen Erstgespräch. Zusätzliche Wünsche nach Absprache.</p>
   </div>
 </section>
 
@@ -294,6 +342,7 @@
   <div class="wrap">
     <div class="section-head center rein"><span class="kicker">Fragen</span><h2>Gut zu wissen</h2></div>
     <div class="faq">
+      <details><summary>Was bringt mir die Gratis-Warnung?</summary><p>An Tagen mit negativen Börsenpreisen bekommst du morgens eine Mail mit den Stunden, in denen Einspeisen Geld kosten kann. Dann verbrauchst du den Strom selbst oder drosselst den Wechselrichter über seine App. Ob es dich wirklich etwas kostet, hängt von deinem Einspeisetarif ab: Bei einer fixen Vergütung noch nicht, bei einem dynamischen Tarif schon.</p></details>
       <details><summary>Brauche ich eine Solaranlage?</summary><p>Nein. homi zeigt auch ohne Solaranlage, was dich Strom wann kostet, und findet Stromfresser. Richtig spannend wird es mit Solaranlage, Batterie, Wärmepumpe oder E-Auto.</p></details>
       <details><summary>Welche Geräte werden unterstützt?</summary><p>Die meisten gängigen Wechselrichter, Smart Meter, Batteriespeicher, Wärmepumpen und Wallboxen mit lokaler Schnittstelle. Im Erstgespräch prüfe ich deine Geräte. Fehlt eine Anbindung, wird sie mit KI-Unterstützung programmiert.</p></details>
       <details><summary>Was macht die KI genau?</summary><p>Die KI schreibt den Programmcode für neue Auswertungen und Steuerungen nach deinen Wünschen und testet ihn mit deinen Daten. Ich prüfe jede Änderung, bevor sie bei dir läuft, und Steuerungen starten immer im Testmodus. Die KI entscheidet nicht selbständig über deine Geräte.</p></details>

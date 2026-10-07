@@ -28,6 +28,13 @@
     content: ""; position: absolute; inset: 0; pointer-events: none;
     background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,.18) 2px 3px);
   }
+  #minus-banner { display: none; margin: 0 0 8px; padding: 8px 12px; border: 3px solid var(--red); background: #2a0000; color: var(--yellow); font-size: clamp(13px, 2vw, 17px); text-align: center; animation: minusblink 1.2s steps(2) infinite; }
+  #minus-banner.an { display: block; }
+  #minus-banner small { display: block; color: #ffaaaa; font-size: .8em; animation: none; }
+  @keyframes minusblink { 50% { border-color: var(--yellow); } }
+  .ein .v { color: var(--yellow); }
+  .fahrplan { font-size: 12px; color: var(--grey); margin-top: 4px; line-height: 1.5; }
+  .fahrplan b { color: var(--red); }
   #talk {
     min-height: 2.6em; font-size: clamp(13px, 2.2vw, 18px); line-height: 1.3;
     text-align: center; color: var(--yellow); padding: 2px 8px 6px;
@@ -78,6 +85,7 @@
 </head>
 <body>
 <main class="monitor">
+  <div id="minus-banner" role="alert"></div>
   <div id="talk" aria-live="polite">Lade Daten vom Fronius…</div>
   <canvas id="scene" width="320" height="150" aria-label="Haus mit Solaranlage, Figur und Stromnetz"></canvas>
   <div id="sentence">Gehe zu</div>
@@ -99,6 +107,7 @@
       <div class="stat zahle"><div class="k">Ich bezahle gerade</div><div class="v" id="s-zahle">–</div><div class="s" id="s-tarif">&nbsp;</div></div>
       <div class="stat bekomme"><div class="k">Ich bekomme gerade</div><div class="v" id="s-bekomme">–</div><div class="s" id="s-rueck">&nbsp;</div></div>
       <div class="stat session"><div class="k">Seit du zuschaust</div><div class="v" id="s-session">0.0000 CHF</div><div class="s" id="s-sessiont">&nbsp;</div></div>
+      <div class="stat ein"><div class="k">Einspeisung dynamisch heute</div><div class="v" id="s-ein">–</div><div class="s" id="s-ein2">&nbsp;</div><div class="fahrplan" id="s-ein3"></div></div>
       <div class="stat prog"><div class="k">Solarprognose morgen</div><div class="v" id="s-prog">–</div><div class="s" id="s-prog2">&nbsp;</div></div>
       <div class="stat srv"><div class="k">homi-Server (unter der Treppe)</div><div class="v" id="s-srv">–</div><div class="s" id="s-srv2">&nbsp;</div></div>
       <div class="stat boerse" id="t-boerse"><div class="k">Strombörse Day-Ahead CH</div><div class="v" id="s-boerse">–</div><div class="s" id="s-boerse2">&nbsp;</div></div>
@@ -328,6 +337,25 @@ async function pollBoerse() {
   try { boerse = await (await fetch("api/boerse", { cache: "no-store" })).json(); } catch {}
   drawBoerse();
 }
+let ein = null;              // /api/einspeisung
+async function pollEinspeisung() {
+  try { ein = await (await fetch("api/einspeisung", { cache: "no-store" })).json(); } catch { return; }
+  const b = $("minus-banner"), h = ein.heute, m = ein.morgen;
+  const txt = [];
+  if (h && h.minuspreis_bloecke && h.minuspreis_bloecke.length) txt.push(`HEUTE ${h.minuspreis_bloecke.join(" + ")}`);
+  if (m && m.minuspreis_bloecke && m.minuspreis_bloecke.length) txt.push(`MORGEN ${m.minuspreis_bloecke.join(" + ")}`);
+  if (txt.length) {
+    b.innerHTML = `⚠ NEGATIVE STROMPREISE ${txt.join(" · ")} – EINSPEISUNG STOPPEN, VERBRAUCHER EINSCHALTEN!<small>Bei der fixen GWS-Vergütung kostet es dich noch nichts. Mit dynamischem Tarif schon.</small>`;
+    b.classList.add("an");
+  } else b.classList.remove("an");
+  if (h) {
+    $("s-ein").textContent = `${h.einspeisung_dynamisch_chf.toFixed(2)} CHF`;
+    $("s-ein2").textContent = `fix GWS: ${h.einspeisung_fix_chf.toFixed(2)} CHF · Batterie optimiert +${h.batterie.mehrwert_chf.toFixed(2)} CHF`;
+    const jetztH = new Date().getHours();
+    const naechste = h.stunden.filter(x => x.stunde >= jetztH && x.aktion !== "–").slice(0, 3);
+    $("s-ein3").innerHTML = naechste.map(x => `${String(x.stunde).padStart(2, "0")}h: ${x.preis_rp < 0 ? "<b>" : ""}${x.aktion}${x.preis_rp < 0 ? "</b>" : ""} (${x.preis_rp.toFixed(1)} Rp)`).join("<br>");
+  }
+}
 async function pollHist() {
   try { hist = await (await fetch("api/history", { cache: "no-store" })).json(); } catch {}
   drawCharts();
@@ -444,6 +472,9 @@ function chatter() {
       ["GWS: Wir liefern auch nachts. Gegen Münzen.", "#ffffff"]);
   }
   const bo = S.boerse;
+  if (ein && ein.heute && ein.heute.minuspreis_bloecke && ein.heute.minuspreis_bloecke.length) lines.push(
+    [`Heute ${ein.heute.minuspreis_bloecke.join(" und ")} negative Preise! Waschmaschine an, Einspeisung aus!`, "#ff5555"],
+    [`Mit Börsentarif würde Einspeisen heute ${(-ein.heute.kosten_bei_minuspreis_chf).toFixed(2)} CHF kosten. Ich passe auf.`, "#ff5555"]);
   if (bo && bo.negativ) lines.push(
     ["GWS: Negative Börsenpreise! Wir zahlen fürs Abnehmen drauf!", "#ffffff"],
     [`Und ich bekomme trotzdem meine ${rp} Rappen. Hehe.`], ["An der Börse schenkt man sich gerade Strom. Verrückte Welt."]);
@@ -878,7 +909,8 @@ say("Willkommen im Haus! Klick auf Verben und Dinge. Oder schau einfach zu.", "#
 poll(); pollHist();
 setInterval(poll, 5000);
 setInterval(pollHist, 60000);
-pollBoerse(); setInterval(pollBoerse, 15 * 60000); setInterval(drawBoerse, 60000);
+pollBoerse(); setInterval(pollBoerse, 15 * 60000);
+pollEinspeisung(); setInterval(pollEinspeisung, 10 * 60000); setInterval(drawBoerse, 60000);
 setInterval(chatter, 7000);
 setInterval(wander, 3500);
 requestAnimationFrame(frame);
