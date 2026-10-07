@@ -105,7 +105,8 @@ Geplant: `mosquitto/` (MQTT), `zigbee2mqtt/` (Zigbee-Stick folgt), Philips Hue �
 ### 4.2 Reverse Proxy und Zertifikate (`proxy/`)
 
 - nginx terminiert TLS für `domus.biber.solar` (Home Assistant, WebSockets) und `home.biber.solar` (Energie-Seite).
-- Unbekannte Hostnamen und direkte IP-Zugriffe werden verworfen (`return 444`).
+- Unbekannte Hostnamen und direkte IP-Zugriffe werden verworfen (HTTP `return 444`, HTTPS `ssl_reject_handshake`) –
+  wichtig seit dem Wildcard-Eintrag `*.biber.solar`, der alle Namen auf den NUC zeigen lässt.
 - certbot prüft alle 12 h die Erneuerung, nginx lädt alle 6 h neu.
 - `home.biber.solar`: Passwortschutz (Basic Auth), nur GET/HEAD, Rate-Limit, strenge Content-Security-Policy.
 
