@@ -3,7 +3,7 @@ import subprocess
 from email.message import EmailMessage
 from email.utils import formatdate, make_msgid
 
-URL = "https://energy.biber.solar"
+URL = "https://homi.solar"
 
 
 def senden(an, betreff, text, absender="homi von Biber Solar <domus@biber.solar>", reply_to="patrick@biber.solar", header=None):

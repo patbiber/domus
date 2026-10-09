@@ -1,4 +1,4 @@
-/* homi – Demo mit simulierten Daten (energy.biber.solar)
+/* homi – Demo mit simulierten Daten (homi.solar)
    Tageszeit und Sonnenstand sind echt (Stäfa, Zürcher Zeit), Wetter und Verbrauch werden pro Tag
    reproduzierbar simuliert (gleicher Tag = gleiche Kurve). Keine externen Dienste. */
 "use strict";

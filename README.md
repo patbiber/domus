@@ -17,7 +17,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | `proxy/` | nginx (Reverse Proxy für Home Assistant) + certbot (Let's Encrypt) | läuft |
 | `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control (systemd-User-Dienst, kein Docker) | läuft |
 | `biber-solar/` | Hauptseite https://biber.solar aus github.com/patbiber/biber-solar, main (nginx-Container, Veröffentlichung alle 5 min) | läuft (seit 03.10.2026) |
-| `energy/` | https://energy.biber.solar: homi-Verkaufsseite mit simulierter Live-Demo, KI-Demo und Anfrageformular | läuft (seit 05.10.2026) |
+| `energy/` | https://homi.solar (früher energy.biber.solar): homi-Verkaufsseite mit simulierter Live-Demo, KI-Demo und Anfrageformular | läuft (seit 05.10.2026) |
 | `training/` | https://training.biber.solar: MkDocs-Material-Seite aus github.com/patbiber/solartech (Build bei neuem Commit, nginx-Container) | läuft (seit 03.10.2026) |
 | `biber-solar-test/` | Vorschau https://test.biber.solar = Arbeitskopie von biber-solar (Änderungen ansehen, dann pushen) | läuft |
 | `system/` | Neustart-Bericht, wöchentliches Docker-Image-Update mit Prüfung und Zurückrollen, Überwachung der öffentlichen IP (systemd-User-Dienste) | läuft |
@@ -262,7 +262,12 @@ ln -sf ~/domus/biber-solar/biber-solar.{service,timer} ~/domus/biber-solar-test/
 systemctl --user daemon-reload && systemctl --user enable --now biber-solar.timer biber-solar-test.timer
 ```
 
-### Verkaufsseite energy.biber.solar (`energy/`)
+### Verkaufsseite homi.solar (`energy/`)
+
+Hauptadresse seit 09.10.2026: **https://homi.solar**. `www.homi.solar` leitet mit 301, die frühere Adresse
+`energy.biber.solar` dauerhaft mit **308** weiter (Pfad, Parameter und Methode bleiben – Bestätigungs-/Abmeldelinks in
+alten Mails und Formular-POSTs alter Seiten funktionieren weiter). Mail-Links verwenden `URL` in `energy/mailer.py`.
+
 
 homi als Angebot für Haus & Betrieb – Start des Geschäfts. Statische Seite `energy/www/` (index.html, style.css, app.js,
 keine externen Ressourcen, kein Tracking) und kleiner Python-Server `energy/server.py` (Container `energy`, Port 8080
@@ -280,7 +285,8 @@ nur im Netz `proxy_default`).
   https://beispiel.homi.solar und in der FAQ «Wie erreiche ich mein homi?».
 - **Abschnitt «homi als App»** (`#app`): Handy-Rahmen mit echtem homi-Screenshot (`img/app-homi.png`) und
   eingeblendeter Beispiel-Push-Nachricht.
-- Proxy `proxy/conf.d/energy.biber.solar.conf`: Let's Encrypt, strenge CSP, nur GET bzw. POST fürs Formular.
+- Proxy `proxy/conf.d/homi.solar.conf`: Let's Encrypt, strenge CSP, nur GET bzw. POST fürs Formular
+  (`energy.biber.solar.conf` enthält nur noch die Weiterleitung).
 
 ```bash
 cd ~/domus/energy && docker compose up -d
@@ -288,7 +294,7 @@ ln -sf ~/domus/energy/energy-anfrage.{service,path,timer} ~/.config/systemd/user
 systemctl --user daemon-reload && systemctl --user enable --now energy-anfrage.path energy-anfrage.timer
 ```
 
-**Minuspreise (energy.biber.solar `#einspeisung`, prominent nach dem Kopfbereich):** Erklärung dynamische Einspeisetarife,
+**Minuspreise (homi.solar `#einspeisung`, prominent nach dem Kopfbereich):** Erklärung dynamische Einspeisetarife,
 Beispieltag mit Rechnung (−CHF 0.98 ohne Steuerung, +CHF 1.26 mit homi), zwei Angebote:
 - **Gratis-Warnung:** Anmeldung `POST /api/warnung` → Double-Opt-in (`energy/abos/ausstehend/`, Versandauftrag
   `abos/versand/` → Pfad-Unit `energy-warnung.path` → `energy/warnung-versand.py` mailt den Bestätigungslink) →
@@ -308,8 +314,7 @@ systemctl --user daemon-reload && systemctl --user enable --now energy-warnung.p
 
 `homi.solar` ist die Basis-Domain für alle Kunden-Instanzen: **`<name>.homi.solar`** (z. B. `sonnenhof.homi.solar`).
 - DNS bei OVH: A-Einträge `homi.solar`, `www` und Wildcard `*` → NUC. Neue Kunden brauchen keinen DNS-Eintrag.
-- `homi.solar` / `www.homi.solar` (`proxy/conf.d/homi.solar.conf`, Let's Encrypt) leiten vorerst mit 302 auf
-  https://energy.biber.solar weiter.
+- `homi.solar` ist zugleich die Adresse der Verkaufsseite (siehe oben), `www.homi.solar` leitet dorthin weiter.
 - Nicht eingerichtete Namen lehnt `proxy/conf.d/00-default.conf` ab (HTTP 444, HTTPS `ssl_reject_handshake`).
 - **`kunden/kunde.py`** richtet eine Instanz in einem Schritt ein: DNS prüfen, Zertifikat (HTTP-01 über den
   Standardserver), Passwort (Benutzer `homi`, wird einmal angezeigt), nginx-Konfiguration aus `kunden/kunde.conf.vorlage`

@@ -1,4 +1,4 @@
-# Verkaufsseite https://energy.biber.solar: homi als Angebot für Haus & Betrieb (simulierte Demo-Daten)
+# Verkaufsseite https://homi.solar (früher energy.biber.solar): homi als Angebot für Haus & Betrieb (simulierte Demo-Daten)
 # server.py liefert www/ aus und legt Anfragen aus dem Formular in ./anfragen/neu ab;
 # der Host verschickt sie per Mail (anfrage-mail.py, Pfad-Unit energy-anfrage.path).
 # Kein eigener Port: erreichbar nur über den Proxy (nginx in proxy/) im Netz proxy_default.

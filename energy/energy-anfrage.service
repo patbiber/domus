@@ -1,5 +1,5 @@
 [Unit]
-Description=homi: neue Anfragen von energy.biber.solar per Mail verschicken
+Description=homi: neue Anfragen von homi.solar per Mail verschicken
 After=network-online.target
 StartLimitIntervalSec=300
 StartLimitBurst=5

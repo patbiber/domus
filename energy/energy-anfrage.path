@@ -1,6 +1,6 @@
 # Sobald eine Anfrage-Datei liegt: sofort verschicken
 [Unit]
-Description=homi: auf neue Anfragen von energy.biber.solar warten
+Description=homi: auf neue Anfragen von homi.solar warten
 
 [Path]
 PathExistsGlob=%h/domus/energy/anfragen/neu/*.json

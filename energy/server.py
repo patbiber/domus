@@ -1,4 +1,4 @@
-"""homi-Verkaufsseite energy.biber.solar: liefert www/ aus und nimmt Anfragen entgegen.
+"""homi-Verkaufsseite homi.solar (früher energy.biber.solar): liefert www/ aus und nimmt Anfragen entgegen.
 
 POST /api/anfrage  JSON-Anfrage aus dem Formular -> /anfragen/neu/<zeit>-<zufall>.json
                    Der Host verschickt sie per Mail (energy/anfrage-mail.py, Pfad-Unit energy-anfrage.path),

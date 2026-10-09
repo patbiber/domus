@@ -159,7 +159,7 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
 - `kunden/kunde.py neu <name>` richtet alles in einem Schritt ein (Zertifikat, Passwort, nginx); das Ziel ist zuerst
   eine Platzhalterseite und wird später auf die homi-Instanz der Kundschaft umgestellt (Container, LAN oder WireGuard).
 - Konfigurationen und Passwörter der Kunden liegen nur auf dem NUC, nicht im Repo.
-- `homi.solar` selbst leitet vorerst auf die Verkaufsseite energy.biber.solar weiter.
+- `homi.solar` selbst ist seit 09.10.2026 die Hauptadresse der Verkaufsseite; energy.biber.solar leitet dauerhaft dorthin (308).
 
 ### 4.8 Claude Code Remote Control (`claude-remote/`)
 
@@ -233,6 +233,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 07.10.2026 | Wildcard `*.biber.solar`, unbekannte Hostnamen werden auch per HTTPS abgelehnt |
 | 07.10.2026 | homi als App (PWA): installierbar, Push bei Minuspreisen, Prognose und Störungen; Abschnitt «homi als App» auf energy |
 | 09.10.2026 | Domain homi.solar als Basis für Kunden-Instanzen (`<name>.homi.solar`), Skript `kunden/kunde.py`, Musterseite beispiel.homi.solar |
+| 09.10.2026 | homi.solar ist die Hauptadresse der Verkaufsseite (energy.biber.solar leitet mit 308 weiter) |
 
 ## 8. Offene Punkte
 
