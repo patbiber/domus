@@ -29,6 +29,10 @@ strompreise/data/
 # Passwort-Hashes für nginx (Basic Auth)
 proxy/conf.d/*.htpasswd
 
+# Kunden-Instanzen unter <name>.homi.solar (erzeugt von kunden/kunde.py, Kundennamen = Personendaten)
+proxy/conf.d/kunde-*.conf
+proxy/conf.d/.kunde-*.tmp
+
 # Python
 __pycache__/
 energie/data/

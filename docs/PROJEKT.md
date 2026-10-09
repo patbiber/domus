@@ -53,6 +53,7 @@ flowchart LR
 
     nginx -->|domus.biber.solar| HA
     nginx -->|home.biber.solar| EN
+    nginx -->|kunde.homi.solar| KU[Kunden-homi<br/>kunden/kunde.py]
     EN -->|Solar API| FR[Fronius<br/>192.168.1.221]
     FR --- SM[Smart Meter]
     SP -->|monatlich| GWS[gws.ch<br/>Tarife JSON + PDF]
@@ -70,6 +71,7 @@ flowchart LR
 | `proxy/` | nginx + certbot (Let's Encrypt) | Docker | Ports 80/443 |
 | `energie/` | Energie-API und Retro-Webseite | Docker (`python:3.13-alpine`), `network_mode: host` | https://home.biber.solar, LAN-Port 8099 |
 | `strompreise/` | Monatliches Archiv der GWS-Stromtarife | Bash-Skript + systemd-User-Timer | – |
+| `kunden/` | Kunden-Instanzen `<name>.homi.solar` (nginx-Konfiguration, Zertifikat, Passwort) | Python-Skript `kunde.py` | https://beispiel.homi.solar |
 | `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control | systemd-User-Dienst in tmux | claude.ai/code, Claude-App |
 | (Host) | E-Mail-Versand | `msmtp`, `msmtp-mta`, `bsd-mailx` | – |
 
@@ -151,7 +153,15 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
   `msmtp` setgid `msmtp` – jeder Benutzer kann senden, niemand das Passwort lesen.
 - `/etc/aliases` leitet `root` und alle lokalen Empfänger an `patrick@biber.solar`.
 
-### 4.7 Claude Code Remote Control (`claude-remote/`)
+### 4.7 Kunden-Domain homi.solar (`kunden/`)
+
+- Jede Kundin, jeder Kunde bekommt eine eigene Adresse `<name>.homi.solar`; Wildcard-DNS `*.homi.solar` → NUC.
+- `kunden/kunde.py neu <name>` richtet alles in einem Schritt ein (Zertifikat, Passwort, nginx); das Ziel ist zuerst
+  eine Platzhalterseite und wird später auf die homi-Instanz der Kundschaft umgestellt (Container, LAN oder WireGuard).
+- Konfigurationen und Passwörter der Kunden liegen nur auf dem NUC, nicht im Repo.
+- `homi.solar` selbst leitet vorerst auf die Verkaufsseite energy.biber.solar weiter.
+
+### 4.8 Claude Code Remote Control (`claude-remote/`)
 
 - Dauerhafte Claude-Code-Session als systemd-User-Dienst (tmux, Linger aktiv), steuerbar über claude.ai/code
   oder die Claude-App.
@@ -169,6 +179,7 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
 | Aufbewahrung | Container-Logs max. 3 × 10 MB, keine Protokollierung der laufenden API-Abrufe, HA-Backups: letzte 10 |
 | Öffentliche Ports | Nur 80/443 (Router → NUC); Port 8099 nur im LAN |
 | Home Assistant | TLS, IP-Sperre, 2-Faktor-Login |
+| Kunden-Instanzen | Eigene Zertifikate und Passwörter je Instanz, unbekannte Namen werden abgelehnt, Konfiguration nicht im Repo |
 | Energie-Seite | Passwortschutz (Basic Auth), nur lesend (ausser Push-Anmeldung, nur bekannte Push-Dienste), Rate-Limit, CSP |
 | Push | VAPID-Privatschlüssel nur in `energie/data/push/`; Inhalte für Google/Apple/Mozilla unlesbar verschlüsselt |
 
@@ -219,10 +230,14 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 03.10.2026 | Solarprognose (Open-Meteo, selbstgeeicht) mit Abendmail, HA-Sensoren und Anzeige auf homi |
 | 05.10.2026 | Verkaufsseite https://energy.biber.solar: homi als Angebot mit simulierter Live-Demo, KI-Demo und Anfrageformular |
 | 07.10.2026 | Dynamische Einspeisetarife: Einspeise-Fahrplan mit Batterie-Optimierung, Minuspreis-Warnband in homi, Gratis-Warnung per Mail (Double-Opt-in) und Abo-Angebot auf energy |
+| 07.10.2026 | Wildcard `*.biber.solar`, unbekannte Hostnamen werden auch per HTTPS abgelehnt |
 | 07.10.2026 | homi als App (PWA): installierbar, Push bei Minuspreisen, Prognose und Störungen; Abschnitt «homi als App» auf energy |
+| 09.10.2026 | Domain homi.solar als Basis für Kunden-Instanzen (`<name>.homi.solar`), Skript `kunden/kunde.py`, Musterseite beispiel.homi.solar |
 
 ## 8. Offene Punkte
 
+- OVH-API-Token um die Zone homi.solar erweitern (IP-Nachführung; optional Wildcard-Zertifikat per DNS-01).
+- Kunden-Konfigurationen (`proxy/conf.d/kunde-*`) ins Backup ausser Haus aufnehmen (USB-Platte).
 - Rückliefervergütung 2027 nachtragen, sobald die GWS sie veröffentlichen (`energie/tarif.json`).
 - MQTT, Zigbee2MQTT und Hue einbinden.
 - LAN-Adresse im README prüfen (dort steht `192.168.178.121`, der NUC meldet `192.168.1.x`).

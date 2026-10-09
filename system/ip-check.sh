@@ -5,7 +5,7 @@
 # Stimmt der DNS nicht und sind OVH-API-Zugangsdaten in ~/domus/.env, werden die A-Einträge automatisch
 # per system/ovh-dns.py nachgeführt. Jede Meldung kommt einmal pro neuem Zustand, danach höchstens alle 6 h.
 set -uo pipefail
-NAMEN=(${IP_CHECK_NAMEN:-biber.solar www.biber.solar training.biber.solar domus.biber.solar home.biber.solar test.biber.solar energy.biber.solar})
+NAMEN=(${IP_CHECK_NAMEN:-biber.solar www.biber.solar training.biber.solar domus.biber.solar home.biber.solar test.biber.solar energy.biber.solar wildcard-check.biber.solar homi.solar www.homi.solar wildcard-check.homi.solar})
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/domus"
 mkdir -p "$STATE_DIR"
 IP_FILE="$STATE_DIR/public_ip"
@@ -68,12 +68,13 @@ fi
     echo
     echo "Je nach TTL sind die Seiten in wenigen Minuten wieder erreichbar. Entwarnung folgt per Mail."
   elif [ -n "$falsch" ]; then
-    [ -n "$auto" ] && printf 'Automatische Anpassung über OVH nicht möglich:\n  %s\n\n' "$auto"
+    [ -n "$auto" ] && printf 'Automatische Anpassung über OVH nicht (vollständig) möglich:\n%s\n\n' "$(echo "$auto" | sed 's/^/  /')"
     echo "Diese DNS-Einträge (Typ A) bitte bei OVH auf $neu ändern:"
     echo
     printf '%s' "$falsch"
     echo
-    echo "OVH: Web Cloud -> Domainnamen -> biber.solar -> DNS-Zone -> A-Einträge bearbeiten."
+    echo "OVH: Web Cloud -> Domainnamen -> biber.solar bzw. homi.solar -> DNS-Zone -> A-Einträge bearbeiten"
+    echo "(bei homi.solar auch den Wildcard-Eintrag *)."
     echo "NICHT ändern: MX, SPF/TXT, DKIM, DMARC (Proton-Mail)."
     echo
     echo "Bis zur Änderung sind die betroffenen Seiten von aussen nicht erreichbar."

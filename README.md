@@ -276,6 +276,8 @@ nur im Netz `proxy_default`).
   `energy/anfragen/neu/*.json` (nicht im Repo) → Pfad-Unit `energy-anfrage.path` ruft sofort `energy/anfrage-mail.py`
   auf: Mail an root (→ patrick@biber.solar) mit Reply-To des Interessenten, Datei nach `anfragen/versendet/`.
   Timer `energy-anfrage.timer` holt stündlich fehlgeschlagene Sendungen nach. Der Container braucht keine Mail-Zugangsdaten.
+- **Eigene Adresse `<name>.homi.solar`**: erwähnt in «So geht's» (Schritt 3), in der App-Liste mit Link auf
+  https://beispiel.homi.solar und in der FAQ «Wie erreiche ich mein homi?».
 - **Abschnitt «homi als App»** (`#app`): Handy-Rahmen mit echtem homi-Screenshot (`img/app-homi.png`) und
   eingeblendeter Beispiel-Push-Nachricht.
 - Proxy `proxy/conf.d/energy.biber.solar.conf`: Let's Encrypt, strenge CSP, nur GET bzw. POST fürs Formular.
@@ -301,6 +303,37 @@ Beispieltag mit Rechnung (−CHF 0.98 ohne Steuerung, +CHF 1.26 mit homi), zwei 
 ln -sf ~/domus/energy/energy-{warnung.service,warnung.path,minuspreis.service,minuspreis.timer} ~/.config/systemd/user/
 systemctl --user daemon-reload && systemctl --user enable --now energy-warnung.path energy-minuspreis.timer
 ```
+
+### Kunden-Domain homi.solar (`kunden/`)
+
+`homi.solar` ist die Basis-Domain für alle Kunden-Instanzen: **`<name>.homi.solar`** (z. B. `sonnenhof.homi.solar`).
+- DNS bei OVH: A-Einträge `homi.solar`, `www` und Wildcard `*` → NUC. Neue Kunden brauchen keinen DNS-Eintrag.
+- `homi.solar` / `www.homi.solar` (`proxy/conf.d/homi.solar.conf`, Let's Encrypt) leiten vorerst mit 302 auf
+  https://energy.biber.solar weiter.
+- Nicht eingerichtete Namen lehnt `proxy/conf.d/00-default.conf` ab (HTTP 444, HTTPS `ssl_reject_handshake`).
+- **`kunden/kunde.py`** richtet eine Instanz in einem Schritt ein: DNS prüfen, Zertifikat (HTTP-01 über den
+  Standardserver), Passwort (Benutzer `homi`, wird einmal angezeigt), nginx-Konfiguration aus `kunden/kunde.conf.vorlage`
+  (wie home.biber.solar: Basic Auth, CSP, nur GET/HEAD + Push-Anmeldung, App-Hülle ohne Passwort), `nginx -t` mit
+  Zurückrollen bei Fehler, Reload.
+  Erzeugt `proxy/conf.d/kunde-<name>.conf` und `.htpasswd` – **nicht im Repo** (Kundennamen = Personendaten).
+
+```bash
+kunden/kunde.py neu sonnenhof                    # Platzhalterseite, Passwort wird erzeugt
+kunden/kunde.py ziel sonnenhof host:8099         # homi-Dienst auf dem NUC (Port)
+kunden/kunde.py ziel sonnenhof http://homi-sonnenhof:8099   # Container im Netz proxy_default / WireGuard-Adresse
+kunden/kunde.py passwort sonnenhof               # neues Passwort
+kunden/kunde.py liste
+kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zertifikat löschen
+```
+
+- Der Platzhalter (`kunden/platzhalter.html`, «Hier wohnt bald ein homi») ist immer öffentlich; das Passwort gilt,
+  sobald ein Ziel gesetzt ist. `beispiel.homi.solar` ist die öffentliche Musterseite (ohne Passwort).
+- Namen sind öffentlich sichtbar (DNS-Abfragen, Certificate-Transparency-Logs der Zertifikate) → neutrale Namen
+  empfehlen. Später möglich: Wildcard-Zertifikat `*.homi.solar` per DNS-01, dann erscheinen keine Kundennamen mehr in
+  den Logs (braucht OVH-Token mit POST/DELETE auf `/domain/zone/homi.solar/record*`).
+- IP-Nachführung: `system/ovh-dns.py` kennt die Zone homi.solar (`""`, `www`, `*`), braucht dafür aber ein OVH-Token
+  mit Rechten auf `/domain/zone/homi.solar/…` (das bestehende darf nur biber.solar). Bis dahin meldet das Skript die
+  Zone als «NICHT möglich» (Exit-Code 2), biber.solar wird trotzdem nachgeführt und `ip-check.sh` mailt den Rest.
 
 ### Trainingsseite training.biber.solar (`training/`)
 
