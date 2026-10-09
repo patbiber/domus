@@ -33,6 +33,9 @@ TARIFE_JSON = os.environ.get("TARIFE_JSON", "/strompreise/latest/tarife.json")
 TARIF_CFG = os.environ.get("TARIF_CFG", "/app/tarif.json")
 PORT = int(os.environ.get("PORT", "8099"))
 WWW = os.path.join(os.path.dirname(os.path.abspath(__file__)), "www")
+# Kunden-Oberfläche (modernes Layout) für Aufrufe über <name>.homi.solar; alle anderen Adressen bekommen www/ (Retro)
+WWW_KUNDE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "www-kunde")
+KUNDE_HOST = re.compile(r"^[a-z0-9-]+\.homi\.solar$")
 POLL_S = 5
 BOERSE_URL = "https://api.energy-charts.info/price?bzn=CH&start={start}&end={end}"
 EZB_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
@@ -824,8 +827,24 @@ class Handler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def oberflaeche(self):
+        host = (self.headers.get("Host") or "").split(":")[0].lower()
+        self.directory = WWW_KUNDE if KUNDE_HOST.match(host) and os.path.isdir(WWW_KUNDE) else WWW
+
+    def do_HEAD(self):
+        self.oberflaeche()
+        return super().do_HEAD()
+
     def do_GET(self):
+        self.oberflaeche()
         path = self.path.split("?")[0]
+        if path == "/api/info":
+            try:
+                with open(ANLAGE_CFG, encoding="utf-8") as f:
+                    a = json.load(f)
+            except (OSError, ValueError):
+                a = {}
+            return self.send_json({"titel": a.get("titel") or "Mein Zuhause", "kwp": a.get("max_kw")})
         if path == "/api/status":
             with lock:
                 return self.send_json(state["status"] or {"fronius_ok": False, "startet": True})

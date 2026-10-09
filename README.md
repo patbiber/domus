@@ -332,6 +332,13 @@ kunden/kunde.py liste
 kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zertifikat löschen
 ```
 
+- **Kunden-Oberfläche** `energie/www-kunde/` (modernes, marktfähiges Layout im Stil von homi.solar, hell/dunkel,
+  Handy mit Tab-Leiste unten): `energie/server.py` liefert sie für jeden Aufruf über `<name>.homi.solar` aus (Host-Header),
+  alle anderen Adressen (home.biber.solar, LAN) bekommen weiterhin die Retro-Seite `www/`. Gleiche API, gleiche Push-Abos.
+  Bereiche: Übersicht (Energiefluss live, Kennzahlen heute, Sonne morgen, Strompreis, 24 h), Verlauf (Woche/Monat/Jahr
+  aus dem Archiv), Strompreis (Börse heute/morgen, Tarif, Wert der Einspeisung, Fahrplan der Überschuss-Stunden),
+  Mehr (App/Push, Batterie-Simulation, Anlage, Kontakt). Diagramme als eigenes SVG mit Werten beim Antippen, keine
+  Fremdbibliothek. Anzeigename aus `energie/anlage.json` (`titel`) über `/api/info`.
 - **Erste Instanz: https://biber.homi.solar** = Patricks eigenes homi (Ziel `host:8099`, seit 09.10.2026; home.biber.solar
   läuft parallel weiter). Push-Abos und Daten teilen sich beide Adressen, die App muss pro Adresse installiert werden.
 - Der Platzhalter (`kunden/platzhalter.html`, «Hier wohnt bald ein homi») ist immer öffentlich; das Passwort gilt,

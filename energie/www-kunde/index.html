@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>homi</title>
+<meta name="description" content="homi – deine Solaranlage, dein Verbrauch und deine Stromkosten live.">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#0b1730">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="homi">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header class="kopf">
+  <div class="kopf-innen">
+    <div class="marke">
+      <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#13254a"/><circle cx="23" cy="9" r="5.5" fill="#FFB020"/><path d="M3 18 14 8.5 25 18v11H3z" fill="#fff"/><rect x="11" y="20" width="6" height="9" rx="1" fill="#FFB020"/></svg>
+      <div><b>homi</b><span id="titel">Mein Zuhause</span></div>
+    </div>
+    <nav class="tabs" aria-label="Bereiche">
+      <button type="button" data-tab="uebersicht" class="aktiv" aria-current="page">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Übersicht</span></button>
+      <button type="button" data-tab="verlauf">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Verlauf</span></button>
+      <button type="button" data-tab="preise">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-5 4 4 8-8M15 8h5v5"/></svg><span>Strompreis</span></button>
+      <button type="button" data-tab="mehr">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg><span>Mehr</span></button>
+    </nav>
+    <div id="live" class="live" title="Verbindung zur Anlage"><i></i><span>verbinde …</span></div>
+  </div>
+</header>
+
+<main>
+  <!-- ===================== Übersicht ===================== -->
+  <section id="tab-uebersicht" class="tab aktiv">
+    <div id="warnung" class="warnung" role="alert" hidden></div>
+
+    <div class="raster">
+      <article class="karte fluss-karte">
+        <div class="karte-kopf"><h2>Jetzt</h2><span id="fluss-zeit" class="leise"></span></div>
+        <svg id="fluss" class="fluss" viewBox="0 0 360 230" role="img" aria-label="Energiefluss zwischen Solaranlage, Haus und Stromnetz">
+          <path id="l-pv-haus" class="leitung" d="M88 62 C170 62 200 112 262 112"/>
+          <path id="l-pv-netz" class="leitung" d="M60 92 L60 140"/>
+          <path id="l-netz-haus" class="leitung" d="M88 170 C170 170 200 118 262 118"/>
+          <g class="knoten sonne" transform="translate(60 62)">
+            <circle r="30"/>
+            <g class="symbol"><circle r="8"/><path d="M0-15v-4M0 15v4M-15 0h-4M15 0h4M-10.6-10.6l-2.8-2.8M10.6 10.6l2.8 2.8M-10.6 10.6l-2.8 2.8M10.6-10.6l2.8-2.8"/></g>
+          </g>
+          <g class="knoten netz" transform="translate(60 170)">
+            <circle r="30"/>
+            <g class="symbol"><path d="M-6-14h12l5 28M-6-14l-5 28M-9-2h18M-11 9h22M0-14v-4"/></g>
+          </g>
+          <g class="knoten haus" transform="translate(296 115)">
+            <circle r="36"/>
+            <g class="symbol"><path d="M-14 1 0-12l14 13v14h-28z"/><path d="M-4 15V6h8v9"/></g>
+          </g>
+          <text id="t-pv" class="wert" x="60" y="20" text-anchor="middle">–</text>
+          <text class="schild" x="60" y="34" text-anchor="middle">Solar</text>
+          <text id="t-netz" class="wert" x="60" y="222" text-anchor="middle">–</text>
+          <text id="t-netz-l" class="schild" x="60" y="208" text-anchor="middle">Netz</text>
+          <text id="t-haus" class="wert" x="296" y="174" text-anchor="middle">–</text>
+          <text class="schild" x="296" y="190" text-anchor="middle">Verbrauch</text>
+        </svg>
+        <p id="fluss-satz" class="satz">Einen Moment, ich frage die Anlage …</p>
+      </article>
+
+      <div class="kpis" id="kpis-heute">
+        <div class="kpi sonne"><span>Solar heute</span><b id="k-pv">–</b><small id="k-pv2">&nbsp;</small></div>
+        <div class="kpi blau"><span>Verbrauch heute</span><b id="k-verbrauch">–</b><small id="k-verbrauch2">&nbsp;</small></div>
+        <div class="kpi gruen"><span>Autarkie heute</span><b id="k-autarkie">–</b><small>aus eigenem Strom</small></div>
+        <div class="kpi"><span>Bilanz heute</span><b id="k-bilanz">–</b><small id="k-bilanz2">&nbsp;</small></div>
+      </div>
+
+      <article class="karte" id="karte-prognose">
+        <div class="karte-kopf"><h2>Sonne morgen</h2><span id="p-tag" class="leise"></span></div>
+        <div class="gross"><span id="p-symbol" class="wetter" aria-hidden="true"></span><b id="p-kwh">–</b></div>
+        <p id="p-fenster" class="leise">&nbsp;</p>
+        <div class="zeile"><span>Heute bisher / erwartet</span><b id="p-heute">–</b></div>
+        <div class="zeile"><span id="p-ueber-l">Übermorgen</span><b id="p-ueber">–</b></div>
+      </article>
+
+      <article class="karte" id="karte-preis">
+        <div class="karte-kopf"><h2>Strompreis jetzt</h2><span id="pr-tarif" class="leise"></span></div>
+        <div class="zeile"><span>Du bezahlst</span><b id="pr-bezug">–</b></div>
+        <div class="zeile"><span>Du bekommst fürs Einspeisen</span><b id="pr-rueck">–</b></div>
+        <div class="zeile"><span>Strombörse (Day-Ahead)</span><b id="pr-boerse">–</b></div>
+        <p id="pr-hinweis" class="leise">&nbsp;</p>
+      </article>
+
+      <article class="karte">
+        <div class="karte-kopf"><h2>Letzte 24 Stunden</h2>
+          <div class="legende"><span class="sonne">Solar</span><span class="blau">Verbrauch</span></div></div>
+        <div id="chart-24h" class="chart" data-hoehe="200"></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ===================== Verlauf ===================== -->
+  <section id="tab-verlauf" class="tab">
+    <div class="seg" id="seg-verlauf" role="tablist">
+      <button type="button" data-z="woche" class="an">Woche</button>
+      <button type="button" data-z="monat">Monat</button>
+      <button type="button" data-z="jahr">Jahr</button>
+    </div>
+    <article class="karte">
+      <div class="karte-kopf"><h2 id="v-titel">Letzte 7 Tage</h2>
+        <div class="legende"><span class="sonne">Erzeugt</span><span class="blau">Verbraucht</span></div></div>
+      <div id="chart-verlauf" class="chart" data-hoehe="240"></div>
+      <p id="v-hinweis" class="leise">&nbsp;</p>
+    </article>
+    <div class="kpis sechs" id="v-summen"></div>
+  </section>
+
+  <!-- ===================== Strompreis ===================== -->
+  <section id="tab-preise" class="tab">
+    <div class="raster">
+      <article class="karte breit">
+        <div class="karte-kopf"><h2>Börsenpreis heute und morgen</h2>
+          <div class="legende"><span class="blau">Rp/kWh</span><span class="rot">negativ</span><span class="sonne">jetzt</span></div></div>
+        <div id="chart-boerse" class="chart" data-hoehe="220"></div>
+        <p class="leise">EPEX Spot Day-Ahead Schweiz via Energy-Charts (CC BY 4.0), umgerechnet zum EZB-Kurs. Die Preise für morgen erscheinen am frühen Nachmittag.</p>
+      </article>
+      <article class="karte">
+        <div class="karte-kopf"><h2>Dein Tarif</h2><span id="t-stand" class="leise"></span></div>
+        <div class="zeile"><span>Produkt</span><b id="t-produkt">–</b></div>
+        <div class="zeile"><span>Bezug inkl. MWST</span><b id="t-bezug">–</b></div>
+        <div class="zeile"><span>Rücklieferung</span><b id="t-rueck">–</b></div>
+        <div class="zeile"><span>Selbst verbrauchen lohnt sich um</span><b id="t-vorteil">–</b></div>
+      </article>
+      <article class="karte">
+        <div class="karte-kopf"><h2>Einspeisung mit Börsenpreis</h2><span class="leise">heute</span></div>
+        <div class="zeile"><span>Mit dynamischem Tarif</span><b id="e-dyn">–</b></div>
+        <div class="zeile"><span>Mit deinem fixen Tarif</span><b id="e-fix">–</b></div>
+        <div class="zeile"><span>Batterie 5 kWh, clever gesteuert</span><b id="e-batt">–</b></div>
+        <p class="leise">So viel wäre deine Einspeisung heute wert. Ab 2027 dürfen Netzbetreiber nach Börsenpreis vergüten.</p>
+      </article>
+      <article class="karte breit">
+        <div class="karte-kopf"><h2>Fahrplan</h2>
+          <div class="seg klein" id="seg-plan"><button type="button" data-t="heute" class="an">Heute</button><button type="button" data-t="morgen">Morgen</button></div></div>
+        <ol id="plan" class="plan"></ol>
+      </article>
+    </div>
+  </section>
+
+  <!-- ===================== Mehr ===================== -->
+  <section id="tab-mehr" class="tab">
+    <div class="raster">
+      <article class="karte" id="app">
+        <div class="karte-kopf"><h2>App und Benachrichtigungen</h2></div>
+        <p id="app-text" class="leise">Installiere homi auf deinem Handy: <b>iPhone</b> Teilen → «Zum Home-Bildschirm», <b>Android</b> Menü ⋮ → «App installieren».</p>
+        <div id="push-status" class="status-zeile">Push ist auf diesem Gerät aus</div>
+        <label class="schalter"><input type="checkbox" value="minuspreis" checked><span></span><div><b>Negative Strompreise</b><small>morgens um 06:45, nur wenn es sie gibt</small></div></label>
+        <label class="schalter"><input type="checkbox" value="prognose" checked><span></span><div><b>Sonnenprognose</b><small>jeden Abend um 19:00 für morgen</small></div></label>
+        <label class="schalter"><input type="checkbox" value="ausfall" checked><span></span><div><b>Störungen</b><small>wenn die Anlage nicht mehr antwortet</small></div></label>
+        <div class="knoepfe">
+          <button type="button" class="knopf haupt" id="push-an">Benachrichtigungen einschalten</button>
+          <button type="button" class="knopf" id="push-test" hidden>Testnachricht senden</button>
+          <button type="button" class="knopf leise-knopf" id="push-aus" hidden>Ausschalten</button>
+          <button type="button" class="knopf" id="app-install" hidden>App installieren</button>
+        </div>
+        <p id="app-meldung" class="meldung" aria-live="polite"></p>
+      </article>
+
+      <article class="karte">
+        <div class="karte-kopf"><h2>Lohnt sich eine Batterie?</h2><span id="s-tage" class="leise"></span></div>
+        <p class="leise">homi rechnet mit deinen echten Messwerten mit, als hättest du einen Speicher.</p>
+        <div id="speicher"></div>
+      </article>
+
+      <article class="karte">
+        <div class="karte-kopf"><h2>Deine Anlage</h2></div>
+        <div class="zeile"><span>Standort</span><b id="a-titel">–</b></div>
+        <div class="zeile"><span>Leistung</span><b id="a-kwp">–</b></div>
+        <div class="zeile"><span>Daten seit</span><b id="a-seit">–</b></div>
+        <div class="zeile"><span>Prognose-Treffsicherheit</span><b id="a-treffer">–</b></div>
+        <p class="leise">Messwerte alle 5 Sekunden direkt vom Wechselrichter, gespeichert in der Schweiz. Wetter: Open-Meteo (CC BY 4.0).</p>
+      </article>
+
+      <article class="karte">
+        <div class="karte-kopf"><h2>Hilfe und Wünsche</h2></div>
+        <p>homi wächst mit deinen Wünschen. Neue Auswertung, andere Geräte, eine Steuerung? Schreib mir.</p>
+        <a class="knopf haupt" href="mailto:patrick@biber.solar?subject=homi">patrick@biber.solar</a>
+        <p class="leise fuss">homi von Biber Solar · Uerikon</p>
+      </article>
+    </div>
+  </section>
+</main>
+
+<div id="tip" class="tip" hidden></div>
+<script src="/app.js"></script>
+</body>
+</html>
