@@ -332,6 +332,8 @@ kunden/kunde.py liste
 kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zertifikat löschen
 ```
 
+- **Erste Instanz: https://biber.homi.solar** = Patricks eigenes homi (Ziel `host:8099`, seit 09.10.2026; home.biber.solar
+  läuft parallel weiter). Push-Abos und Daten teilen sich beide Adressen, die App muss pro Adresse installiert werden.
 - Der Platzhalter (`kunden/platzhalter.html`, «Hier wohnt bald ein homi») ist immer öffentlich; das Passwort gilt,
   sobald ein Ziel gesetzt ist. `beispiel.homi.solar` ist die öffentliche Musterseite (ohne Passwort).
 - **Wildcard-Zertifikat `*.homi.solar`** (seit 09.10.2026, Name `wildcard.homi.solar`): alle Kunden-Instanzen nutzen
