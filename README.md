@@ -284,7 +284,9 @@ nur im Netz `proxy_default`).
   Timer `energy-anfrage.timer` holt stündlich fehlgeschlagene Sendungen nach. Der Container braucht keine Mail-Zugangsdaten.
 - **Eigene Adresse `<name>.homi.solar`**: erwähnt in «So geht's» (Schritt 3), in der App-Liste mit Link auf
   https://beispiel.homi.solar und in der FAQ «Wie erreiche ich mein homi?».
-- **Abschnitt «homi als App»** (`#app`): Handy-Rahmen mit echtem homi-Screenshot (`img/app-homi.png`) und
+- **Abschnitt «So sieht dein homi aus»** (`#ansicht`): drei echte Handy-Screenshots der Kunden-Oberfläche
+  (`img/app-uebersicht.png`, `app-verlauf.png`, `app-preise.png`, aufgenommen 09.10.2026 abends), auf dem Handy wischbar.
+- **Abschnitt «homi als App»** (`#app`): Handy-Rahmen mit echtem homi-Screenshot (`img/app-uebersicht.png`) und
   eingeblendeter Beispiel-Push-Nachricht.
 - Proxy `proxy/conf.d/homi.solar.conf`: Let's Encrypt, strenge CSP, nur GET bzw. POST fürs Formular
   (`energy.biber.solar.conf` enthält nur noch die Weiterleitung).

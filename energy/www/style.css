@@ -309,7 +309,7 @@ footer nav { display: flex; gap: 18px; flex-wrap: wrap; }
 .handy::before { content: ""; position: absolute; top: 20px; left: 50%; width: 84px; height: 22px; margin-left: -42px; border-radius: 12px; background: #0b0b0f; z-index: 2; }
 .push-karte { position: absolute; top: 52px; left: 22px; right: 22px; z-index: 3; display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 18px; background: rgba(248, 249, 252, .94); color: var(--ink); box-shadow: 0 10px 30px rgba(0, 0, 0, .35); font-size: .78rem; line-height: 1.35; opacity: 0; transform: translateY(-18px) scale(.97); transition: opacity .5s ease .9s, transform .5s cubic-bezier(.2, 1.4, .4, 1) .9s; }
 .rein.sichtbar .push-karte { opacity: 1; transform: none; }
-.push-karte img { width: 34px; height: 34px; border-radius: 9px; image-rendering: pixelated; flex: none; }
+.push-karte img { width: 34px; height: 34px; border-radius: 9px; flex: none; }
 .push-karte small { display: block; color: var(--muted); font-size: .72rem; }
 .push-karte b { display: block; font-size: .82rem; }
 .push-karte span { display: block; color: var(--ink-2); }
@@ -317,3 +317,16 @@ footer nav { display: flex; gap: 18px; flex-wrap: wrap; }
 @media (prefers-reduced-motion: reduce) { .push-karte { opacity: 1; transform: none; transition: none; } }
 .app-liste a { color: var(--sun-2); font-weight: 700; text-decoration: none; white-space: nowrap; }
 .app-liste a:hover { text-decoration: underline; }
+
+/* Einblick: drei echte Handy-Ansichten; schmal als wischbare Reihe */
+#ansicht { background: var(--surface); }
+.ansicht-reihe { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.ansicht-reihe figure { margin: 0; display: grid; gap: 14px; justify-items: center; align-content: start; text-align: center; }
+.ansicht-reihe img { width: 100%; max-width: 290px; height: auto; border-radius: 38px; border: 10px solid #0b0b0f; box-shadow: var(--shadow-lg); }
+.ansicht-reihe figcaption { display: grid; gap: 4px; max-width: 30ch; }
+.ansicht-reihe figcaption span { color: var(--muted); font-size: .95rem; }
+@media (max-width: 900px) {
+  .ansicht-reihe { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 18px; padding: 16px 8px 28px; margin-inline: -8px; }
+  .ansicht-reihe img { box-shadow: 0 10px 24px rgba(15, 27, 45, .16); }
+  .ansicht-reihe figure { flex: 0 0 min(78%, 280px); scroll-snap-align: center; }
+}
