@@ -1,0 +1,8 @@
+# Mittags-Screenshots für homi.solar, sobald die Sonne scheint (siehe handy-screenshots.py)
+[Unit]
+Description=homi.solar: Handy-Ansichten mit Sonne aufnehmen
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/energy/handy-screenshots.py

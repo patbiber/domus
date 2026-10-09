@@ -1,0 +1,9 @@
+# Mittags stündlich prüfen, ob genug Sonne für die Screenshots da ist; schaltet sich nach Erfolg selbst ab
+[Unit]
+Description=homi.solar: Sonnen-Screenshots versuchen (11:30–14:30)
+
+[Timer]
+OnCalendar=*-*-* 11,12,13,14:30:00
+
+[Install]
+WantedBy=timers.target
