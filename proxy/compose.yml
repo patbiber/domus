@@ -28,8 +28,9 @@ services:
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    # Alle 12h Erneuerung prüfen (erneuert erst < 30 Tage vor Ablauf)
-    entrypoint: /bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done'
+    # Alle 12h Erneuerung prüfen (erneuert erst < 30 Tage vor Ablauf). Ohne --webroot: jedes Zertifikat nutzt die in
+    # renewal/*.conf gespeicherte Methode (webroot bzw. DNS-Hook ovh-dns-hook.py für *.homi.solar)
+    entrypoint: /bin/sh -c 'trap exit TERM; while :; do certbot renew --quiet; sleep 12h & wait $${!}; done'
     logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB
       driver: json-file
       options:

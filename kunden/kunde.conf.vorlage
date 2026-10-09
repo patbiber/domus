@@ -23,8 +23,8 @@ server {
     http2 on;
     server_name {{FQDN}};
 
-    ssl_certificate     /etc/letsencrypt/live/{{FQDN}}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/{{FQDN}}/privkey.pem;
+    ssl_certificate     /etc/letsencrypt/live/{{ZERTIFIKAT}}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ZERTIFIKAT}}/privkey.pem;
     ssl_protocols       TLSv1.2 TLSv1.3;
 
     add_header Strict-Transport-Security "max-age=15768000" always;

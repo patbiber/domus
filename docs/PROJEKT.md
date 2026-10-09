@@ -179,7 +179,7 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
 | Aufbewahrung | Container-Logs max. 3 × 10 MB, keine Protokollierung der laufenden API-Abrufe, HA-Backups: letzte 10 |
 | Öffentliche Ports | Nur 80/443 (Router → NUC); Port 8099 nur im LAN |
 | Home Assistant | TLS, IP-Sperre, 2-Faktor-Login |
-| Kunden-Instanzen | Eigene Zertifikate und Passwörter je Instanz, unbekannte Namen werden abgelehnt, Konfiguration nicht im Repo |
+| Kunden-Instanzen | Wildcard-Zertifikat (Namen nicht in CT-Logs), eigenes Passwort je Instanz, unbekannte Namen werden abgelehnt, Konfiguration nicht im Repo |
 | Energie-Seite | Passwortschutz (Basic Auth), nur lesend (ausser Push-Anmeldung, nur bekannte Push-Dienste), Rate-Limit, CSP |
 | Push | VAPID-Privatschlüssel nur in `energie/data/push/`; Inhalte für Google/Apple/Mozilla unlesbar verschlüsselt |
 
@@ -234,10 +234,10 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 07.10.2026 | homi als App (PWA): installierbar, Push bei Minuspreisen, Prognose und Störungen; Abschnitt «homi als App» auf energy |
 | 09.10.2026 | Domain homi.solar als Basis für Kunden-Instanzen (`<name>.homi.solar`), Skript `kunden/kunde.py`, Musterseite beispiel.homi.solar |
 | 09.10.2026 | homi.solar ist die Hauptadresse der Verkaufsseite (energy.biber.solar leitet mit 308 weiter) |
+| 09.10.2026 | Neuer OVH-Token für beide Zonen; Wildcard-Zertifikat `*.homi.solar` per DNS-01 (eigener Hook), Kundennamen nicht mehr in CT-Logs |
 
 ## 8. Offene Punkte
 
-- OVH-API-Token um die Zone homi.solar erweitern (IP-Nachführung; optional Wildcard-Zertifikat per DNS-01).
 - Kunden-Konfigurationen (`proxy/conf.d/kunde-*`) ins Backup ausser Haus aufnehmen (USB-Platte).
 - Rückliefervergütung 2027 nachtragen, sobald die GWS sie veröffentlichen (`energie/tarif.json`).
 - MQTT, Zigbee2MQTT und Hue einbinden.

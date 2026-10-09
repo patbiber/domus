@@ -43,7 +43,8 @@ cd proxy
 ./init-cert.sh             # echtes Zertifikat
 ```
 
-Erneuerung läuft automatisch (certbot prüft alle 12h, nginx lädt alle 6h neu). Port 80 leitet auf 443 weiter.
+Erneuerung läuft automatisch (certbot prüft alle 12h mit `certbot renew` ohne `--webroot`: jedes Zertifikat nutzt seine
+gespeicherte Methode, webroot bzw. DNS-Hook für `*.homi.solar`; nginx lädt alle 6h neu). Port 80 leitet auf 443 weiter.
 Neue Seiten: weitere Datei in `proxy/conf.d/` anlegen.
 
 `domus.biber.solar` leitet auf Home Assistant weiter (`host.docker.internal:8123`, WebSockets aktiv).
@@ -333,12 +334,17 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
 
 - Der Platzhalter (`kunden/platzhalter.html`, «Hier wohnt bald ein homi») ist immer öffentlich; das Passwort gilt,
   sobald ein Ziel gesetzt ist. `beispiel.homi.solar` ist die öffentliche Musterseite (ohne Passwort).
-- Namen sind öffentlich sichtbar (DNS-Abfragen, Certificate-Transparency-Logs der Zertifikate) → neutrale Namen
-  empfehlen. Später möglich: Wildcard-Zertifikat `*.homi.solar` per DNS-01, dann erscheinen keine Kundennamen mehr in
-  den Logs (braucht OVH-Token mit POST/DELETE auf `/domain/zone/homi.solar/record*`).
-- IP-Nachführung: `system/ovh-dns.py` kennt die Zone homi.solar (`""`, `www`, `*`), braucht dafür aber ein OVH-Token
-  mit Rechten auf `/domain/zone/homi.solar/…` (das bestehende darf nur biber.solar). Bis dahin meldet das Skript die
-  Zone als «NICHT möglich» (Exit-Code 2), biber.solar wird trotzdem nachgeführt und `ip-check.sh` mailt den Rest.
+- **Wildcard-Zertifikat `*.homi.solar`** (seit 09.10.2026, Name `wildcard.homi.solar`): alle Kunden-Instanzen nutzen
+  es, `kunde.py` holt dann kein Einzelzertifikat mehr → Kundennamen erscheinen nicht in den öffentlichen
+  Certificate-Transparency-Logs, neue Instanzen sind in unter einer Sekunde eingerichtet.
+  Geholt mit `proxy/wildcard-cert.sh` per DNS-01: `proxy/ovh-dns-hook.py` setzt den TXT-Eintrag `_acme-challenge`
+  über die OVH-API, wartet 90 s und löscht ihn danach wieder (das offizielle Plugin certbot-dns-ovh bräuchte zusätzlich
+  das Recht, alle Zonen aufzulisten). Hook und Zugangsdaten liegen in `proxy/certbot/conf/` (`ovh.ini`, 600, nicht im
+  Repo); der certbot-Container erneuert es mit denselben Hooks. Nach einem OVH-Schlüsselwechsel `wildcard-cert.sh`
+  erneut aufrufen (schreibt `ovh.ini` neu, holt nur bei Bedarf ein neues Zertifikat).
+- DNS bleibt öffentlich: Wer den Namen kennt, kann ihn auflösen → trotzdem neutrale Namen empfehlen.
+- IP-Nachführung: `system/ovh-dns.py` führt beide Zonen nach (biber.solar und homi.solar mit `""`, `www`, `*`;
+  TTL 300 s). Fehlen für eine Zone Rechte, meldet es sie als «NICHT möglich» (Exit-Code 2), die anderen laufen weiter.
 
 ### Trainingsseite training.biber.solar (`training/`)
 
@@ -386,7 +392,8 @@ müssen übereinstimmen) und prüft, ob biber.solar, www, training, domus, home,
 - DNS zeigt nicht auf die IP → Mail, danach Erinnerung höchstens alle 6 h; wieder in Ordnung → Entwarnung.
 - Zustand in `~/.local/state/domus/` (`public_ip`, `ip_meldung`).
 - **Automatische DNS-Nachführung:** Stimmt ein A-Eintrag nicht, setzt `system/ovh-dns.py --setzen <ip>` die Einträge
-  über die OVH-API neu (nur A-Einträge von biber.solar, www, training, domus, home, test, energy und Wildcard `*`; MX/TXT bleiben unberührt) und
+  über die OVH-API neu (nur A-Einträge von biber.solar, www, training, domus, home, test, energy, `*` sowie homi.solar, www, `*`;
+  MX/TXT bleiben unberührt) und
   lädt die Zone neu. Zugangsdaten `OVH_*` in `.env` (Vorlage `.env.example`, Token-Rechte dort beschrieben).
   Ohne Zugangsdaten oder bei Fehler: Mail mit Anleitung für die manuelle Änderung. `system/ovh-dns.py` ohne
   Argument zeigt die aktuellen A-Einträge laut OVH.

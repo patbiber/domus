@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Kunden-Instanzen von homi unter <name>.homi.solar einrichten: nginx-Konfiguration, Let's-Encrypt-Zertifikat, Passwort.
 
-Der Wildcard-Eintrag *.homi.solar zeigt auf den NUC; der Standardserver (proxy/conf.d/00-default.conf) beantwortet die
-Let's-Encrypt-Prüfung für jeden Namen, darum genügt ein Aufruf. Erzeugt werden (nur auf dem NUC, nicht im Repo):
+Der Wildcard-Eintrag *.homi.solar zeigt auf den NUC. Zertifikat: das Wildcard-Zertifikat *.homi.solar
+(proxy/wildcard-cert.sh), sonst ein Einzelzertifikat per HTTP-01 über den Standardserver (proxy/conf.d/00-default.conf). Erzeugt werden (nur auf dem NUC, nicht im Repo):
   proxy/conf.d/kunde-<name>.conf       aus kunden/kunde.conf.vorlage
   proxy/conf.d/kunde-<name>.htpasswd   Benutzer «homi», Passwort wird einmal angezeigt
 
@@ -36,6 +36,7 @@ CONF_D = os.path.join(HIER, "..", "proxy", "conf.d")
 ENV = os.path.join(HIER, "..", ".env")
 ICON = os.path.join(HIER, "..", "energie", "www", "icons", "homi-192.png")
 BENUTZER = "homi"
+WILDCARD = f"wildcard.{DOMAIN}"                  # Zertifikatsname von proxy/wildcard-cert.sh
 RESERVIERT = {"www", "mail", "smtp", "imap", "pop", "api", "admin", "app", "status", "test", "demo", "homi", "kunden",
               "ftp", "ns1", "ns2", "autoconfig", "autodiscover", "webmail", "vpn", "login", "konto"}
 NAME_RE = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,28}[a-z0-9])$")
@@ -137,7 +138,7 @@ def schreiben(name, ziel, passwort, angelegt):
     anzeige, url = ziel_aufloesen(ziel)
     with open(os.path.join(HIER, "kunde.conf.vorlage"), encoding="utf-8") as f:
         text = f.read()
-    for k, v in {"{{FQDN}}": f"{name}.{DOMAIN}", "{{NAME}}": name, "{{ZIEL}}": anzeige,
+    for k, v in {"{{FQDN}}": f"{name}.{DOMAIN}", "{{NAME}}": name, "{{ZERTIFIKAT}}": zert_name(f"{name}.{DOMAIN}"), "{{ZIEL}}": anzeige,
                  "{{PASSWORT}}": "an" if passwort else "aus", "{{ANGELEGT}}": angelegt,
                  "{{INHALT}}": inhalt(name, url, passwort)}.items():
         text = text.replace(k, v)
@@ -170,8 +171,17 @@ def passwort_setzen(name):
     return pw
 
 
+def zert_da(name):
+    return docker("exec", "certbot", "test", "-f", f"/etc/letsencrypt/live/{name}/fullchain.pem", pruefen=False).returncode == 0
+
+
+def zert_name(fqdn):
+    """Wildcard-Zertifikat, falls vorhanden – dann taucht der Kundenname in keinem öffentlichen Zertifikats-Log auf"""
+    return WILDCARD if zert_da(WILDCARD) else fqdn
+
+
 def zertifikat(fqdn):
-    if docker("exec", "certbot", "test", "-f", f"/etc/letsencrypt/live/{fqdn}/fullchain.pem", pruefen=False).returncode == 0:
+    if zert_da(WILDCARD) or zert_da(fqdn):
         return
     email = next((z.split("=", 1)[1].strip() for z in open(ENV, encoding="utf-8") if z.startswith("LETSENCRYPT_EMAIL=")), "")
     if not email:
@@ -246,7 +256,8 @@ def entfernen(name):
     if os.path.exists(htpasswd):
         os.remove(htpasswd)
     docker("exec", "nginx", "nginx", "-s", "reload")
-    docker("exec", "certbot", "certbot", "delete", "-n", "--cert-name", f"{name}.{DOMAIN}", pruefen=False)
+    if zert_da(f"{name}.{DOMAIN}"):
+        docker("exec", "certbot", "certbot", "delete", "-n", "--cert-name", f"{name}.{DOMAIN}", pruefen=False)
     print(f"✓ {name}.{DOMAIN} entfernt")
 
 
