@@ -348,7 +348,8 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   = Eigenverbrauch; Wert: Eigenverbrauch × Bezugstarif + Einspeisung × Rücklieferung (heutige Tarife, ohne Alterung).
   Jahresertrag aus dem laufenden Jahr hochgerechnet (typische Monatsanteile), Inbetriebnahme daraus geschätzt.
   Einstellungen in `anlage.json`: `investition_chf` (Patrick: 33'000), `foerderung_chf`, `inbetriebnahme`,
-  `jahresertrag_kwh`. Stand 10.10.2026: 17.8 % zurückverdient, CHF ~1'490/Jahr, Break-even ca. Dez. 2044.
+  `jahresertrag_kwh`. Patrick: Investition 32'849.60, Pronovo-Einmalvergütung 3'390 → selbst bezahlt 29'459.60.
+  Stand 10.10.2026: 19.9 % zurückverdient, CHF ~1'490/Jahr, Break-even ca. Juli 2042 (nach ~19.7 Jahren).
   Überall vorhanden: Kunden-UI (Karte unten in der Übersicht, Rechnung unter «Mehr»), Retro-Seite (Kachel «Anlage
   abbezahlt») und Home Assistant (`sensor.pv_anlage_amortisiert` mit Attributen, `sensor.pv_anlage_break_even`).
 - **Grundsatz:** Jede Funktion in allen Oberflächen (Retro, Kunden-UI, Home Assistant), ausser gerätespezifische

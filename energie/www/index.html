@@ -382,7 +382,7 @@ async function pollAmort() {
       const d = new Date(a.break_even);
       $("s-amort").textContent = `${a.amortisiert_pct.toFixed(1)} %`;
       $("s-amort2").textContent = a.amortisiert_pct >= 100 ? "bezahlt!" :
-        `${Math.round(a.bisher_chf).toLocaleString("de-CH")} von ${Math.round(a.netto_chf).toLocaleString("de-CH")} CHF · Break-even ${MONATE[d.getMonth()]} ${d.getFullYear()} · +${Math.round(a.pro_jahr_chf).toLocaleString("de-CH")} CHF/Jahr`;
+        `${Math.round(a.bisher_chf).toLocaleString("de-CH")} von ${Math.round(a.netto_chf).toLocaleString("de-CH")} CHF${a.foerderung_chf ? " (nach Förderung)" : ""} · Break-even ${MONATE[d.getMonth()]} ${d.getFullYear()} · +${Math.round(a.pro_jahr_chf).toLocaleString("de-CH")} CHF/Jahr`;
       $("s-amort3").style.width = `${Math.min(100, a.amortisiert_pct)}%`;
     }
   } catch {}

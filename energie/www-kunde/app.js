@@ -382,7 +382,8 @@ function amortZeichnen() {
     const heute = (Math.max(0, h.pv_kwh - h.einspeisung_kwh) * a.bezug_rp_kwh + h.einspeisung_kwh * a.rueck_rp_kwh) / 100;
     $("am-heute").textContent = `heute + CHF ${zahl(heute, 2)}`;
   }
-  $("am-satz").textContent = fertig ? "bezahlt" : `${chf0(a.netto_chf)} Investition`;
+  $("am-satz").textContent = fertig ? "bezahlt" : a.foerderung_chf
+    ? `${chf0(a.investition_chf)} Investition − ${chf0(a.foerderung_chf)} Förderung = ${chf0(a.netto_chf)}` : `${chf0(a.netto_chf)} Investition`;
   $("am-fuellung").style.width = `${Math.min(100, a.amortisiert_pct)}%`;
   $("am-heute-marke").style.left = `calc(${Math.min(100, a.amortisiert_pct)}% - 1px)`;
   $("am-balken").setAttribute("aria-valuenow", a.amortisiert_pct);
@@ -391,6 +392,7 @@ function amortZeichnen() {
   // Rechnung im Bereich «Mehr»
   $("ar-inv").textContent = chf0(a.investition_chf);
   $("ar-foerd").textContent = a.foerderung_chf ? `− ${chf0(a.foerderung_chf)}` : "noch nicht erfasst";
+  $("ar-netto").textContent = chf0(a.netto_chf);
   $("ar-start").textContent = `${monatJahr(a.inbetriebnahme)}${a.inbetriebnahme_geschaetzt ? " (geschätzt aus dem Zähler)" : ""}`;
   $("ar-prod").textContent = `${a.produktion_kwh.toLocaleString("de-CH")} kWh`;
   $("ar-eigen").textContent = `${zahl(a.eigenverbrauch_pct, 1)} % · ${a.eigenverbrauch_kwh.toLocaleString("de-CH")} kWh`;
