@@ -343,6 +343,12 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   aus dem Archiv), Strompreis (Börse heute/morgen, Tarif, Wert der Einspeisung, Fahrplan der Überschuss-Stunden),
   Mehr (App/Push, Batterie-Simulation, Anlage, Kontakt). Diagramme als eigenes SVG mit Werten beim Antippen, keine
   Fremdbibliothek. Anzeigename aus `energie/anlage.json` (`titel`) über `/api/info`.
+- **Amortisation** (`/api/amortisation`, Karte oben in der Übersicht, Rechnung unter «Mehr»): Produktion seit
+  Inbetriebnahme (Fronius `TOTAL_ENERGY`), Hausverbrauch (Smart Meter, Verbrauchszweig) × Autarkie aus dem homi-Archiv
+  = Eigenverbrauch; Wert: Eigenverbrauch × Bezugstarif + Einspeisung × Rücklieferung (heutige Tarife, ohne Alterung).
+  Jahresertrag aus dem laufenden Jahr hochgerechnet (typische Monatsanteile), Inbetriebnahme daraus geschätzt.
+  Einstellungen in `anlage.json`: `investition_chf` (Patrick: 33'000), `foerderung_chf`, `inbetriebnahme`,
+  `jahresertrag_kwh`. Stand 10.10.2026: 17.8 % zurückverdient, CHF ~1'490/Jahr, Break-even ca. Dez. 2044.
 - **Erste Instanz: https://biber.homi.solar** = Patricks eigenes homi (Ziel `host:8099`, seit 09.10.2026; home.biber.solar
   läuft parallel weiter). Push-Abos und Daten teilen sich beide Adressen, die App muss pro Adresse installiert werden.
 - Der Platzhalter (`kunden/platzhalter.html`, «Hier wohnt bald ein homi») ist immer öffentlich; das Passwort gilt,

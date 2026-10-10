@@ -238,6 +238,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 09.10.2026 | Neuer OVH-Token für beide Zonen; Wildcard-Zertifikat `*.homi.solar` per DNS-01 (eigener Hook), Kundennamen nicht mehr in CT-Logs |
 | 09.10.2026 | Erste Kunden-Instanz: Patricks homi unter https://biber.homi.solar |
 | 09.10.2026 | Kunden-Oberfläche `energie/www-kunde/` (modernes Layout, App, Push) für alle `<name>.homi.solar`; home.biber.solar bleibt Retro |
+| 10.10.2026 | Amortisation in homi: zurückverdient, Break-even, Hebel Eigenverbrauch (Investition 33'000 CHF) |
 
 ## 8. Offene Punkte
 

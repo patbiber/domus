@@ -42,6 +42,22 @@
   <section id="tab-uebersicht" class="tab aktiv">
     <div id="warnung" class="warnung" role="alert" hidden></div>
 
+    <article class="karte amort" id="amort" hidden>
+      <div class="amort-kopf">
+        <div><h2>Amortisation</h2><p class="leise" id="am-satz">&nbsp;</p></div>
+        <button type="button" class="link" id="am-details">So rechnet homi →</button>
+      </div>
+      <div class="amort-zahlen">
+        <div><span>Zurückverdient</span><b id="am-pct">–</b><small id="am-bisher">&nbsp;</small></div>
+        <div><span>Break-even</span><b id="am-datum">–</b><small id="am-rest">&nbsp;</small></div>
+        <div><span>Pro Jahr</span><b id="am-jahr">–</b><small id="am-heute">&nbsp;</small></div>
+      </div>
+      <div class="amort-balken" role="progressbar" aria-label="Anteil der Investition, der schon zurückverdient ist" aria-valuemin="0" aria-valuemax="100" id="am-balken">
+        <i id="am-fuellung"></i><span id="am-heute-marke"></span>
+      </div>
+      <div class="amort-skala"><span id="am-start">Inbetriebnahme</span><span id="am-ziel">–</span></div>
+    </article>
+
     <div class="raster">
       <article class="karte fluss-karte">
         <div class="karte-kopf"><h2>Jetzt</h2><span id="fluss-zeit" class="leise"></span></div>
@@ -166,6 +182,23 @@
           <button type="button" class="knopf" id="app-install" hidden>App installieren</button>
         </div>
         <p id="app-meldung" class="meldung" aria-live="polite"></p>
+      </article>
+
+      <article class="karte" id="amort-rechnung" hidden>
+        <div class="karte-kopf"><h2>Amortisation: so rechnet homi</h2></div>
+        <div class="zeile"><span>Investition</span><b id="ar-inv">–</b></div>
+        <div class="zeile"><span>Förderung (Einmalvergütung)</span><b id="ar-foerd">–</b></div>
+        <div class="zeile"><span>Inbetriebnahme</span><b id="ar-start">–</b></div>
+        <div class="zeile"><span>Produziert seit Inbetriebnahme</span><b id="ar-prod">–</b></div>
+        <div class="zeile"><span>davon selbst verbraucht</span><b id="ar-eigen">–</b></div>
+        <div class="zeile"><span>Wert pro kWh im Mittel</span><b id="ar-wert">–</b></div>
+        <div class="zeile"><span>Bisher erwirtschaftet</span><b id="ar-bisher">–</b></div>
+        <div class="zeile"><span>Jahresertrag</span><b id="ar-jahr">–</b></div>
+        <div class="zeile"><span>Break-even</span><b id="ar-be">–</b></div>
+        <p class="leise" id="ar-hebel"></p>
+        <p class="leise">Selbst verbrauchter Strom zählt mit dem Bezugstarif (den Einkauf sparst du), eingespeister mit der
+          Rücklieferung. Gerechnet mit den heutigen Tarifen, ohne Alterung der Module und ohne Preisänderungen.
+          Einmalvergütung und Steuerabzug verkürzen die Dauer – sag mir die Beträge, dann rechne ich sie ein.</p>
       </article>
 
       <article class="karte">

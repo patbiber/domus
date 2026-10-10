@@ -4,7 +4,7 @@ const $ = id => document.getElementById(id);
 const WT = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
 const WT_LANG = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
 const MON = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
-const D = { status: null, hist: [], boerse: null, ein: null, prog: null, heute: null, info: null, speicher: null };
+const D = { status: null, hist: [], boerse: null, ein: null, prog: null, heute: null, info: null, speicher: null, amort: null };
 const zahl = (x, n = 1) => x == null || isNaN(x) ? "–" : Number(x).toLocaleString("de-CH", { minimumFractionDigits: n, maximumFractionDigits: n });
 const kw = w => w == null ? "–" : (Math.abs(w) < 1000 ? `${Math.round(w)} W` : `${zahl(w / 1000, 2)} kW`);
 const chf = x => x == null ? "–" : `${x < 0 ? "−" : ""}CHF ${zahl(Math.abs(x), 2)}`;
@@ -359,6 +359,54 @@ document.querySelectorAll("#seg-plan button").forEach(b => b.onclick = () => {
   planTag = b.dataset.t; planZeichnen();
 });
 
+/* ======================= Amortisation ======================= */
+const chf0 = x => x == null ? "–" : `CHF ${Math.round(x).toLocaleString("de-CH")}`;
+const monatJahr = s => { const d = new Date(s); return `${["Jan.", "Feb.", "März", "April", "Mai", "Juni", "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez."][d.getMonth()]} ${d.getFullYear()}`; };
+function amortZeichnen() {
+  const a = D.amort;
+  if (!a || !a.aktiv) return;
+  $("amort").hidden = false; $("amort-rechnung").hidden = false;
+  const fertig = a.amortisiert_pct >= 100;
+  $("am-pct").textContent = `${zahl(a.amortisiert_pct, 1)} %`;
+  $("am-bisher").textContent = `${chf0(a.bisher_chf)} von ${chf0(a.netto_chf)}`;
+  $("am-datum").textContent = fertig ? "erreicht" : monatJahr(a.break_even);
+  $("am-rest").textContent = fertig ? "die Anlage verdient jetzt" : `in ${zahl(a.rest_jahre, 1)} Jahren`;
+  $("am-jahr").textContent = chf0(a.pro_jahr_chf);
+  // heutiger Beitrag: selbst verbraucht × Bezugstarif + eingespeist × Rücklieferung
+  const h = D.heute;
+  if (h) {
+    const heute = (Math.max(0, h.pv_kwh - h.einspeisung_kwh) * a.bezug_rp_kwh + h.einspeisung_kwh * a.rueck_rp_kwh) / 100;
+    $("am-heute").textContent = `heute + CHF ${zahl(heute, 2)}`;
+  }
+  $("am-satz").textContent = fertig ? "Deine Anlage hat sich bezahlt gemacht."
+    : `Deine Anlage hat ${chf0(a.bisher_chf)} zurückverdient. Bleibt es wie heute, ist sie ${monatJahr(a.break_even)} bezahlt.`;
+  $("am-fuellung").style.width = `${Math.min(100, a.amortisiert_pct)}%`;
+  $("am-heute-marke").style.left = `calc(${Math.min(100, a.amortisiert_pct)}% - 1px)`;
+  $("am-balken").setAttribute("aria-valuenow", a.amortisiert_pct);
+  $("am-start").textContent = `${a.inbetriebnahme_geschaetzt ? "ca. " : ""}${monatJahr(a.inbetriebnahme)}`;
+  $("am-ziel").textContent = a.break_even ? `${monatJahr(a.break_even)}` : "–";
+  // Rechnung im Bereich «Mehr»
+  $("ar-inv").textContent = chf0(a.investition_chf);
+  $("ar-foerd").textContent = a.foerderung_chf ? `− ${chf0(a.foerderung_chf)}` : "noch nicht erfasst";
+  $("ar-start").textContent = `${monatJahr(a.inbetriebnahme)}${a.inbetriebnahme_geschaetzt ? " (geschätzt aus dem Zähler)" : ""}`;
+  $("ar-prod").textContent = `${a.produktion_kwh.toLocaleString("de-CH")} kWh`;
+  $("ar-eigen").textContent = `${zahl(a.eigenverbrauch_pct, 1)} % · ${a.eigenverbrauch_kwh.toLocaleString("de-CH")} kWh`;
+  $("ar-wert").textContent = `${zahl(a.wert_rp_kwh, 2)} Rp.`;
+  $("ar-bisher").textContent = chf0(a.bisher_chf);
+  $("ar-jahr").textContent = `${a.jahresertrag_kwh.toLocaleString("de-CH")} kWh = ${chf0(a.pro_jahr_chf)}`;
+  $("ar-be").textContent = fertig ? "erreicht" : `${monatJahr(a.break_even)} · nach ${zahl(a.gesamtdauer_jahre, 1)} Jahren`;
+  // Hebel: doppelt so viel Eigenverbrauch
+  if (!fertig && a.eigenverbrauch_pct < 50) {
+    const ev = Math.min(.6, 2 * a.eigenverbrauch_pct / 100);
+    const proJahr = a.jahresertrag_kwh * (ev * a.bezug_rp_kwh + (1 - ev) * a.rueck_rp_kwh) / 100;
+    const frueher = a.rest_jahre - a.rest_chf / proJahr;
+    $("ar-hebel").innerHTML = `<b>Hebel:</b> Jede selbst verbrauchte kWh bringt ${zahl(a.bezug_rp_kwh - a.rueck_rp_kwh, 1)} Rp. mehr als eingespeist.
+      Mit ${Math.round(ev * 100)} % statt ${Math.round(a.eigenverbrauch_pct)} % Eigenverbrauch (z. B. Boiler, E-Auto, Batterie)
+      wäre die Anlage rund <b>${zahl(frueher, 1)} Jahre früher</b> bezahlt.`;
+  }
+}
+$("am-details").onclick = () => { tabZeigen("mehr"); setTimeout(() => $("amort-rechnung").scrollIntoView({ behavior: "smooth", block: "start" }), 50); };
+
 /* ======================= Mehr: Speicher, Anlage ======================= */
 function speicherZeichnen() {
   const s = D.speicher;
@@ -374,7 +422,7 @@ function speicherZeichnen() {
 /* ======================= Laden ======================= */
 function zeichnen() {
   flussZeichnen(); kpisZeichnen(); prognoseZeichnen(); preisZeichnen(); warnungZeichnen();
-  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen();
+  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen();
 }
 async function status() {
   try { D.status = await holen("status"); flussZeichnen(); kpisZeichnen(); preisZeichnen(); }
@@ -383,10 +431,10 @@ async function status() {
 async function minute() {
   try { D.hist = await holen("history"); } catch {}
   try { const r = await holen(`archiv?aufloesung=tag&von=${iso(new Date())}&bis=${iso(new Date())}`); D.heute = r.zeilen[0] || null; } catch {}
-  kpisZeichnen(); verlauf24Zeichnen();
+  kpisZeichnen(); verlauf24Zeichnen(); amortZeichnen();
 }
 async function selten() {
-  for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"]]) {
+  for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"]]) {
     try { D[k] = await holen(p); } catch {}
   }
   zeichnen();
