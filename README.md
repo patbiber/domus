@@ -349,6 +349,12 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   Jahresertrag aus dem laufenden Jahr hochgerechnet (typische Monatsanteile), Inbetriebnahme daraus geschätzt.
   Einstellungen in `anlage.json`: `investition_chf` (Patrick: 33'000), `foerderung_chf`, `inbetriebnahme`,
   `jahresertrag_kwh`. Stand 10.10.2026: 17.8 % zurückverdient, CHF ~1'490/Jahr, Break-even ca. Dez. 2044.
+  Überall vorhanden: Kunden-UI (Karte unten in der Übersicht, Rechnung unter «Mehr»), Retro-Seite (Kachel «Anlage
+  abbezahlt») und Home Assistant (`sensor.pv_anlage_amortisiert` mit Attributen, `sensor.pv_anlage_break_even`).
+- **Grundsatz:** Jede Funktion in allen Oberflächen (Retro, Kunden-UI, Home Assistant), ausser gerätespezifische
+  (z. B. Verbrauch des NUC). Stand 10.10.2026 zusätzlich angeglichen: Batterie-Simulation in der Retro-Seite,
+  Verlauf «Tag» und «Gesamt» in der Kunden-UI, HA-Sensoren `sensor.einspeisung_dynamisch_heute`,
+  `sensor.minuspreise_heute`, `sensor.minuspreise_morgen`.
 - **Erste Instanz: https://biber.homi.solar** = Patricks eigenes homi (Ziel `host:8099`, seit 09.10.2026; home.biber.solar
   läuft parallel weiter). Push-Abos und Daten teilen sich beide Adressen, die App muss pro Adresse installiert werden.
 - Der Platzhalter (`kunden/platzhalter.html`, «Hier wohnt bald ein homi») ist immer öffentlich; das Passwort gilt,

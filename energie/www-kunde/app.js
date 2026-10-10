@@ -278,7 +278,9 @@ let verlaufZeitraum = "woche", verlaufDaten = null;
 async function verlaufLaden() {
   const heute = new Date();
   let von, aufl, titel;
-  if (verlaufZeitraum === "woche") { von = new Date(heute - 6 * 864e5); aufl = "tag"; titel = "Letzte 7 Tage"; }
+  if (verlaufZeitraum === "tag") { von = heute; aufl = "stunde"; titel = "Heute"; }
+  else if (verlaufZeitraum === "gesamt") { von = new Date(Date.now() - 5 * 365 * 864e5); aufl = "jahr"; titel = "Alle Jahre"; }
+  else if (verlaufZeitraum === "woche") { von = new Date(heute - 6 * 864e5); aufl = "tag"; titel = "Letzte 7 Tage"; }
   else if (verlaufZeitraum === "monat") { von = new Date(heute - 29 * 864e5); aufl = "tag"; titel = "Letzte 30 Tage"; }
   else { von = new Date(heute.getFullYear(), heute.getMonth() - 11, 1); aufl = "monat"; titel = "Letzte 12 Monate"; }
   $("v-titel").textContent = titel;
@@ -288,12 +290,14 @@ async function verlaufLaden() {
 function verlaufZeichnen() {
   const d = verlaufDaten, box = $("chart-verlauf");
   if (!d || !box.offsetParent) return;
-  const z = d.zeilen, monat = d.aufloesung === "monat";
-  const lab = r => monat ? MON[+r.zeit.slice(5, 7) - 1] : datum(r.zeit);
+  const z = d.zeilen, monat = d.aufloesung === "monat", stunde = d.aufloesung === "stunde", jahr = d.aufloesung === "jahr";
+  const lab = r => jahr ? r.zeit.slice(0, 4) : stunde ? `${+r.zeit.slice(11, 13)}–${+r.zeit.slice(11, 13) + 1} Uhr`
+    : monat ? MON[+r.zeit.slice(5, 7) - 1] : datum(r.zeit);
   balkenChart(box, {
     labels: z.map(lab),
     gruppen: [{ werte: z.map(r => r.pv_kwh), farbe: farbe("sonne") }, { werte: z.map(r => r.verbrauch_kwh), farbe: farbe("blau") }],
-    xLabel: i => z.length <= 12 ? (monat ? MON[+z[i].zeit.slice(5, 7) - 1] : WT[new Date(z[i].zeit).getDay()])
+    xLabel: i => jahr ? z[i].zeit.slice(0, 4) : stunde ? (+z[i].zeit.slice(11, 13) % 6 === 0 ? `${+z[i].zeit.slice(11, 13)}h` : null)
+      : z.length <= 12 ? (monat ? MON[+z[i].zeit.slice(5, 7) - 1] : WT[new Date(z[i].zeit).getDay()])
       : (i % 5 === 0 ? `${+z[i].zeit.slice(8, 10)}.${+z[i].zeit.slice(5, 7)}.` : null),
     tip: i => `<b>${lab(z[i])}</b><br>Erzeugt ${zahl(z[i].pv_kwh, 1)} kWh<br>Verbraucht ${zahl(z[i].verbrauch_kwh, 1)} kWh<br>Bilanz ${chf(z[i].saldo_chf)}`,
   });
@@ -378,8 +382,7 @@ function amortZeichnen() {
     const heute = (Math.max(0, h.pv_kwh - h.einspeisung_kwh) * a.bezug_rp_kwh + h.einspeisung_kwh * a.rueck_rp_kwh) / 100;
     $("am-heute").textContent = `heute + CHF ${zahl(heute, 2)}`;
   }
-  $("am-satz").textContent = fertig ? "Deine Anlage hat sich bezahlt gemacht."
-    : `Deine Anlage hat ${chf0(a.bisher_chf)} zurückverdient. Bleibt es wie heute, ist sie ${monatJahr(a.break_even)} bezahlt.`;
+  $("am-satz").textContent = fertig ? "bezahlt" : `${chf0(a.netto_chf)} Investition`;
   $("am-fuellung").style.width = `${Math.min(100, a.amortisiert_pct)}%`;
   $("am-heute-marke").style.left = `calc(${Math.min(100, a.amortisiert_pct)}% - 1px)`;
   $("am-balken").setAttribute("aria-valuenow", a.amortisiert_pct);

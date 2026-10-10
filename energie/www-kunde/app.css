@@ -81,27 +81,22 @@ main { max-width: 1160px; margin: 0 auto; padding: 16px; }
 .gross b { font-size: 2.3rem; letter-spacing: -.03em; line-height: 1.1; }
 .wetter { font-size: 2.1rem; line-height: 1; }
 
-/* Amortisation */
-.amort { margin-bottom: 14px; background: linear-gradient(135deg, var(--navy), var(--navy-2)); color: #fff; }
+/* Amortisation (zurückhaltend, normale Karte) */
 .amort[hidden] { display: none; }
-.amort .leise { color: #9fb0cc; }
-.amort-kopf { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-.amort-kopf h2 { font-size: 1.05rem; }
-.link { border: 0; background: none; color: var(--sonne); font-weight: 700; font-size: .88rem; cursor: pointer; padding: 2px 0; white-space: nowrap; }
-.link:focus-visible { outline: 2px solid var(--sonne); outline-offset: 3px; border-radius: 4px; }
-.amort-zahlen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0 14px; }
-.amort-zahlen span { display: block; font-size: .74rem; color: #9fb0cc; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
-.amort-zahlen b { display: block; font-size: clamp(1.25rem, 4.6vw, 1.9rem); letter-spacing: -.02em; line-height: 1.15; margin-top: 2px; font-variant-numeric: tabular-nums; }
-.amort-zahlen small { display: block; color: #c3cde0; font-size: .8rem; }
-.amort-balken { position: relative; height: 14px; border-radius: 99px; background: rgba(255,255,255,.12); overflow: hidden; }
-.amort-balken i { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: linear-gradient(90deg, var(--sonne), var(--sonne-2)); transition: width 1s ease; }
-.amort-balken span { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; opacity: .9; }
-.amort-skala { display: flex; justify-content: space-between; font-size: .76rem; color: #9fb0cc; margin-top: 6px; }
-.amort-zahlen span, .amort-zahlen b { white-space: nowrap; }
+.amort-kopf { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.link { border: 0; background: none; color: var(--sonne-2); font-weight: 700; font-size: .86rem; cursor: pointer; padding: 2px 0; white-space: nowrap; }
+.link:focus-visible { outline: 2px solid var(--blau); outline-offset: 3px; border-radius: 4px; }
+.amort-zahlen { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0; }
+.amort-zahlen span { display: block; font-size: .74rem; color: var(--leise); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; white-space: nowrap; }
+.amort-zahlen b { display: block; font-size: 1.2rem; letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.amort-zahlen small { display: block; color: var(--leise); font-size: .78rem; }
+.amort-balken { position: relative; height: 8px; border-radius: 99px; background: var(--flaeche-2); overflow: hidden; }
+.amort-balken i { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: var(--gruen); transition: width 1s ease; }
+.amort-balken span { display: none; }
+.amort-skala { display: flex; justify-content: space-between; font-size: .76rem; color: var(--leise); margin-top: 6px; }
 @media (max-width: 480px) {
-  .amort-zahlen { grid-template-columns: 1fr 1fr; row-gap: 14px; }
-  .amort-zahlen > div:last-child { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-  .amort-zahlen > div:last-child b { font-size: 1.15rem; }
+  .amort-zahlen { grid-template-columns: 1fr 1fr; row-gap: 12px; }
+  .amort-zahlen > div:last-child { grid-column: 1 / -1; }
 }
 
 /* Warnung bei negativen Preisen */
@@ -206,3 +201,4 @@ main { max-width: 1160px; margin: 0 auto; padding: 16px; }
 .speicher .balken { grid-column: 1 / -1; height: 8px; border-radius: 99px; background: var(--flaeche-2); overflow: hidden; margin-top: 6px; }
 .speicher .balken i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--gruen), #5ee0a0); }
 .speicher small { grid-column: 1 / -1; color: var(--leise); font-size: .8rem; }
+@media (max-width: 480px) { .seg button { padding: 8px 11px; font-size: .84rem; } }

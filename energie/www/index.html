@@ -86,6 +86,9 @@
   .zahle .v { color: var(--red); } .bekomme .v { color: var(--green); } .session .v { color: var(--purple); }
   .srv .v { color: var(--cyan); }
   .prog .v { color: var(--yellow); }
+  .amort .v { color: var(--green); } .batt .v { color: var(--purple); }
+  .balken8 { display: block; height: 6px; margin-top: 4px; background: #222; }
+  .balken8 i { display: block; height: 100%; background: var(--green-dim); }
   .boerse .v { color: var(--cyan); } .boerse.neg { border-color: var(--red); } .boerse.neg .v { color: var(--red); animation: blink 1s steps(2) infinite; }
   @keyframes blink { 50% { opacity: .35; } }
   .charts { margin-top: 10px; display: grid; gap: 8px; }
@@ -129,6 +132,8 @@
       <div class="stat prog"><div class="k">Solarprognose morgen</div><div class="v" id="s-prog">–</div><div class="s" id="s-prog2">&nbsp;</div></div>
       <div class="stat srv"><div class="k">homi-Server (unter der Treppe)</div><div class="v" id="s-srv">–</div><div class="s" id="s-srv2">&nbsp;</div></div>
       <div class="stat boerse" id="t-boerse"><div class="k">Strombörse Day-Ahead CH</div><div class="v" id="s-boerse">–</div><div class="s" id="s-boerse2">&nbsp;</div></div>
+      <div class="stat batt"><div class="k">Batterie-Simulation</div><div class="v" id="s-batt">–</div><div class="s" id="s-batt2">&nbsp;</div></div>
+      <div class="stat amort" title="Investition minus bisheriger Ertrag (selbst verbraucht × Bezugstarif + eingespeist × Rücklieferung), heutige Tarife"><div class="k">Anlage abbezahlt</div><div class="v" id="s-amort">–</div><div class="s" id="s-amort2">&nbsp;</div><span class="balken8"><i id="s-amort3" style="width:0"></i></span></div>
     </div>
     <div class="charts">
       <div class="legend"><span><i style="background:#ffdd33"></i>Solar</span><span><i style="background:#ff5555"></i>Verbrauch</span><span>Leistung, letzte 24 h</span></div>
@@ -368,6 +373,29 @@ async function poll() {
   } catch { S = null; }
   onData();
 }
+// Amortisation und Batterie-Simulation (wie in der Kunden-Oberfläche), alle 10 Minuten
+const MONATE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
+async function pollAmort() {
+  try {
+    const a = await (await fetch("api/amortisation", { cache: "no-store" })).json();
+    if (a && a.aktiv) {
+      const d = new Date(a.break_even);
+      $("s-amort").textContent = `${a.amortisiert_pct.toFixed(1)} %`;
+      $("s-amort2").textContent = a.amortisiert_pct >= 100 ? "bezahlt!" :
+        `${Math.round(a.bisher_chf).toLocaleString("de-CH")} von ${Math.round(a.netto_chf).toLocaleString("de-CH")} CHF · Break-even ${MONATE[d.getMonth()]} ${d.getFullYear()} · +${Math.round(a.pro_jahr_chf).toLocaleString("de-CH")} CHF/Jahr`;
+      $("s-amort3").style.width = `${Math.min(100, a.amortisiert_pct)}%`;
+    }
+  } catch {}
+  try {
+    const s = await (await fetch("api/speicher", { cache: "no-store" })).json();
+    const sp = (s.speicher || []).slice().sort((x, y) => (y.ersparnis_pro_jahr_chf || 0) - (x.ersparnis_pro_jahr_chf || 0));
+    if (sp.length) {
+      $("s-batt").textContent = `${Math.round(sp[0].ersparnis_pro_jahr_chf)} CHF/Jahr`;
+      $("s-batt2").textContent = sp.map(x => `${x.kapazitaet_kwh} kWh: ${Math.round(x.ersparnis_pro_jahr_chf)}`).join(" · ") + ` CHF (${Math.round(sp[0].tage_gemessen)} Tage)`;
+    }
+  } catch {}
+}
+
 async function pollBoerse() {
   try { boerse = await (await fetch("api/boerse", { cache: "no-store" })).json(); } catch {}
   drawBoerse();
@@ -387,8 +415,10 @@ async function pollEinspeisung() {
     $("s-ein").textContent = `${h.einspeisung_dynamisch_chf.toFixed(2)} CHF`;
     $("s-ein2").textContent = `fix GWS: ${h.einspeisung_fix_chf.toFixed(2)} CHF · Batterie optimiert +${h.batterie.mehrwert_chf.toFixed(2)} CHF`;
     const jetztH = new Date().getHours();
-    const naechste = h.stunden.filter(x => x.stunde >= jetztH && x.aktion !== "–").slice(0, 3);
-    $("s-ein3").innerHTML = naechste.map(x => `${String(x.stunde).padStart(2, "0")}h: ${x.preis_rp < 0 ? "<b>" : ""}${x.aktion}${x.preis_rp < 0 ? "</b>" : ""} (${x.preis_rp.toFixed(1)} Rp)`).join("<br>");
+    // nur echte Überschuss-Stunden (wie in der Kunden-Oberfläche), keine Schritte der virtuellen Batterie
+    const naechste = h.stunden.filter(x => x.stunde >= jetztH && (x.ueberschuss_kwh || 0) >= 0.05).slice(0, 3);
+    $("s-ein3").innerHTML = naechste.length ? naechste.map(x => `${String(x.stunde).padStart(2, "0")}h: ${x.preis_rp < 0 ? "<b>" : ""}${x.ueberschuss_kwh.toFixed(1)} kWh ${x.preis_rp < 0 ? "selbst verbrauchen!</b>" : "Überschuss"} (${x.preis_rp.toFixed(1)} Rp)`).join("<br>")
+      : "heute kein Überschuss mehr";
   }
 }
 async function pollHist() {
@@ -1043,7 +1073,8 @@ if ("serviceWorker" in navigator) {
 setInterval(poll, 5000);
 setInterval(pollHist, 60000);
 pollBoerse(); setInterval(pollBoerse, 15 * 60000);
-pollEinspeisung(); setInterval(pollEinspeisung, 10 * 60000); setInterval(drawBoerse, 60000);
+pollEinspeisung(); setInterval(pollEinspeisung, 10 * 60000);
+pollAmort(); setInterval(pollAmort, 10 * 60000); setInterval(drawBoerse, 60000);
 setInterval(chatter, 7000);
 setInterval(wander, 3500);
 requestAnimationFrame(frame);
