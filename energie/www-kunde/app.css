@@ -42,7 +42,7 @@ b { font-weight: 700; }
 @keyframes puls { 70% { box-shadow: 0 0 0 7px rgba(18,183,106,0); } 100% { box-shadow: 0 0 0 0 rgba(18,183,106,0); } }
 
 /* Tabs: Handy unten fixiert, ab 900 px oben im Kopf */
-.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(4, 1fr);
+.tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(5, 1fr);
   background: var(--flaeche); border-top: 1px solid var(--linie); padding: 6px 4px calc(6px + var(--unten));
   box-shadow: 0 -6px 24px rgba(15,27,45,.08); }
 .tabs button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 3px;
@@ -194,6 +194,39 @@ main { max-width: 1160px; margin: 0 auto; padding: 16px; }
 .knopf[hidden] { display: none; }
 .meldung { min-height: 1.3em; margin: 10px 0 0; font-size: .9rem; color: var(--text-2); }
 .fuss { margin-top: 16px; }
+
+/* Energieberater */
+.berater-kopf { margin: 2px 2px 14px; }
+.berater-kopf h2 { font-size: 1.35rem; letter-spacing: -.02em; }
+.b-summe { margin: 10px 0 0; padding: 12px 14px; border-radius: 14px; background: rgba(18,183,106,.12); color: var(--text); font-size: .94rem; }
+.b-summe[hidden] { display: none; }
+.tipps { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 14px; counter-reset: tipp; }
+@media (min-width: 900px) { .tipps { grid-template-columns: repeat(3, 1fr); } }
+.tipp { counter-increment: tipp; background: var(--flaeche); border-radius: var(--radius); box-shadow: var(--schatten); padding: 18px; display: grid; gap: 8px; align-content: start; }
+.tipp-kopf { display: flex; align-items: center; gap: 12px; }
+.tipp-kopf::before { content: counter(tipp); flex: none; width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center;
+  font-weight: 800; background: var(--flaeche-2); color: var(--text-2); }
+.tipp.akut .tipp-kopf::before { content: "!"; background: var(--rot); color: #fff; }
+.tipp h3 { margin: 0; font-size: 1.02rem; flex: 1; }
+.tipp .wert { font-weight: 800; color: var(--gruen); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tipp p { margin: 0; color: var(--text-2); font-size: .93rem; }
+.tipp .aktion { background: var(--flaeche-2); border-radius: 12px; padding: 10px 12px; font-size: .9rem; color: var(--text); }
+.tipp .aktion b { display: block; font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--leise); margin-bottom: 2px; }
+.tipp .bedingung { font-size: .8rem; color: var(--leise); }
+.urteil { font-size: .8rem; font-weight: 700; padding: 4px 10px; border-radius: 99px; background: var(--flaeche-2); color: var(--text-2); white-space: nowrap; }
+.urteil.ja { background: rgba(18,183,106,.15); color: var(--gruen); }
+.urteil.knapp { background: rgba(255,176,32,.18); color: #b26a00; }
+.urteil.nein { background: rgba(240,68,56,.12); color: var(--rot); }
+@media (prefers-color-scheme: dark) { .urteil.knapp { color: var(--sonne); } }
+.tabelle-rahmen { overflow-x: auto; margin: 12px 0 4px; }
+.tabelle-rahmen table { width: 100%; border-collapse: collapse; font-size: .9rem; font-variant-numeric: tabular-nums; }
+.tabelle-rahmen th { text-align: right; font-size: .74rem; color: var(--leise); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; padding: 6px 8px; }
+.tabelle-rahmen th:first-child, .tabelle-rahmen td:first-child { text-align: left; padding-left: 0; }
+.tabelle-rahmen td { text-align: right; padding: 9px 6px; border-top: 1px solid var(--linie); white-space: nowrap; }
+.b-summe .leise { display: block; margin-top: 4px; font-size: .82rem; }
+.tabelle-rahmen tr.beste td { font-weight: 700; }
+.tabelle-rahmen tr.beste td:first-child::after { content: " ★"; color: var(--sonne); }
+.bat-tipps { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 6px; color: var(--text-2); }
 
 /* Speicher-Simulation */
 .speicher { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 11px 0; border-top: 1px solid var(--linie); }

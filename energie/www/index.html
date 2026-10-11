@@ -86,7 +86,9 @@
   .zahle .v { color: var(--red); } .bekomme .v { color: var(--green); } .session .v { color: var(--purple); }
   .srv .v { color: var(--cyan); }
   .prog .v { color: var(--yellow); }
-  .amort .v { color: var(--green); } .batt .v { color: var(--purple); }
+  .amort .v { color: var(--green); } .batt .v { color: var(--purple); } .rat .v { color: var(--yellow); }
+  .rat ol { margin: 4px 0 0; padding-left: 18px; font-size: 12px; color: var(--white); }
+  .rat ol li { margin: 2px 0; } .rat ol li span { color: var(--green); }
   .balken8 { display: block; height: 6px; margin-top: 4px; background: #222; }
   .balken8 i { display: block; height: 100%; background: var(--green-dim); }
   .boerse .v { color: var(--cyan); } .boerse.neg { border-color: var(--red); } .boerse.neg .v { color: var(--red); animation: blink 1s steps(2) infinite; }
@@ -132,6 +134,7 @@
       <div class="stat prog"><div class="k">Solarprognose morgen</div><div class="v" id="s-prog">–</div><div class="s" id="s-prog2">&nbsp;</div></div>
       <div class="stat srv"><div class="k">homi-Server (unter der Treppe)</div><div class="v" id="s-srv">–</div><div class="s" id="s-srv2">&nbsp;</div></div>
       <div class="stat boerse" id="t-boerse"><div class="k">Strombörse Day-Ahead CH</div><div class="v" id="s-boerse">–</div><div class="s" id="s-boerse2">&nbsp;</div></div>
+      <div class="stat rat" title="Energieberater: drei Tipps aus den Messwerten der letzten 14 Tage"><div class="k">Energieberater</div><div class="v" id="s-rat">–</div><ol id="s-rat2"></ol><div class="s" id="s-rat3">&nbsp;</div></div>
       <div class="stat batt"><div class="k">Batterie-Simulation</div><div class="v" id="s-batt">–</div><div class="s" id="s-batt2">&nbsp;</div></div>
       <div class="stat amort" title="Investition minus bisheriger Ertrag (selbst verbraucht × Bezugstarif + eingespeist × Rücklieferung), heutige Tarife"><div class="k">Anlage abbezahlt</div><div class="v" id="s-amort">–</div><div class="s" id="s-amort2">&nbsp;</div><span class="balken8"><i id="s-amort3" style="width:0"></i></span></div>
     </div>
@@ -373,6 +376,17 @@ async function poll() {
   } catch { S = null; }
   onData();
 }
+// Energieberater (wie in der Kunden-Oberfläche): drei Tipps + Batterie-Urteil
+let rat = null;
+async function pollBerater() {
+  try { rat = await (await fetch("api/berater", { cache: "no-store" })).json(); } catch { return; }
+  if (!rat || !rat.aktiv) return;
+  $("s-rat").textContent = rat.summe_chf_jahr ? `+${Math.round(rat.summe_chf_jahr).toLocaleString("de-CH")} CHF/Jahr drin` : "Tipps";
+  $("s-rat2").innerHTML = rat.tipps.map(t => `<li title="${t.aktion.replace(/"/g, "&quot;")}">${t.titel}${t.chf_jahr ? ` <span>(${Math.round(t.chf_jahr)} CHF)</span>` : ""}</li>`).join("");
+  const b = rat.batterie;
+  $("s-rat3").textContent = b ? (b.modus === "kaufen" ? `Batterie: ${b.urteil}${b.beste_kwh ? ` (beste: ${b.beste_kwh} kWh, ${Math.round((b.optionen.find(o => o.kwh === b.beste_kwh) || {}).amortisation_jahre || 0)} J.)` : ""}` : b.titel) : "\u00a0";
+}
+
 // Amortisation und Batterie-Simulation (wie in der Kunden-Oberfläche), alle 10 Minuten
 const MONATE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
 async function pollAmort() {
@@ -546,6 +560,10 @@ function chatter() {
   else if (bo && bo.rp_kwh != null) lines.push(
     [`Die Börse zahlt gerade ${bo.rp_kwh.toFixed(1)} Rp/kWh. Die GWS gibt mir ${rp}.`],
     [bo.naechster_negativer ? `Achtung, ab ${bo.naechster_negativer.slice(11, 16)} Uhr wird der Börsenpreis negativ!` : "Keine negativen Börsenpreise in Sicht."]);
+  if (rat && rat.aktiv) {
+    for (const t of rat.tipps) lines.push([`Tipp vom Energieberater: ${t.titel}!${t.chf_jahr ? ` Bringt ${Math.round(t.chf_jahr)} CHF im Jahr.` : ""}`, "#ffff55"]);
+    if (rat.batterie && rat.batterie.modus === "kaufen") lines.push([`Eine Batterie? Mein Urteil: ${rat.batterie.urteil}.`, "#ff55ff"]);
+  }
   lines.push(["Ich sollte mal wieder die Panels putzen."], ["Wenn ich nur einen gelben Kristall hätte…"],
     ["Zweiköpfige Eichhörnchen? Nicht in diesem Haus."], ["Irgendwas brummt hier. Hoffentlich nur der Kühlschrank."]);
   const pm = S.prognose && S.prognose.morgen;
@@ -1074,7 +1092,8 @@ setInterval(poll, 5000);
 setInterval(pollHist, 60000);
 pollBoerse(); setInterval(pollBoerse, 15 * 60000);
 pollEinspeisung(); setInterval(pollEinspeisung, 10 * 60000);
-pollAmort(); setInterval(pollAmort, 10 * 60000); setInterval(drawBoerse, 60000);
+pollAmort(); setInterval(pollAmort, 10 * 60000);
+pollBerater(); setInterval(pollBerater, 60 * 60000); setInterval(drawBoerse, 60000);
 setInterval(chatter, 7000);
 setInterval(wander, 3500);
 requestAnimationFrame(frame);

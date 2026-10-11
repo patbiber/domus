@@ -227,6 +227,166 @@ def amortisation():
     return daten
 
 
+# ---------------------------------------------------------------- Energieberater
+# Richtpreise für Batteriespeicher inkl. Anschluss (Stand Oktober 2026), überschreibbar in anlage.json "batterie_preise"
+BATTERIE_PREISE = {
+    "2": {"chf": 800, "beispiel": "Steckerspeicher, z. B. Marstek Venus E Mini oder EcoFlow Stream (max. 600 W)"},
+    "5": {"chf": 2100, "beispiel": "z. B. Marstek Venus E 4.0 (CHF 1'709 bei Alltron) plus fester Anschluss"},
+    "10": {"chf": 3800, "beispiel": "z. B. Marstek Venus E 4.0 mit Erweiterung oder Zendure SolarFlow 2400 AC"},
+}
+BATTERIE_LEBENSDAUER_J = 12
+tsd = lambda x: f"{round(x):,}".replace(",", "'")      # 7'577 (Schweizer Tausendertrennung)
+berater_cache = {"zeit": 0, "daten": None}
+
+
+def berater():
+    """Drei Tipps mit dem grössten Nutzen in CHF pro Jahr aus den Messwerten der letzten 14 Tage, dazu eine Batterie-
+    Empfehlung (Kauf) bzw. Betriebstipps (vorhandene Batterie, anlage.json "haushalt.batterie")."""
+    if time.time() - berater_cache["zeit"] < 3600 and berater_cache["daten"]:
+        return berater_cache["daten"]
+    with open(ANLAGE_CFG, encoding="utf-8") as f:
+        cfg = json.load(f)
+    haushalt = cfg.get("haushalt") or {}
+    heute = date.today()
+    rows = [r for r in archiv.lesen(heute - timedelta(days=14), heute - timedelta(days=1)) if r["sekunden"]]
+    tage = sum(r["sekunden"] for r in rows) / 86400
+    if tage < 3:
+        return {"aktiv": False, "grund": "homi braucht mindestens 3 Tage Messwerte für Tipps."}
+    t = (state.get("status") or {}).get("tarif") or {}
+    bezug, rueck = t.get("bezug_chf_kwh") or 0.27, t.get("rueckliefer_chf_kwh") or 0.0
+    diff = bezug - rueck
+    # Stundenprofil (Mittel pro Tag) und Grundlast (Median 01–05 Uhr)
+    prof = [{"v": 0.0, "pv": 0.0, "b": 0.0, "e": 0.0} for _ in range(24)]
+    nacht_w, gross = [], {}
+    for r in rows:
+        s = int(r["zeit"][11:13])
+        for k, q in (("v", "verbrauch_kwh"), ("pv", "pv_kwh"), ("b", "bezug_kwh"), ("e", "einspeisung_kwh")):
+            prof[s][k] += r[q] / tage
+        w = r["verbrauch_kwh"] * 3.6e6 / r["sekunden"]
+        if 1 <= s < 5 and r["sekunden"] >= 500:
+            nacht_w.append(w)
+        if (s >= 22 or s < 6) and w >= 600:          # grosser Verbraucher nachts (Boiler, Heizung …)
+            gross[r["zeit"][:10]] = gross.get(r["zeit"][:10], 0) + r["verbrauch_kwh"]
+    nacht_w.sort()
+    grund_w = nacht_w[len(nacht_w) // 2] if nacht_w else 0
+    ohne_sonne = sum(1 for p in prof if p["pv"] < p["v"]) / 24
+    spitze = max(range(24), key=lambda s: prof[s]["b"])
+    tipps = []
+    # 1) Grundlast
+    if grund_w >= 50:
+        ziel = max(40, round(grund_w * 0.7 / 5) * 5)
+        kwh = (grund_w - ziel) * 8.76
+        tipps.append({"id": "grundlast", "titel": "Grundlast senken",
+            "chf_jahr": round(kwh * (ohne_sonne * bezug + (1 - ohne_sonne) * rueck)), "kwh_jahr": round(kwh),
+            "text": f"Dein Haus braucht auch nachts rund {grund_w:.0f} W – das sind {tsd(grund_w * 8.76)} kWh im Jahr nur für "
+                    f"Dauerläufer und Geräte im Bereitschaftsmodus. Ziel: {ziel} W.",
+            "aktion": "Mit einem Steckdosen-Messgerät (ca. CHF 20) die grössten Dauerverbraucher suchen: alte Kühl- und "
+                      "Gefriergeräte, Router und Netzwerk, Umwälzpumpe, TV und Spielkonsole im Standby. "
+                      "Was nachts nicht laufen muss, mit Steckdosenleiste oder Zeitschaltuhr ausschalten."})
+    # 2) Grosser Verbraucher nachts -> in die Mittagssonne
+    if gross and haushalt.get("boiler_elektrisch") is not False:
+        kwh_nacht = sum(gross.values()) / tage
+        if kwh_nacht >= 0.3:
+            tipps.append({"id": "nachtlast", "titel": "Nachtverbraucher in den Mittag legen",
+                "chf_jahr": round(kwh_nacht * 365 * diff), "kwh_jahr": round(kwh_nacht * 365),
+                "text": f"Zwischen 22 und 6 Uhr läuft an {len(gross)} von {round(tage)} Tagen ein grosser Verbraucher "
+                        f"(über 600 W, im Mittel {kwh_nacht:.1f} kWh pro Nacht) – typisch für einen Boiler oder eine Heizung.",
+                "aktion": "Prüfen, was nachts läuft. Ist es der Boiler: Ladezeit auf 11–15 Uhr umstellen lassen "
+                          "(Zeitschaltuhr bzw. Rundsteuerung) – dann heizt ihn deine Sonne statt das Netz."})
+    # 3) Überschuss für Warmwasser / E-Auto / Wärmepumpe nutzen
+    try:
+        am = amortisation()
+    except (OSError, ValueError, KeyError):
+        am = amort_cache["daten"] or {}
+    ueberschuss_jahr = (am.get("jahresertrag_kwh", 0) - am.get("eigenverbrauch_kwh", 0) * am.get("jahresertrag_kwh", 0)
+                        / max(1, am.get("produktion_kwh", 1))) if am.get("aktiv") else sum(p["e"] for p in prof) * 365
+    if ueberschuss_jahr > 1000 and not (haushalt.get("boiler_elektrisch") is False and not haushalt.get("e_auto")):
+        nutzbar = min(ueberschuss_jahr * 0.4, 2500)
+        bedingung = None if haushalt.get("boiler_elektrisch") or haushalt.get("e_auto") else \
+            "falls dein Warmwasser elektrisch erzeugt wird oder du ein E-Auto hast"
+        tipps.append({"id": "ueberschuss", "titel": "Sonnenüberschuss selbst nutzen",
+            "chf_jahr": round(nutzbar * diff), "kwh_jahr": round(nutzbar), "bedingung": bedingung,
+            "text": f"Du speist rund {tsd(ueberschuss_jahr)} kWh im Jahr für {rueck * 100:.0f} Rp. ein. Selbst genutzt ist jede "
+                    f"kWh {bezug * 100:.1f} Rp. wert – {diff * 100:.1f} Rp. mehr.",
+            "aktion": "Elektroboiler mit einem Überschuss-Regler (z. B. Fronius Ohmpilot, ca. CHF 900 inkl. Einbau) nur mit "
+                      "Sonnenstrom heizen; E-Auto tagsüber laden; Wärmepumpe mittags vorheizen lassen."})
+    # 4) Verbrauch verschieben (Waschen, Spülen, Trocknen)
+    abend = sum(max(0.0, p["b"] - grund_w / 1000) for p in prof)
+    kwh = abend * 0.4 * 365
+    if kwh > 30:
+        f = ((state.get("prognose") or {}).get("morgen") or {}).get("bestes_fenster")
+        tipps.append({"id": "verschieben", "titel": "Grosse Geräte in die Sonnenstunden",
+            "chf_jahr": round(kwh * diff), "kwh_jahr": round(kwh),
+            "text": f"Am meisten Strom aus dem Netz brauchst du zwischen {spitze} und {spitze + 1} Uhr. Rund "
+                    f"{abend:.1f} kWh pro Tag kommen über die Grundlast hinaus aus dem Netz.",
+            "aktion": "Waschmaschine, Geschirrspüler und Tumbler mit Startzeitvorwahl über Mittag laufen lassen"
+                      + (f" – morgen am besten {f['von']}–{f['bis']} Uhr." if f else ".")})
+    # 5) Akut: negative Preise in Sicht
+    plan = einspeise_plan()
+    tage_minus = [(n, d) for n, d in (("heute", plan.get("heute")), ("morgen", plan.get("morgen"))) if d and d.get("minuspreis_bloecke")]
+    if tage_minus:
+        n, d = tage_minus[0]
+        tipps.insert(0, {"id": "minuspreis", "titel": f"{n.capitalize()} negative Strompreise nutzen", "akut": True,
+            "chf_jahr": None, "kwh_jahr": None,
+            "text": f"{n.capitalize()} {' und '.join(d['minuspreis_bloecke'])} liegt der Börsenpreis unter null.",
+            "aktion": "Grosse Verbraucher genau in diese Stunden legen. Mit dynamischem Einspeisetarif: Einspeisung drosseln."})
+    akut = [x for x in tipps if x.get("akut")]
+    rest = sorted((x for x in tipps if not x.get("akut")), key=lambda x: -(x["chf_jahr"] or 0))
+    drei = (akut + rest)[:3]
+    summe = sum(x["chf_jahr"] or 0 for x in drei)
+    monate_frueher = None
+    if am.get("aktiv") and am.get("pro_jahr_chf") and am.get("rest_chf"):
+        monate_frueher = round(12 * (am["rest_chf"] / am["pro_jahr_chf"] - am["rest_chf"] / (am["pro_jahr_chf"] + summe)))
+    # Batterie
+    preise = {**BATTERIE_PREISE, **(cfg.get("batterie_preise") or {})}
+    vorhanden = haushalt.get("batterie")
+    if vorhanden:
+        batterie = {"modus": "optimieren", "titel": f"Deine Batterie ({vorhanden.get('kapazitaet_kwh', '?')} kWh) optimal nutzen",
+            "tipps": ["Nur mit Sonnenüberschuss laden, nie aus dem Netz – bei fixem Tarif kostet das nur Wirkungsgrad.",
+                      "Notstrom-Reserve klein halten (10–20 %), sonst bleibt teure Kapazität ungenutzt.",
+                      f"Die Batterie für den Abend aufsparen: Am meisten Netzstrom brauchst du um {spitze} Uhr.",
+                      "Bei negativen Börsenpreisen (und dynamischem Tarif) gezielt aus dem Netz laden – homi warnt dich am Morgen."]}
+    else:
+        try:
+            sim = speicher_sim.report()
+        except Exception:                      # Simulation ist Beiwerk
+            sim = {"speicher": []}
+        optionen = []
+        for s in sim.get("speicher", []):
+            p = preise.get(str(int(s["kapazitaet_kwh"])))
+            if not p or not s.get("ersparnis_pro_jahr_chf"):
+                continue
+            jahre = p["chf"] / s["ersparnis_pro_jahr_chf"]
+            optionen.append({"kwh": s["kapazitaet_kwh"], "name": s["name"], "preis_chf": p["chf"], "beispiel": p["beispiel"],
+                             "ersparnis_jahr_chf": round(s["ersparnis_pro_jahr_chf"]), "amortisation_jahre": round(jahre, 1)})
+        beste = min(optionen, key=lambda o: o["amortisation_jahre"]) if optionen else None
+        tage_sim = round((sim.get("speicher") or [{}])[0].get("tage_gemessen") or 0)
+        if not beste:
+            urteil, text = "noch offen", "Für eine Empfehlung braucht homi noch ein paar Tage Messwerte."
+        elif beste["amortisation_jahre"] <= 8:
+            urteil, text = "lohnt sich", (f"Eine {beste['kwh']}-kWh-Batterie spart dir rund CHF {beste['ersparnis_jahr_chf']} im Jahr "
+                f"und ist nach etwa {beste['amortisation_jahre']:.0f} Jahren bezahlt. Beispiel: {beste['beispiel']}.")
+        elif beste["amortisation_jahre"] <= BATTERIE_LEBENSDAUER_J:
+            urteil, text = "knapp", (f"Am besten rechnet sich eine {beste['kwh']}-kWh-Batterie: rund CHF {beste['ersparnis_jahr_chf']} "
+                f"im Jahr, bezahlt nach etwa {beste['amortisation_jahre']:.0f} Jahren – knapp innerhalb der Lebensdauer "
+                f"(10–15 Jahre). Beispiel: {beste['beispiel']}. Vorher lohnen sich die Tipps oben mehr.")
+        else:
+            urteil, text = "lohnt sich nicht", (f"Eine Batterie würde dir höchstens rund CHF {beste['ersparnis_jahr_chf']} im Jahr "
+                f"sparen ({beste['kwh']} kWh), kostet aber rund CHF {tsd(beste['preis_chf'])}. Bezahlt wäre sie erst nach "
+                f"{beste['amortisation_jahre']:.0f} Jahren – länger, als sie hält. Neu rechnen lohnt sich mit einem "
+                f"dynamischen Einspeisetarif, einem E-Auto oder wenn Speicher günstiger werden.")
+        batterie = {"modus": "kaufen", "urteil": urteil, "text": text, "optionen": optionen,
+                    "beste_kwh": beste["kwh"] if beste else None, "tage_gemessen": tage_sim,
+                    "hinweis": f"Gerechnet mit deinen echten Werten der letzten {tage_sim} Tage (simulierte Batterie) und "
+                               f"Richtpreisen inkl. Anschluss, Stand Oktober 2026. Im Winter gibt es weniger Überschuss, "
+                               f"im Sommer mehr – die Empfehlung wird mit jedem Monat genauer."}
+    daten = {"aktiv": True, "stand": datetime.now().isoformat(timespec="minutes"), "tage": round(tage, 1),
+             "grundlast_w": round(grund_w), "spitze_stunde": spitze, "tipps": drei, "summe_chf_jahr": summe,
+             "monate_frueher": monate_frueher, "batterie": batterie}
+    berater_cache.update(zeit=time.time(), daten=daten)
+    return daten
+
+
 def fetch_boerse():
     """Day-Ahead-Preise CH (EUR/MWh) für heute bis übermorgen und EUR/CHF-Kurs der EZB."""
     today = date.today()
@@ -931,6 +1091,12 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/speicher":
             with lock:
                 return self.send_json(speicher_sim.report())
+        if path == "/api/berater":
+            try:
+                return self.send_json(berater())
+            except (OSError, ValueError, KeyError, ZeroDivisionError) as e:
+                print("Berater:", e, flush=True)
+                return self.send_json(berater_cache["daten"] or {"aktiv": False, "grund": "Berechnung gerade nicht möglich"})
         if path == "/api/amortisation":
             try:
                 return self.send_json(amortisation())

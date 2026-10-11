@@ -240,6 +240,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 09.10.2026 | Kunden-Oberfläche `energie/www-kunde/` (modernes Layout, App, Push) für alle `<name>.homi.solar`; home.biber.solar bleibt Retro |
 | 10.10.2026 | Amortisation in homi: zurückverdient, Break-even, Hebel Eigenverbrauch (Investition 33'000 CHF) |
 | 10.10.2026 | Alle Funktionen in allen Oberflächen: Amortisation/Batterie-Simulation in Retro, Verlauf Tag/Gesamt in der Kunden-UI, neue HA-Sensoren |
+| 11.10.2026 | Energieberater: drei Tipps mit CHF/Jahr und Batterie-Empfehlung in Kunden-UI, Retro und Home Assistant |
 
 ## 8. Offene Punkte
 

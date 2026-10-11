@@ -352,6 +352,15 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   Stand 10.10.2026: 19.9 % zurückverdient, CHF ~1'490/Jahr, Break-even ca. Juli 2042 (nach ~19.7 Jahren).
   Überall vorhanden: Kunden-UI (Karte unten in der Übersicht, Rechnung unter «Mehr»), Retro-Seite (Kachel «Anlage
   abbezahlt») und Home Assistant (`sensor.pv_anlage_amortisiert` mit Attributen, `sensor.pv_anlage_break_even`).
+- **Energieberater** (`/api/berater`, stündlich neu): drei Tipps mit dem grössten Nutzen in CHF/Jahr aus den letzten
+  14 Tagen, Kandidaten: Grundlast senken (Median 01–05 Uhr, Ziel −30 %), Nachtverbraucher ≥ 600 W in den Mittag legen,
+  Sonnenüberschuss selbst nutzen (Boiler/E-Auto, max. 2'500 kWh), grosse Geräte in die Sonnenstunden (40 % des Bezugs über
+  der Grundlast), akut: negative Preise heute/morgen (immer zuoberst). Batterie: ohne Batterie Kaufempfehlung aus der
+  Speicher-Simulation und Richtpreisen (`BATTERIE_PREISE` in server.py, überschreibbar mit `batterie_preise` in
+  anlage.json; Urteil ≤ 8 J. «lohnt sich», ≤ 12 J. «knapp», sonst «lohnt sich nicht»); mit `haushalt.batterie` in
+  anlage.json stattdessen Betriebstipps. `haushalt` (boiler_elektrisch, e_auto, waermepumpe, batterie; null = unbekannt)
+  schärft die Tipps. Überall: Kunden-UI Bereich «Berater» (`/#berater`), Retro-Kachel «Energieberater» + Sprüche,
+  HA `sensor.energieberater_tipp_1…3`, `sensor.energieberater_sparpotenzial`, `sensor.energieberater_batterie`.
 - **Grundsatz:** Jede Funktion in allen Oberflächen (Retro, Kunden-UI, Home Assistant), ausser gerätespezifische
   (z. B. Verbrauch des NUC). Stand 10.10.2026 zusätzlich angeglichen: Batterie-Simulation in der Retro-Seite,
   Verlauf «Tag» und «Gesamt» in der Kunden-UI, HA-Sensoren `sensor.einspeisung_dynamisch_heute`,

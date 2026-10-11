@@ -412,6 +412,46 @@ function amortZeichnen() {
 }
 $("am-details").onclick = () => { tabZeigen("mehr"); setTimeout(() => $("amort-rechnung").scrollIntoView({ behavior: "smooth", block: "start" }), 50); };
 
+/* ======================= Energieberater ======================= */
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+function beraterZeichnen() {
+  const b = D.berater;
+  if (!b) return;
+  if (!b.aktiv) { $("b-stand").textContent = b.grund || "Noch keine Tipps."; return; }
+  const st = new Date(b.stand);
+  $("b-stand").textContent = `Drei Tipps aus deinen Messwerten der letzten ${Math.round(b.tage)} Tage, sortiert nach Wirkung · Stand ${st.toLocaleDateString("de-CH")} ${st.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}`;
+  const s = $("b-summe");
+  if (b.summe_chf_jahr > 0) {
+    s.innerHTML = `Setzt du alle drei um, bringt das rund <b>CHF ${Math.round(b.summe_chf_jahr).toLocaleString("de-CH")} pro Jahr</b>`
+      + (b.monate_frueher > 0 ? ` – und deine Anlage ist <b>${b.monate_frueher >= 24 ? zahl(b.monate_frueher / 12, 1) + " Jahre" : b.monate_frueher + " Monate"} früher</b> bezahlt.` : ".")
+      + (b.tipps.some(t => t.bedingung) ? ` <span class="leise">Vorausgesetzt, die Bedingung bei Tipp ${b.tipps.findIndex(t => t.bedingung) + 1} trifft zu.</span>` : "");
+    s.hidden = false;
+  } else s.hidden = true;
+  $("b-tipps").innerHTML = b.tipps.map(t => `<li class="tipp${t.akut ? " akut" : ""}">
+      <div class="tipp-kopf"><h3>${esc(t.titel)}</h3>${t.chf_jahr ? `<span class="wert">CHF ${Math.round(t.chf_jahr).toLocaleString("de-CH")}/Jahr</span>` : ""}</div>
+      <p>${esc(t.text)}</p>
+      <div class="aktion"><b>So geht's</b>${esc(t.aktion)}</div>
+      ${t.bedingung ? `<span class="bedingung">Gilt, ${esc(t.bedingung)}.</span>` : ""}</li>`).join("");
+  const bat = b.batterie, k = $("b-batterie");
+  if (!bat) return;
+  k.hidden = false;
+  if (bat.modus === "optimieren") {
+    $("b-bat-titel").textContent = bat.titel; $("b-urteil").textContent = "";
+    $("b-bat-text").textContent = ""; $("b-bat-tabelle").innerHTML = "";
+    $("b-bat-tipps").innerHTML = bat.tipps.map(x => `<li>${esc(x)}</li>`).join("");
+    return;
+  }
+  const u = $("b-urteil");
+  u.textContent = bat.urteil;
+  u.className = "urteil " + ({ "lohnt sich": "ja", "knapp": "knapp", "lohnt sich nicht": "nein" }[bat.urteil] || "");
+  $("b-bat-text").textContent = bat.text;
+  $("b-bat-tabelle").innerHTML = bat.optionen.length ? `<table><thead><tr><th>Grösse</th><th>spart/Jahr</th><th>Preis ca.</th><th>bezahlt</th></tr></thead><tbody>`
+    + bat.optionen.map(o => `<tr class="${o.kwh === bat.beste_kwh ? "beste" : ""}"><td>${o.kwh} kWh</td><td>CHF ${o.ersparnis_jahr_chf}</td>
+        <td>CHF ${o.preis_chf.toLocaleString("de-CH")}</td><td>${zahl(o.amortisation_jahre, 0)} J.</td></tr>`).join("") + "</tbody></table>" : "";
+  $("b-bat-tipps").innerHTML = "";
+  $("b-bat-hinweis").textContent = bat.hinweis || "";
+}
+
 /* ======================= Mehr: Speicher, Anlage ======================= */
 function speicherZeichnen() {
   const s = D.speicher;
@@ -427,7 +467,7 @@ function speicherZeichnen() {
 /* ======================= Laden ======================= */
 function zeichnen() {
   flussZeichnen(); kpisZeichnen(); prognoseZeichnen(); preisZeichnen(); warnungZeichnen();
-  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen();
+  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen();
 }
 async function status() {
   try { D.status = await holen("status"); flussZeichnen(); kpisZeichnen(); preisZeichnen(); }
@@ -439,7 +479,7 @@ async function minute() {
   kpisZeichnen(); verlauf24Zeichnen(); amortZeichnen();
 }
 async function selten() {
-  for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"]]) {
+  for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"], ["berater", "berater"]]) {
     try { D[k] = await holen(p); } catch {}
   }
   zeichnen();
@@ -461,7 +501,7 @@ let groesse = 0;
 addEventListener("resize", () => { clearTimeout(groesse); groesse = setTimeout(zeichnen, 150); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { status(); minute(); } });
 const anfang = (location.hash || "").slice(1);
-if (["verlauf", "preise", "mehr"].includes(anfang)) tabZeigen(anfang, false);
+if (["verlauf", "preise", "berater", "mehr"].includes(anfang)) tabZeigen(anfang, false);
 start();
 
 /* ======================= App & Push ======================= */

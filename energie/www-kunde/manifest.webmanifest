@@ -17,6 +17,7 @@
   ],
   "shortcuts": [
     {"name": "Verlauf", "url": "/#verlauf", "icons": [{"src": "/icons/homi-192.png", "sizes": "192x192"}]},
-    {"name": "Strompreis", "url": "/#preise", "icons": [{"src": "/icons/homi-192.png", "sizes": "192x192"}]}
+    {"name": "Strompreis", "url": "/#preise", "icons": [{"src": "/icons/homi-192.png", "sizes": "192x192"}]},
+    {"name": "Energieberater", "url": "/#berater", "icons": [{"src": "/icons/homi-192.png", "sizes": "192x192"}]}
   ]
 }
