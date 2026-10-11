@@ -1159,8 +1159,10 @@ class Handler(SimpleHTTPRequestHandler):
                       ".js": "text/javascript"}
 
     def end_headers(self):
-        # Service Worker immer frisch prüfen, damit Änderungen an sw.js sofort ankommen
-        if self.path.split("?")[0] == "/sw.js":
+        # Seite, Programm, Design, Manifest und Service Worker bei jedem Öffnen neu prüfen (sonst zeigen Browser und
+        # installierte Apps tagelang eine alte Version); unverändert antwortet der Server knapp mit 304
+        p = self.path.split("?")[0]
+        if p == "/" or p.endswith((".html", ".js", ".css", ".webmanifest")):
             self.send_header("Cache-Control", "no-cache")
         super().end_headers()
 

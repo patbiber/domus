@@ -144,7 +144,9 @@ Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen):
   Tagesprofil, Spitzen, Hochrechnung pro Jahr, Vergleich mit bewohnten Tagen) und mailt den Bericht;
   `--nur-anzeigen` gibt ihn nur aus. Einmal-Timer `homi-messung` am 09.10.2026 12:15.
 - **App (PWA) mit Push-Nachrichten**: homi ist installierbar (Android: Menü → «App installieren», iPhone: Teilen →
-  «Zum Home-Bildschirm», Push ab iOS 16.4). `www/manifest.webmanifest`, `www/sw.js` (Push anzeigen, Offline-Seite
+  «Zum Home-Bildschirm», Push ab iOS 16.4). Seite, JS, CSS und Manifest kommen mit `Cache-Control: no-cache` (sonst
+  zeigen installierte Apps tagelang alte Versionen); der Service Worker holt sie zusätzlich immer frisch (bei 401 geht
+  die Original-Anfrage durch, damit der Login-Dialog erscheint). `www/manifest.webmanifest`, `www/sw.js` (Push anzeigen, Offline-Seite
   `www/offline.html`, keine Live-Daten im Cache), Icons `www/icons/` (erzeugt mit `energie/icons.py`, Pixel-Art).
   Abschnitt «homi als App» unten auf der Seite: Push ein/aus, Themen (Minuspreise, Prognose, Störungen), Testnachricht.
   - Anmelden: `POST /api/push` (`anmelden`/`abmelden`/`lesen`/`test`; nur Endpunkte der bekannten Push-Dienste

@@ -1,7 +1,7 @@
 // Service Worker von homi: macht die Seite installierbar, zeigt Push-Nachrichten
 // und eine Offline-Seite, wenn der NUC nicht erreichbar ist. Live-Daten werden nie zwischengespeichert.
 "use strict";
-const CACHE = "homi-kunde-v1";
+const CACHE = "homi-kunde-v2";
 const OFFLINE = ["/offline.html", "/icons/homi-192.png"];
 
 self.addEventListener("install", e => {
@@ -14,10 +14,19 @@ self.addEventListener("activate", e => {
     .then(() => self.clients.claim()));
 });
 
-// Nur Seitenaufrufe abfangen: online normal laden, offline die gespeicherte Hinweisseite zeigen
+// Seite, Programm und Design immer beim Server nachfragen (übergeht veraltete Kopien im Browser-Speicher);
+// offline die gespeicherte Hinweisseite zeigen. Live-Daten (/api/) laufen unverändert durch.
 self.addEventListener("fetch", e => {
-  if (e.request.mode !== "navigate") return;
-  e.respondWith(fetch(e.request).catch(() => caches.match("/offline.html")));
+  const url = new URL(e.request.url);
+  if (e.request.mode === "navigate") {
+    // Frisch holen; verlangt der Server das Passwort (401), die Original-Anfrage durchlassen, damit der Browser
+    // seinen Login-Dialog zeigen kann
+    e.respondWith(fetch(e.request.url, { cache: "no-cache", credentials: "same-origin" })
+      .then(r => r.status === 401 ? fetch(e.request) : r)
+      .catch(() => caches.match("/offline.html")));
+  } else if (url.origin === self.location.origin && /\.(js|css|webmanifest)$/.test(url.pathname)) {
+    e.respondWith(fetch(e.request, { cache: "no-cache" }));
+  }
 });
 
 self.addEventListener("push", e => {
