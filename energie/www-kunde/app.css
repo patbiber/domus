@@ -213,6 +213,19 @@ main { max-width: 1160px; margin: 0 auto; padding: 16px; }
 .tipp .aktion { background: var(--flaeche-2); border-radius: 12px; padding: 10px 12px; font-size: .9rem; color: var(--text); }
 .tipp .aktion b { display: block; font-size: .74rem; text-transform: uppercase; letter-spacing: .05em; color: var(--leise); margin-bottom: 2px; }
 .tipp .bedingung { font-size: .8rem; color: var(--leise); }
+.erkl { border-top: 1px solid var(--linie); padding-top: 8px; }
+.erkl summary { cursor: pointer; font-weight: 700; font-size: .88rem; color: var(--blau); list-style: none; display: flex; align-items: center; gap: 6px; }
+.erkl summary::-webkit-details-marker { display: none; }
+.erkl summary::before { content: "›"; display: inline-block; font-size: 1.1rem; line-height: 1; transition: transform .2s; }
+.erkl[open] summary::before { transform: rotate(90deg); }
+.erkl summary:focus-visible { outline: 2px solid var(--blau); outline-offset: 3px; border-radius: 4px; }
+.erkl p, .erkl ol, .erkl ul { margin: 8px 0 2px; font-size: .9rem; color: var(--text-2); }
+.erkl ol { padding-left: 20px; display: grid; gap: 5px; font-variant-numeric: tabular-nums; }
+.erkl[hidden] { display: none; }
+.berater-kopf .erkl { margin-top: 12px; }
+.geprueft { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 4px; font-size: .86rem; }
+.geprueft li { display: flex; justify-content: space-between; gap: 12px; color: var(--text-2); }
+.geprueft li span { color: var(--leise); text-align: right; }
 .urteil { font-size: .8rem; font-weight: 700; padding: 4px 10px; border-radius: 99px; background: var(--flaeche-2); color: var(--text-2); white-space: nowrap; }
 .urteil.ja { background: rgba(18,183,106,.15); color: var(--gruen); }
 .urteil.knapp { background: rgba(255,176,32,.18); color: #b26a00; }

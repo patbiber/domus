@@ -359,8 +359,13 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   Speicher-Simulation und Richtpreisen (`BATTERIE_PREISE` in server.py, überschreibbar mit `batterie_preise` in
   anlage.json; Urteil ≤ 8 J. «lohnt sich», ≤ 12 J. «knapp», sonst «lohnt sich nicht»); mit `haushalt.batterie` in
   anlage.json stattdessen Betriebstipps. `haushalt` (boiler_elektrisch, e_auto, waermepumpe, batterie; null = unbekannt)
-  schärft die Tipps. Überall: Kunden-UI Bereich «Berater» (`/#berater`), Retro-Kachel «Energieberater» + Sprüche,
-  HA `sensor.energieberater_tipp_1…3`, `sensor.energieberater_sparpotenzial`, `sensor.energieberater_batterie`.
+  schärft die Tipps. Jeder Tipp erklärt sich: `warum` (was homi in den Daten sieht) und `rechnung` (Schritte mit den
+  echten Zahlen); `auswahl`, `basis` und `geprueft` (auch nicht gezeigte Kandidaten mit Ergebnis), bei der Batterie
+  ebenso `warum`/`rechnung`. Überall: Kunden-UI Bereich «Berater» (`/#berater`, aufklappbar «Warum dieser Tipp?» /
+  «So hat homi gerechnet»), Retro-Kachel «Energieberater» (Tipp antippen → Figur erklärt das Warum, Tooltip mit Rechenweg)
+  + Sprüche,
+  HA `sensor.energieberater_tipp_1…3`, `sensor.energieberater_sparpotenzial`, `sensor.energieberater_batterie`
+  (Attribute inkl. `warum`, `rechnung`, `geprueft`).
 - **Grundsatz:** Jede Funktion in allen Oberflächen (Retro, Kunden-UI, Home Assistant), ausser gerätespezifische
   (z. B. Verbrauch des NUC). Stand 10.10.2026 zusätzlich angeglichen: Batterie-Simulation in der Retro-Seite,
   Verlauf «Tag» und «Gesamt» in der Kunden-UI, HA-Sensoren `sensor.einspeisung_dynamisch_heute`,

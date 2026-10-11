@@ -175,11 +175,16 @@
       <h2>Dein Energieberater</h2>
       <p class="leise" id="b-stand">homi wertet deine Messwerte aus …</p>
       <p id="b-summe" class="b-summe" hidden></p>
+      <details class="erkl" id="b-auswahl" hidden><summary>Wie wählt homi die Tipps aus?</summary>
+        <p id="b-auswahl-text"></p><p id="b-basis" class="leise"></p>
+        <div id="b-geprueft"></div></details>
     </div>
     <ol class="tipps" id="b-tipps"></ol>
     <article class="karte" id="b-batterie" hidden>
       <div class="karte-kopf"><h2 id="b-bat-titel">Brauchst du eine Batterie?</h2><span id="b-urteil" class="urteil"></span></div>
       <p id="b-bat-text"></p>
+      <details class="erkl" id="b-bat-warum" hidden><summary>Warum diese Empfehlung?</summary><p></p></details>
+      <details class="erkl" id="b-bat-rechnung" hidden><summary>So hat homi gerechnet</summary><ol></ol></details>
       <div class="tabelle-rahmen" id="b-bat-tabelle"></div>
       <ul id="b-bat-tipps" class="bat-tipps"></ul>
       <p class="leise" id="b-bat-hinweis"></p>

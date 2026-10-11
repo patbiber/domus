@@ -427,17 +427,28 @@ function beraterZeichnen() {
       + (b.tipps.some(t => t.bedingung) ? ` <span class="leise">Vorausgesetzt, die Bedingung bei Tipp ${b.tipps.findIndex(t => t.bedingung) + 1} trifft zu.</span>` : "");
     s.hidden = false;
   } else s.hidden = true;
+  const offen = [...document.querySelectorAll("#b-tipps details")].map(d => d.open);   // geöffnete Erklärungen behalten
   $("b-tipps").innerHTML = b.tipps.map(t => `<li class="tipp${t.akut ? " akut" : ""}">
       <div class="tipp-kopf"><h3>${esc(t.titel)}</h3>${t.chf_jahr ? `<span class="wert">CHF ${Math.round(t.chf_jahr).toLocaleString("de-CH")}/Jahr</span>` : ""}</div>
       <p>${esc(t.text)}</p>
       <div class="aktion"><b>So geht's</b>${esc(t.aktion)}</div>
-      ${t.bedingung ? `<span class="bedingung">Gilt, ${esc(t.bedingung)}.</span>` : ""}</li>`).join("");
+      ${t.bedingung ? `<span class="bedingung">Gilt, ${esc(t.bedingung)}.</span>` : ""}
+      ${t.warum ? `<details class="erkl"><summary>Warum dieser Tipp?</summary><p>${esc(t.warum)}</p></details>` : ""}
+      ${t.rechnung && t.rechnung.length ? `<details class="erkl"><summary>So hat homi gerechnet</summary><ol>${t.rechnung.map(r => `<li>${esc(r)}</li>`).join("")}</ol></details>` : ""}</li>`).join("");
+  document.querySelectorAll("#b-tipps details").forEach((d, i) => { d.open = !!offen[i]; });
+  if (b.auswahl) {
+    $("b-auswahl").hidden = false;
+    $("b-auswahl-text").textContent = b.auswahl;
+    $("b-basis").textContent = `Datenbasis: ${b.basis}. Tarif: Bezug ${zahl(b.tarif.bezug_rp, 2)} Rp., Rücklieferung ${zahl(b.tarif.rueck_rp, 2)} Rp. pro kWh.`;
+    $("b-geprueft").innerHTML = b.geprueft && b.geprueft.length ? `<b>Ebenfalls geprüft:</b><ul class="geprueft">`
+      + b.geprueft.map(g => `<li>${esc(g.titel)}<span>${esc(g.ergebnis)}</span></li>`).join("") + "</ul>" : "";
+  }
   const bat = b.batterie, k = $("b-batterie");
   if (!bat) return;
   k.hidden = false;
   if (bat.modus === "optimieren") {
     $("b-bat-titel").textContent = bat.titel; $("b-urteil").textContent = "";
-    $("b-bat-text").textContent = ""; $("b-bat-tabelle").innerHTML = "";
+    $("b-bat-text").textContent = bat.warum || ""; $("b-bat-tabelle").innerHTML = "";
     $("b-bat-tipps").innerHTML = bat.tipps.map(x => `<li>${esc(x)}</li>`).join("");
     return;
   }
@@ -445,9 +456,11 @@ function beraterZeichnen() {
   u.textContent = bat.urteil;
   u.className = "urteil " + ({ "lohnt sich": "ja", "knapp": "knapp", "lohnt sich nicht": "nein" }[bat.urteil] || "");
   $("b-bat-text").textContent = bat.text;
+  if (bat.warum) { $("b-bat-warum").hidden = false; $("b-bat-warum").querySelector("p").textContent = bat.warum; }
+  if (bat.rechnung) { $("b-bat-rechnung").hidden = false; $("b-bat-rechnung").querySelector("ol").innerHTML = bat.rechnung.map(r => `<li>${esc(r)}</li>`).join(""); }
   $("b-bat-tabelle").innerHTML = bat.optionen.length ? `<table><thead><tr><th>Grösse</th><th>spart/Jahr</th><th>Preis ca.</th><th>bezahlt</th></tr></thead><tbody>`
-    + bat.optionen.map(o => `<tr class="${o.kwh === bat.beste_kwh ? "beste" : ""}"><td>${o.kwh} kWh</td><td>CHF ${o.ersparnis_jahr_chf}</td>
-        <td>CHF ${o.preis_chf.toLocaleString("de-CH")}</td><td>${zahl(o.amortisation_jahre, 0)} J.</td></tr>`).join("") + "</tbody></table>" : "";
+    + bat.optionen.map(o => `<tr class="${o.kwh === bat.beste_kwh ? "beste" : ""}"><td>${o.kwh} kWh</td><td>${o.ersparnis_jahr_chf}.–</td>
+        <td>${o.preis_chf.toLocaleString("de-CH")}.–</td><td>${zahl(o.amortisation_jahre, 0)} J.</td></tr>`).join("") + "</tbody></table>" : "";
   $("b-bat-tipps").innerHTML = "";
   $("b-bat-hinweis").textContent = bat.hinweis || "";
 }

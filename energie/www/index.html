@@ -88,7 +88,7 @@
   .prog .v { color: var(--yellow); }
   .amort .v { color: var(--green); } .batt .v { color: var(--purple); } .rat .v { color: var(--yellow); }
   .rat ol { margin: 4px 0 0; padding-left: 18px; font-size: 12px; color: var(--white); }
-  .rat ol li { margin: 2px 0; } .rat ol li span { color: var(--green); }
+  .rat ol li { margin: 2px 0; cursor: help; } .rat ol li:hover { color: var(--yellow); } .rat ol li span { color: var(--green); }
   .balken8 { display: block; height: 6px; margin-top: 4px; background: #222; }
   .balken8 i { display: block; height: 100%; background: var(--green-dim); }
   .boerse .v { color: var(--cyan); } .boerse.neg { border-color: var(--red); } .boerse.neg .v { color: var(--red); animation: blink 1s steps(2) infinite; }
@@ -134,7 +134,7 @@
       <div class="stat prog"><div class="k">Solarprognose morgen</div><div class="v" id="s-prog">–</div><div class="s" id="s-prog2">&nbsp;</div></div>
       <div class="stat srv"><div class="k">homi-Server (unter der Treppe)</div><div class="v" id="s-srv">–</div><div class="s" id="s-srv2">&nbsp;</div></div>
       <div class="stat boerse" id="t-boerse"><div class="k">Strombörse Day-Ahead CH</div><div class="v" id="s-boerse">–</div><div class="s" id="s-boerse2">&nbsp;</div></div>
-      <div class="stat rat" title="Energieberater: drei Tipps aus den Messwerten der letzten 14 Tage"><div class="k">Energieberater</div><div class="v" id="s-rat">–</div><ol id="s-rat2"></ol><div class="s" id="s-rat3">&nbsp;</div></div>
+      <div class="stat rat" title="Energieberater: drei Tipps aus den Messwerten der letzten 14 Tage"><div class="k">Energieberater · Tipp antippen = Warum</div><div class="v" id="s-rat">–</div><ol id="s-rat2"></ol><div class="s" id="s-rat3">&nbsp;</div></div>
       <div class="stat batt"><div class="k">Batterie-Simulation</div><div class="v" id="s-batt">–</div><div class="s" id="s-batt2">&nbsp;</div></div>
       <div class="stat amort" title="Investition minus bisheriger Ertrag (selbst verbraucht × Bezugstarif + eingespeist × Rücklieferung), heutige Tarife"><div class="k">Anlage abbezahlt</div><div class="v" id="s-amort">–</div><div class="s" id="s-amort2">&nbsp;</div><span class="balken8"><i id="s-amort3" style="width:0"></i></span></div>
     </div>
@@ -382,7 +382,8 @@ async function pollBerater() {
   try { rat = await (await fetch("api/berater", { cache: "no-store" })).json(); } catch { return; }
   if (!rat || !rat.aktiv) return;
   $("s-rat").textContent = rat.summe_chf_jahr ? `+${Math.round(rat.summe_chf_jahr).toLocaleString("de-CH")} CHF/Jahr drin` : "Tipps";
-  $("s-rat2").innerHTML = rat.tipps.map(t => `<li title="${t.aktion.replace(/"/g, "&quot;")}">${t.titel}${t.chf_jahr ? ` <span>(${Math.round(t.chf_jahr)} CHF)</span>` : ""}</li>`).join("");
+  const attr = s => String(s || "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+  $("s-rat2").innerHTML = rat.tipps.map((t, i) => `<li data-i="${i}" title="${attr("So geht's: " + t.aktion + "\n\nSo hat homi gerechnet:\n" + (t.rechnung || []).map(r => "• " + r).join("\n"))}">${t.titel}${t.chf_jahr ? ` <span>(${Math.round(t.chf_jahr)} CHF)</span>` : ""}</li>`).join("");
   const b = rat.batterie;
   $("s-rat3").textContent = b ? (b.modus === "kaufen" ? `Batterie: ${b.urteil}${b.beste_kwh ? ` (beste: ${b.beste_kwh} kWh, ${Math.round((b.optionen.find(o => o.kwh === b.beste_kwh) || {}).amortisation_jahre || 0)} J.)` : ""}` : b.titel) : "\u00a0";
 }
@@ -1093,7 +1094,12 @@ setInterval(pollHist, 60000);
 pollBoerse(); setInterval(pollBoerse, 15 * 60000);
 pollEinspeisung(); setInterval(pollEinspeisung, 10 * 60000);
 pollAmort(); setInterval(pollAmort, 10 * 60000);
-pollBerater(); setInterval(pollBerater, 60 * 60000); setInterval(drawBoerse, 60000);
+pollBerater(); setInterval(pollBerater, 60 * 60000);
+// Klick auf einen Tipp: die Figur erklärt, warum (Rechenweg im Tooltip)
+$("s-rat2").addEventListener("click", e => {
+  const li = e.target.closest("li[data-i]");
+  if (li && rat && rat.tipps[li.dataset.i]) say(`Warum? ${rat.tipps[li.dataset.i].warum}`, "#ffff55", 12000);
+}); setInterval(drawBoerse, 60000);
 setInterval(chatter, 7000);
 setInterval(wander, 3500);
 requestAnimationFrame(frame);
