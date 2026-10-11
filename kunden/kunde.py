@@ -118,7 +118,7 @@ def inhalt(name, ziel_url, passwort):
             "    # App-Hülle (Manifest, Service Worker, Icons, Offline-Seite) ohne Passwort, enthält keine Daten\n"
             "    location ~ ^/(manifest\\.webmanifest|sw\\.js|offline\\.html|icons/[a-z0-9-]+\\.png)$ {\n"
             "        auth_basic off;\n"
-            "        limit_req zone=home_api burst=20 nodelay;\n"
+            "        limit_req zone=home_api burst=60 nodelay;\n"
             f"{weiter}"
             "    }\n\n"
             "    location = /api/push {\n"
@@ -127,7 +127,7 @@ def inhalt(name, ziel_url, passwort):
             f"{weiter}"
             "    }\n\n"
             "    location / {\n"
-            "        limit_req zone=home_api burst=20 nodelay;\n"
+            "        limit_req zone=home_api burst=60 nodelay;\n"
             f"{weiter}"
             "    }")
 

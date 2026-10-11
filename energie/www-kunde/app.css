@@ -45,22 +45,25 @@ b { font-weight: 700; }
 .tabs { position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; display: grid; grid-template-columns: repeat(5, 1fr);
   background: var(--flaeche); border-top: 1px solid var(--linie); padding: 6px 4px calc(6px + var(--unten));
   box-shadow: 0 -6px 24px rgba(15,27,45,.08); }
-.tabs button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 6px 2px; font-size: .72rem; font-weight: 600; color: var(--leise); cursor: pointer; border-radius: 12px; }
-.tabs svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tabs button { border: 0; background: none; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0;
+  padding: 6px 1px; font-size: .66rem; font-weight: 600; color: var(--leise); cursor: pointer; border-radius: 12px; white-space: nowrap; }
+.tabs button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.tabs svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .tabs button.aktiv { color: var(--sonne-2); }
 @media (prefers-color-scheme: dark) { .tabs button.aktiv { color: var(--sonne); } }
 @media (min-width: 900px) {
   body { padding-bottom: 32px; }
-  .tabs { position: static; display: flex; gap: 4px; background: none; border: 0; box-shadow: none; padding: 0; }
-  .tabs button { flex-direction: row; gap: 8px; font-size: .92rem; color: #c3cde0; padding: 8px 14px; border-radius: 99px; }
-  .tabs svg { width: 18px; height: 18px; }
+  .tabs { position: static; display: flex; gap: 2px; background: none; border: 0; box-shadow: none; padding: 0; flex: none; }
+  .tabs button { flex-direction: row; gap: 6px; font-size: .84rem; color: #c3cde0; padding: 7px 11px; border-radius: 99px; }
+  .tabs svg { width: 16px; height: 16px; }
+  .live { padding: 5px 9px; }
   .tabs button:hover { background: rgba(255,255,255,.08); }
   .tabs button.aktiv { background: rgba(255,255,255,.12); color: #fff; }
 }
 
 /* ---------- Inhalt ---------- */
 main { max-width: 1160px; margin: 0 auto; padding: 16px; }
+@media (min-width: 900px) and (max-width: 1080px) { .tabs svg { display: none; } .marke span { max-width: 120px; } }
 .tab { display: none; animation: rein .25s ease; }
 .tab.aktiv { display: block; }
 @keyframes rein { from { opacity: 0; transform: translateY(6px); } }

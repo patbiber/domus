@@ -11,10 +11,17 @@ const chf = x => x == null ? "–" : `${x < 0 ? "−" : ""}CHF ${zahl(Math.abs(x
 const rp = x => x == null ? "–" : `${zahl(x, 1)} Rp.`;
 const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const datum = s => { const d = new Date(s); return `${WT[d.getDay()]} ${d.getDate()}.${d.getMonth() + 1}.`; };
-async function holen(pfad) {
-  const r = await fetch("/api/" + pfad, { cache: "no-store" });
-  if (!r.ok) throw new Error(r.status);
-  return r.json();
+async function holen(pfad, versuch = 0) {
+  // Bei Fehlern (z. B. 503 der Ratenbegrenzung beim gleichzeitigen Start) bis zu zweimal kurz warten und neu versuchen
+  try {
+    const r = await fetch("/api/" + pfad, { cache: "no-store" });
+    if (!r.ok) throw new Error(r.status);
+    return await r.json();
+  } catch (e) {
+    if (versuch >= 2) throw e;
+    await new Promise(ok => setTimeout(ok, 1200 * (versuch + 1)));
+    return holen(pfad, versuch + 1);
+  }
 }
 
 /* ======================= Tabs ======================= */
