@@ -354,11 +354,13 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   abbezahlt») und Home Assistant (`sensor.pv_anlage_amortisiert` mit Attributen, `sensor.pv_anlage_break_even`).
 - **Energieberater** (`/api/berater`, stündlich neu): drei Tipps mit dem grössten Nutzen in CHF/Jahr aus den letzten
   14 Tagen, Kandidaten: Grundlast senken (Median 01–05 Uhr, Ziel −30 %), Nachtverbraucher ≥ 600 W in den Mittag legen,
-  Sonnenüberschuss selbst nutzen (Boiler/E-Auto, max. 2'500 kWh), grosse Geräte in die Sonnenstunden (40 % des Bezugs über
+  Sonnenüberschuss selbst nutzen (Boiler/E-Auto, max. 2'500 kWh) bzw. ohne eigenen Abnehmer Überschuss an Nachbarn
+  verkaufen (LEG, seit 2026; Annahme 25 % zu +3 Rp.), grosse Geräte in die Sonnenstunden (40 % des Bezugs über
   der Grundlast), akut: negative Preise heute/morgen (immer zuoberst). Batterie: ohne Batterie Kaufempfehlung aus der
   Speicher-Simulation und Richtpreisen (`BATTERIE_PREISE` in server.py, überschreibbar mit `batterie_preise` in
   anlage.json; Urteil ≤ 8 J. «lohnt sich», ≤ 12 J. «knapp», sonst «lohnt sich nicht»); mit `haushalt.batterie` in
-  anlage.json stattdessen Betriebstipps. `haushalt` (boiler_elektrisch, e_auto, waermepumpe, batterie; null = unbekannt)
+  anlage.json stattdessen Betriebstipps. `haushalt` (warmwasser, boiler_elektrisch, e_auto, waermepumpe, batterie;
+  null = unbekannt; Patrick: Warmwasser über Fernwärme, kein E-Auto)
   schärft die Tipps. Jeder Tipp erklärt sich: `warum` (was homi in den Daten sieht) und `rechnung` (Schritte mit den
   echten Zahlen); `auswahl`, `basis` und `geprueft` (auch nicht gezeigte Kandidaten mit Ergebnis), bei der Batterie
   ebenso `warum`/`rechnung`. Überall: Kunden-UI Bereich «Berater» (`/#berater`, aufklappbar «Warum dieser Tipp?» /

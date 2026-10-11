@@ -4,7 +4,7 @@
   "investition_chf": 32849.60,
   "foerderung_chf": 3390,
   "inbetriebnahme": null,
-  "haushalt": {"boiler_elektrisch": null, "e_auto": null, "waermepumpe": null, "batterie": null},
+  "haushalt": {"warmwasser": "Fernwärme", "boiler_elektrisch": false, "e_auto": false, "waermepumpe": null, "batterie": null},
   "breite": 47.240,
   "laenge": 8.724,
   "neigung": 25,

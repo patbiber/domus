@@ -302,22 +302,25 @@ def berater():
 
     # 2) Grosser Verbraucher nachts -> in die Mittagssonne
     kwh_nacht = sum(gross.values()) / tage if gross else 0
-    if kwh_nacht >= 0.3 and haushalt.get("boiler_elektrisch") is not False:
+    ursache = ("typisch für Waschmaschine, Tumbler, Geschirrspüler oder eine Heizungspumpe"
+               if haushalt.get("boiler_elektrisch") is False else "typisch für einen Boiler, eine Heizung oder Haushaltsgeräte")
+    if kwh_nacht >= 0.3:
         tipps.append({"id": "nachtlast", "titel": "Nachtverbraucher in den Mittag legen",
             "chf_jahr": round(kwh_nacht * 365 * diff), "kwh_jahr": round(kwh_nacht * 365),
             "text": f"Zwischen 22 und 6 Uhr läuft an {len(gross)} von {round(tage)} Tagen ein grosser Verbraucher "
-                    f"(über 600 W, im Mittel {kwh_nacht:.1f} kWh pro Nacht) – typisch für einen Boiler oder eine Heizung.",
+                    f"(über 600 W, im Mittel {kwh_nacht:.1f} kWh pro Nacht) – {ursache}.",
             "warum": f"Nachts kommt jede kWh aus dem Netz zu {rp(bezug)}. Läuft derselbe Verbraucher mittags, deckt ihn "
                      f"deine Anlage – statt dass du den Strom für {rp(rueck)} einspeist.",
             "rechnung": [f"10-Minuten-Werte über 600 W zwischen 22 und 6 Uhr: an {len(gross)} von {round(tage)} Tagen",
                          f"im Mittel {kwh_nacht:.2f} kWh pro Nacht × 365 = {tsd(kwh_nacht * 365)} kWh/Jahr",
                          f"Vorteil pro verschobene kWh: {rp(bezug)} − {rp(rueck)} = {rp(diff)}",
                          f"{tsd(kwh_nacht * 365)} kWh × {rp(diff)} = CHF {round(kwh_nacht * 365 * diff)} pro Jahr"],
-            "aktion": "Prüfen, was nachts läuft. Ist es der Boiler: Ladezeit auf 11–15 Uhr umstellen lassen "
-                      "(Zeitschaltuhr bzw. Rundsteuerung) – dann heizt ihn deine Sonne statt das Netz."})
+            "aktion": ("Prüfen, was nachts läuft: Geräte mit Startzeitvorwahl auf 11–15 Uhr stellen." if haushalt.get("boiler_elektrisch") is False
+                       else "Prüfen, was nachts läuft. Ist es der Boiler: Ladezeit auf 11–15 Uhr umstellen lassen "
+                            "(Zeitschaltuhr bzw. Rundsteuerung) – dann heizt ihn deine Sonne statt das Netz.")})
     else:
         geprueft.append({"titel": "Nachtverbraucher in den Mittag legen",
-                         "ergebnis": "kein grosser Verbraucher (über 600 W) nachts gefunden" if kwh_nacht < 0.3 else "laut Angabe kein Elektroboiler"})
+                         "ergebnis": "kein grosser Verbraucher (über 600 W) nachts gefunden"})
 
     # 3) Überschuss für Warmwasser / E-Auto / Wärmepumpe nutzen
     try:
@@ -353,8 +356,26 @@ def berater():
             "aktion": "Elektroboiler mit einem Überschuss-Regler (z. B. Fronius Ohmpilot, ca. CHF 900 inkl. Einbau) nur mit "
                       "Sonnenstrom heizen; E-Auto tagsüber laden; Wärmepumpe mittags vorheizen lassen."})
     else:
-        geprueft.append({"titel": "Sonnenüberschuss selbst nutzen",
-                         "ergebnis": "kaum Überschuss" if ueberschuss_jahr <= 1000 else "laut Angabe kein passender Verbraucher"})
+        geprueft.append({"titel": "Sonnenüberschuss selbst nutzen (Boiler, E-Auto)",
+                         "ergebnis": "kaum Überschuss" if ueberschuss_jahr <= 1000 else
+                         f"kein passender Verbraucher ({haushalt.get('warmwasser') + ' für Warmwasser, ' if haushalt.get('warmwasser') else ''}kein E-Auto)"})
+    if kein_abnehmer and ueberschuss_jahr > 3000:
+        verkauf, mehr = ueberschuss_jahr * 0.25, 0.03
+        tipps.append({"id": "leg", "titel": "Überschuss an Nachbarn verkaufen (LEG)",
+            "chf_jahr": round(verkauf * mehr), "kwh_jahr": round(verkauf), "bedingung": "falls Nachbarn mitmachen",
+            "text": f"Du speist rund {tsd(ueberschuss_jahr)} kWh im Jahr für {rp(rueck)} ein und hast selbst keinen grossen "
+                    "Abnehmer dafür. Seit 2026 darfst du Solarstrom in einer lokalen Elektrizitätsgemeinschaft (LEG) an "
+                    "Nachbarn in deiner Gemeinde verkaufen.",
+            "warum": "Ohne Elektroboiler, E-Auto oder Wärmepumpe lässt sich dein Überschuss im Haus kaum nutzen. In einer LEG "
+                     "kauft ihn ein Nachbar zu einem Preis zwischen Rücklieferung und seinem Bezugstarif – beide profitieren. "
+                     "Das neue Stromgesetz (in Kraft seit 1. Januar 2026) senkt dafür das Netzentgelt.",
+            "rechnung": [quelle_u,
+                         f"Annahme: ein Viertel davon geht an Nachbarn → {tsd(verkauf)} kWh/Jahr",
+                         f"Annahme: Verkaufspreis {rp(rueck + mehr)} statt {rp(rueck)} Rücklieferung → {rp(mehr)} mehr pro kWh "
+                         "(hängt vom vereinbarten Preis und vom Netzentgelt ab)",
+                         f"{tsd(verkauf)} kWh × {rp(mehr)} = CHF {round(verkauf * mehr)} pro Jahr – grobe Schätzung"],
+            "aktion": "Bei deinem Netzbetreiber nach den Bedingungen für eine LEG fragen und Nachbarn mit hohem Tagesverbrauch "
+                      "ansprechen (Wärmepumpe, E-Auto, Gewerbe)."})
 
     # 4) Verbrauch verschieben (Waschen, Spülen, Trocknen)
     abend = sum(max(0.0, p["b"] - grund_w / 1000) for p in prof)
@@ -404,7 +425,7 @@ def berater():
     monate_frueher = None
     if am.get("aktiv") and am.get("pro_jahr_chf") and am.get("rest_chf"):
         monate_frueher = round(12 * (am["rest_chf"] / am["pro_jahr_chf"] - am["rest_chf"] / (am["pro_jahr_chf"] + summe)))
-    auswahl = ("homi rechnet fünf mögliche Massnahmen mit deinen Messwerten und deinem Tarif durch und zeigt die drei mit "
+    auswahl = ("homi rechnet bis zu sechs mögliche Massnahmen mit deinen Messwerten und deinem Tarif durch und zeigt die drei mit "
                "dem grössten Nutzen in Franken pro Jahr. Hinweise auf negative Strompreise stehen immer zuoberst. "
                "Annahmen (z. B. wie viel sich verschieben lässt) sind bewusst vorsichtig und bei jedem Tipp genannt.")
     # Batterie
