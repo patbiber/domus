@@ -288,6 +288,8 @@ nur im Netz `proxy_default`).
   (`img/app-uebersicht.png`, `app-verlauf.png`, `app-preise.png`), auf dem Handy wischbar. Neu aufnehmen mit
   `energy/handy-screenshots.py` (Timer `homi-screenshots`, 11:30–14:30: nur bei Solar ≥ 2 kW, ersetzt Bilder und Text,
   committet, pusht, mailt und schaltet sich ab; bis 17.10.2026). `--probe <ordner>` nimmt nur auf, ohne etwas zu ändern.
+- **Abschnitt «Energieberater»** (`#berater`, auch im Menü): drei echte Handy-Ansichten des Beraters
+  (`img/berater-tipps.png`, `berater-erklaerung.png`, `berater-batterie.png`, 11.10.2026), mit Hinweis auf das Beispielhaus.
 - **Abschnitt «homi als App»** (`#app`): Handy-Rahmen mit echtem homi-Screenshot (`img/app-uebersicht.png`) und
   eingeblendeter Beispiel-Push-Nachricht.
 - Proxy `proxy/conf.d/homi.solar.conf`: Let's Encrypt, strenge CSP, nur GET bzw. POST fürs Formular

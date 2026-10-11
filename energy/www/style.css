@@ -330,3 +330,6 @@ footer nav { display: flex; gap: 18px; flex-wrap: wrap; }
   .ansicht-reihe img { box-shadow: 0 10px 24px rgba(15, 27, 45, .16); }
   .ansicht-reihe figure { flex: 0 0 min(78%, 280px); scroll-snap-align: center; }
 }
+
+/* Energieberater: gleiche Handy-Reihe wie #ansicht */
+.berater-note { text-align: center; color: var(--muted); font-size: .9rem; margin: 22px auto 0; max-width: 60ch; }
