@@ -1,0 +1,264 @@
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+
+# Strompreis GWS + Fronius-Livewerte vom Energie-Dienst (domus/energie, Port 8099)
+rest:
+  - resource: http://127.0.0.1:8099/api/status
+    scan_interval: 30
+    sensor:
+      - name: Strompreis Bezug
+        unique_id: gws_strompreis_bezug
+        value_template: "{{ value_json.tarif.bezug_chf_kwh }}"
+        availability: "{{ value_json.tarif is not none }}"
+        unit_of_measurement: CHF/kWh
+        icon: mdi:cash-minus
+      - name: Rückliefervergütung
+        unique_id: gws_rueckliefer_verguetung
+        value_template: "{{ value_json.tarif.rueckliefer_chf_kwh }}"
+        availability: "{{ value_json.tarif is not none }}"
+        unit_of_measurement: CHF/kWh
+        icon: mdi:cash-plus
+      - name: Stromkosten aktuell
+        unique_id: domus_stromkosten_aktuell
+        value_template: "{{ value_json.kosten_chf_h }}"
+        availability: "{{ value_json.fronius_ok }}"
+        unit_of_measurement: CHF/h
+        icon: mdi:cash-clock
+      - name: Einspeiseerlös aktuell
+        unique_id: domus_einspeiseerloes_aktuell
+        value_template: "{{ value_json.erloes_chf_h }}"
+        availability: "{{ value_json.fronius_ok }}"
+        unit_of_measurement: CHF/h
+        icon: mdi:solar-power
+      - name: Börsenpreis Day-Ahead
+        unique_id: domus_boersenpreis_day_ahead
+        value_template: "{{ value_json.boerse.rp_kwh }}"
+        availability: "{{ value_json.boerse is not none and value_json.boerse.rp_kwh is not none }}"
+        unit_of_measurement: Rp/kWh
+        state_class: measurement
+        icon: mdi:chart-line
+        json_attributes_path: "$.boerse"
+        json_attributes:
+          - eur_mwh
+          - min_rp_kwh
+          - max_rp_kwh
+          - naechster_negativer
+          - kurs_eur_chf
+      - name: Börsenpreis Day-Ahead CHF
+        unique_id: domus_boersenpreis_chf
+        value_template: "{{ (value_json.boerse.rp_kwh / 100) | round(4) }}"
+        availability: "{{ value_json.boerse is not none and value_json.boerse.rp_kwh is not none }}"
+        unit_of_measurement: CHF/kWh
+        state_class: measurement
+        icon: mdi:chart-line
+    binary_sensor:
+      - name: Börsenpreis negativ
+        unique_id: domus_boersenpreis_negativ
+        value_template: "{{ value_json.boerse.negativ }}"
+        availability: "{{ value_json.boerse is not none }}"
+        icon: mdi:cash-remove
+  - resource: http://127.0.0.1:8099/api/speicher
+    scan_interval: 60
+    sensor:
+      - name: Speicher-Simulation Steckerspeicher 2 kWh Ersparnis
+        unique_id: domus_sim_stecker_2kwh_ersparnis
+        value_template: "{{ value_json.speicher[0].summe.ersparnis_chf }}"
+        unit_of_measurement: CHF
+        state_class: total_increasing
+        icon: mdi:battery-charging-high
+        json_attributes_path: "$.speicher[0]"
+        json_attributes:
+          - soc_pct
+          - heute
+          - summe
+          - tage_gemessen
+          - zyklen
+          - autarkie_plus_pct
+          - ersparnis_pro_jahr_chf
+      - name: Speicher-Simulation Steckerspeicher 2 kWh Ladestand
+        unique_id: domus_sim_stecker_2kwh_soc
+        value_template: "{{ value_json.speicher[0].soc_pct }}"
+        unit_of_measurement: "%"
+        state_class: measurement
+        device_class: battery
+      - name: Speicher-Simulation Speicher 5 kWh Ersparnis
+        unique_id: domus_sim_speicher_5kwh_ersparnis
+        value_template: "{{ value_json.speicher[1].summe.ersparnis_chf }}"
+        unit_of_measurement: CHF
+        state_class: total_increasing
+        icon: mdi:battery-charging-high
+        json_attributes_path: "$.speicher[1]"
+        json_attributes:
+          - soc_pct
+          - heute
+          - summe
+          - tage_gemessen
+          - zyklen
+          - autarkie_plus_pct
+          - ersparnis_pro_jahr_chf
+      - name: Speicher-Simulation Speicher 5 kWh Ladestand
+        unique_id: domus_sim_speicher_5kwh_soc
+        value_template: "{{ value_json.speicher[1].soc_pct }}"
+        unit_of_measurement: "%"
+        state_class: measurement
+        device_class: battery
+      - name: Speicher-Simulation Speicher 10 kWh Ersparnis
+        unique_id: domus_sim_speicher_10kwh_ersparnis
+        value_template: "{{ value_json.speicher[2].summe.ersparnis_chf }}"
+        unit_of_measurement: CHF
+        state_class: total_increasing
+        icon: mdi:battery-charging-high
+        json_attributes_path: "$.speicher[2]"
+        json_attributes:
+          - soc_pct
+          - heute
+          - summe
+          - tage_gemessen
+          - zyklen
+          - autarkie_plus_pct
+          - ersparnis_pro_jahr_chf
+      - name: Speicher-Simulation Speicher 10 kWh Ladestand
+        unique_id: domus_sim_speicher_10kwh_soc
+        value_template: "{{ value_json.speicher[2].soc_pct }}"
+        unit_of_measurement: "%"
+        state_class: measurement
+        device_class: battery
+  - resource: http://127.0.0.1:8099/api/prognose
+    scan_interval: 1800
+    sensor:
+      - name: PV-Prognose heute
+        unique_id: homi_pv_prognose_heute
+        value_template: "{{ value_json.heute.kwh }}"
+        availability: "{{ value_json.heute is defined }}"
+        unit_of_measurement: kWh
+        icon: mdi:solar-power-variant
+        json_attributes_path: "$.heute"
+        json_attributes: [rest_kwh, spitze_kw, wolken_pct, bestes_fenster]
+      - name: PV-Prognose morgen
+        unique_id: homi_pv_prognose_morgen
+        value_template: "{{ value_json.morgen.kwh }}"
+        availability: "{{ value_json.morgen is defined }}"
+        unit_of_measurement: kWh
+        icon: mdi:weather-sunny-alert
+        json_attributes_path: "$.morgen"
+        json_attributes: [datum, spitze_kw, wolken_pct, bestes_fenster]
+      - name: PV-Prognose bestes Zeitfenster morgen
+        unique_id: homi_pv_prognose_fenster_morgen
+        value_template: "{{ (value_json.morgen.bestes_fenster.von ~ '–' ~ value_json.morgen.bestes_fenster.bis) if value_json.morgen.bestes_fenster else 'keins' }}"
+        availability: "{{ value_json.morgen is defined }}"
+        icon: mdi:washing-machine
+  - resource: http://127.0.0.1:8099/api/boerse
+    scan_interval: 900
+    sensor:
+      - name: Börsenpreise Prognose
+        unique_id: domus_boersenpreise_prognose
+        value_template: "{{ value_json.aktuell.min_rp_kwh if value_json.aktuell else none }}"
+        unit_of_measurement: Rp/kWh
+        icon: mdi:chart-timeline-variant
+        json_attributes:
+          - preise
+          - quelle
+  - resource: http://127.0.0.1:8099/api/amortisation
+    scan_interval: 3600
+    sensor:
+      - name: PV-Anlage amortisiert
+        unique_id: homi_amortisation_pct
+        value_template: "{{ value_json.amortisiert_pct }}"
+        availability: "{{ value_json.aktiv | default(false) }}"
+        unit_of_measurement: "%"
+        icon: mdi:cash-check
+        json_attributes: [bisher_chf, netto_chf, pro_jahr_chf, rest_chf, rest_jahre, break_even, inbetriebnahme, eigenverbrauch_pct, wert_rp_kwh, jahresertrag_kwh]
+      - name: PV-Anlage Break-even
+        unique_id: homi_amortisation_break_even
+        value_template: "{{ value_json.break_even }}"
+        availability: "{{ value_json.aktiv | default(false) }}"
+        device_class: date
+        icon: mdi:calendar-check
+  - resource: http://127.0.0.1:8099/api/einspeisung
+    scan_interval: 900
+    sensor:
+      - name: Einspeisung dynamisch heute
+        unique_id: homi_einspeisung_dynamisch_heute
+        value_template: "{{ value_json.heute.einspeisung_dynamisch_chf }}"
+        availability: "{{ value_json.heute is defined and value_json.heute }}"
+        unit_of_measurement: CHF
+        icon: mdi:transmission-tower-export
+        json_attributes_path: "$.heute"
+        json_attributes: [einspeisung_fix_chf, minuspreis_bloecke, ueberschuss_bei_minuspreis_kwh, kosten_bei_minuspreis_chf, batterie]
+      - name: Minuspreise heute
+        unique_id: homi_minuspreise_heute
+        value_template: "{{ value_json.heute.minuspreis_bloecke | join(', ') if value_json.heute and value_json.heute.minuspreis_bloecke else 'keine' }}"
+        icon: mdi:cash-minus
+      - name: Minuspreise morgen
+        unique_id: homi_minuspreise_morgen
+        value_template: "{{ (value_json.morgen.minuspreis_bloecke | join(', ') if value_json.morgen.minuspreis_bloecke else 'keine') if value_json.morgen else 'noch offen' }}"
+        icon: mdi:cash-minus
+  - resource: http://127.0.0.1:8099/api/berater
+    scan_interval: 3600
+    sensor:
+      - name: Energieberater Tipp 1
+        unique_id: homi_berater_tipp_1
+        value_template: "{{ value_json.tipps[0].titel if value_json.tipps | length > 0 else 'kein Tipp' }}"
+        availability: "{{ value_json.aktiv | default(false) }}"
+        icon: mdi:lightbulb-on-outline
+        json_attributes_path: "$.tipps[0]"
+        json_attributes: [text, warum, rechnung, aktion, chf_jahr, kwh_jahr, bedingung, akut]
+      - name: Energieberater Tipp 2
+        unique_id: homi_berater_tipp_2
+        value_template: "{{ value_json.tipps[1].titel if value_json.tipps | length > 1 else 'kein Tipp' }}"
+        availability: "{{ value_json.aktiv | default(false) }}"
+        icon: mdi:lightbulb-on-outline
+        json_attributes_path: "$.tipps[1]"
+        json_attributes: [text, warum, rechnung, aktion, chf_jahr, kwh_jahr, bedingung, akut]
+      - name: Energieberater Tipp 3
+        unique_id: homi_berater_tipp_3
+        value_template: "{{ value_json.tipps[2].titel if value_json.tipps | length > 2 else 'kein Tipp' }}"
+        availability: "{{ value_json.aktiv | default(false) }}"
+        icon: mdi:lightbulb-on-outline
+        json_attributes_path: "$.tipps[2]"
+        json_attributes: [text, warum, rechnung, aktion, chf_jahr, kwh_jahr, bedingung, akut]
+      - name: Energieberater Sparpotenzial
+        unique_id: homi_berater_summe
+        value_template: "{{ value_json.summe_chf_jahr }}"
+        availability: "{{ value_json.aktiv | default(false) }}"
+        unit_of_measurement: CHF
+        icon: mdi:piggy-bank-outline
+        json_attributes: [monate_frueher, grundlast_w, spitze_stunde, tage, stand, basis, auswahl, geprueft]
+      - name: Energieberater Batterie
+        unique_id: homi_berater_batterie
+        value_template: "{{ value_json.batterie.urteil if value_json.batterie.modus == 'kaufen' else 'vorhanden' }}"
+        availability: "{{ value_json.aktiv | default(false) }}"
+        icon: mdi:home-battery-outline
+        json_attributes_path: "$.batterie"
+        json_attributes: [text, warum, rechnung, beste_kwh, optionen, tipps, hinweis]
+
+# Netzbezug/Einspeisung als kWh-Zähler aus den Fronius-Leistungswerten (Smart Meter sitzt im Verbrauchszweig)
+sensor:
+  - platform: integration
+    source: sensor.solarnet_leistung_netzbezug
+    name: Netzbezug Energie
+    unique_id: domus_netzbezug_energie
+    unit_prefix: k
+    round: 3
+    method: left
+    max_sub_interval:
+      minutes: 1
+  - platform: integration
+    source: sensor.solarnet_leistung_netzeinspeisung
+    name: Netzeinspeisung Energie
+    unique_id: domus_netzeinspeisung_energie
+    unit_prefix: k
+    round: 3
+    method: left
+    max_sub_interval:
+      minutes: 1

@@ -106,7 +106,10 @@ journalctl --user -u strompreise                 # Log
 
 ### Energie-Dienst und home.biber.solar (`energie/`)
 
-Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen):
+Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen). Code: `energie/server.py` (HTTP-Server,
+Start) und das Paket `energie/homi/` mit einem Modul pro Thema: `konfig` (Konstanten, Pfade), `zustand` (gemeinsamer
+Laufzeit-Zustand), `erfassung` (5-s-Schleife), `fronius`, `tarif`, `boerse`, `archiv`, `speicher`, `prognose`,
+`einspeisung`, `amortisation`, `berater`, `push_abo`, `servermessung`. Nur Python-Standardbibliothek.
 - fragt alle 5 s den Fronius ab (`GetPowerFlowRealtimeData`) – nachts ist der Wechselrichter aus, dann `fronius_ok: false`,
 - berechnet den aktuellen Strompreis aus `strompreise/data/latest/tarife.json` + `energie/tarif.json`
   (Produkt ÖkoStrom, Netztarif, Gemeindeabgabe, MWST, Rückliefervergütung Sommer/Winter, Korrekturen gemäss PDF),
@@ -362,7 +365,7 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   Sonnenüberschuss selbst nutzen (Boiler/E-Auto, max. 2'500 kWh) bzw. ohne eigenen Abnehmer Überschuss an Nachbarn
   verkaufen (LEG, seit 2026; Annahme 25 % zu +3 Rp.), grosse Geräte in die Sonnenstunden (40 % des Bezugs über
   der Grundlast), akut: negative Preise heute/morgen (immer zuoberst). Batterie: ohne Batterie Kaufempfehlung aus der
-  Speicher-Simulation und Richtpreisen (`BATTERIE_PREISE` in server.py, überschreibbar mit `batterie_preise` in
+  Speicher-Simulation und Richtpreisen (`BATTERIE_PREISE` in `homi/berater.py`, überschreibbar mit `batterie_preise` in
   anlage.json; Urteil ≤ 8 J. «lohnt sich», ≤ 12 J. «knapp», sonst «lohnt sich nicht»); mit `haushalt.batterie` in
   anlage.json stattdessen Betriebstipps. `haushalt` (warmwasser, boiler_elektrisch, e_auto, waermepumpe, batterie;
   null = unbekannt; Patrick: Warmwasser über Fernwärme, kein E-Auto)

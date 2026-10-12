@@ -82,6 +82,7 @@ Geplant: `mosquitto/` (MQTT), `zigbee2mqtt/` (Zigbee-Stick folgt), Philips Hue �
 ### 4.1 Home Assistant
 
 - Container `ghcr.io/home-assistant/home-assistant:stable`, Konfiguration in `homeassistant/config/`
+  (YAML-Dateien im Repo, Zugangsdaten in `secrets.yaml` und `.storage/` nicht)
   (per `.gitignore` ausgeschlossen).
 - Zugriff von aussen über nginx; Proxy-Einstellungen (`use_x_forwarded_for`, `trusted_proxies`, IP-Sperre nach
   5 Fehlversuchen) liegen seit 2026 in `config/.storage/http`.
@@ -175,7 +176,7 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
 | Thema | Umsetzung |
 |---|---|
 | Secrets | Nur `.env.example` im Repo; `.env`, `secrets.yaml`, `/etc/msmtprc` bleiben lokal |
-| Betriebsdaten | `homeassistant/config/`, `strompreise/data/`, `energie/data/`, `backups/` per `.gitignore` ausgeschlossen |
+| Betriebsdaten | `homeassistant/config/` (ausser `configuration.yaml`, `automations.yaml`, `scripts.yaml`, `scenes.yaml` – ohne Secrets, im Repo), `strompreise/data/`, `energie/data/`, `backups/` per `.gitignore` ausgeschlossen |
 | Updates | Ubuntu und Docker CE täglich, Neustart nur wenn nötig um 03:30; Container-Images wöchentlich mit HA-Backup, Prüfung und automatischem Zurückrollen; Mail-Bericht |
 | Aufbewahrung | Container-Logs max. 3 × 10 MB, keine Protokollierung der laufenden API-Abrufe, HA-Backups: letzte 10 |
 | Öffentliche Ports | Nur 80/443 (Router → NUC); Port 8099 nur im LAN |

@@ -5,7 +5,12 @@
 secrets/
 
 # Dienst-Daten
-homeassistant/config/
+homeassistant/config/*
+# … ausser der eigentlichen Konfiguration (ohne Secrets; secrets.yaml, .storage, Datenbank bleiben draussen)
+!homeassistant/config/configuration.yaml
+!homeassistant/config/automations.yaml
+!homeassistant/config/scripts.yaml
+!homeassistant/config/scenes.yaml
 mosquitto/data/
 mosquitto/log/
 zigbee2mqtt/data/
