@@ -242,6 +242,8 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 10.10.2026 | Amortisation in homi: zurückverdient, Break-even, Hebel Eigenverbrauch (Investition 33'000 CHF) |
 | 10.10.2026 | Alle Funktionen in allen Oberflächen: Amortisation/Batterie-Simulation in Retro, Verlauf Tag/Gesamt in der Kunden-UI, neue HA-Sensoren |
 | 11.10.2026 | Energieberater: drei Tipps mit CHF/Jahr und Batterie-Empfehlung in Kunden-UI, Retro und Home Assistant |
+| 12.10.2026 | Aufgeräumt: server.py in Module (homi/) aufgeteilt, HA-Konfiguration im Repo |
+| 12.10.2026 | Wochenbericht jeden Montag per Mail und Push, in App, Retro und Home Assistant |
 
 ## 8. Offene Punkte
 

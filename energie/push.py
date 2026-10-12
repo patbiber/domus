@@ -9,6 +9,7 @@ Aufruf:
   push.py minuspreis [--test]         06:45 (Timer homi-push-minuspreis): heute negative Börsenpreise?
   push.py prognose                    19:00 (homi-prognose.service): Solarprognose für morgen, Minuspreise morgen
   push.py ausfall                     alle 5 min (Timer homi-push-ausfall): homi, Fronius oder Dienste ausgefallen?
+  push.py wochenbericht               Montag 08:00 (homi-wochenbericht.service): die letzte Woche in einem Satz
   push.py test                        Testnachricht an die Geräte, die auf der Seite «Test» gedrückt haben
   push.py senden <thema> <titel> <text>   beliebige Nachricht an alle Geräte mit diesem Thema
   push.py liste                       angemeldete Geräte anzeigen
@@ -190,6 +191,20 @@ def prognose():
     an_alle("prognose", f"{symbol} Morgen ({WT[tag_.weekday()]}): {m['kwh']:.0f} kWh Sonne", text, ttl=12 * 3600)
 
 
+def wochenbericht():
+    w = api("wochenbericht")
+    if not w.get("aktiv"):
+        print("kein Wochenbericht:", w.get("grund"))
+        return
+    vz = "+" if w["saldo_chf"] >= 0 else "−"
+    text = (f"{w['pv_kwh']:.0f} kWh erzeugt, {w['verbrauch_kwh']:.0f} kWh verbraucht"
+            + (f", Autarkie {w['autarkie_pct']} %" if w.get("autarkie_pct") is not None else "")
+            + f". Bester Tag: {w['bester_tag']['name']} ({w['bester_tag']['pv_kwh']:.0f} kWh).")
+    if w.get("tipp"):
+        text += f" Tipp der Woche: {w['tipp']['titel']}."
+    an_alle("wochenbericht", f"📊 Deine Woche: Bilanz {vz}CHF {abs(w['saldo_chf']):.2f}", text, url="/#verlauf", ttl=24 * 3600)
+
+
 def ausfall():
     """Meldet einen Ausfall erst, wenn er 15 min (Fronius tagsüber: 30 min) anhält, und dann die Erholung."""
     datei = os.path.join(PUSH, "ausfall.json")
@@ -260,6 +275,8 @@ if __name__ == "__main__":
         prognose()
     elif befehl == "ausfall":
         ausfall()
+    elif befehl == "wochenbericht":
+        wochenbericht()
     elif befehl == "test":
         test()
     elif befehl == "senden" and len(sys.argv) == 5:

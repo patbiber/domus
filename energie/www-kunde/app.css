@@ -198,6 +198,26 @@ main { max-width: 1160px; margin: 0 auto; padding: 16px; }
 .meldung { min-height: 1.3em; margin: 10px 0 0; font-size: .9rem; color: var(--text-2); }
 .fuss { margin-top: 16px; }
 
+/* Wochenbericht */
+.woche { margin-bottom: 14px; }
+.woche[hidden] { display: none; }
+.w-nav { display: flex; align-items: center; gap: 8px; }
+.w-nav .link { font-size: 1.3rem; line-height: 1; padding: 0 6px; }
+.w-nav .link:disabled { opacity: .3; cursor: default; }
+.w-satz { margin: 0 0 12px; color: var(--text-2); }
+.w-zahlen { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 14px; }
+@media (max-width: 560px) { .w-zahlen { grid-template-columns: 1fr 1fr; } }
+.w-zahlen div { background: var(--flaeche-2); border-radius: 14px; padding: 10px 12px; }
+.w-zahlen span { display: block; font-size: .72rem; color: var(--leise); text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+.w-zahlen b { display: block; font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+.w-zahlen small { display: block; font-size: .78rem; color: var(--leise); }
+.w-tage { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; height: 96px; margin-bottom: 6px; }
+.w-tage div { display: grid; grid-template-rows: 1fr auto auto; height: 100%; text-align: center; font-size: .72rem; color: var(--leise); }
+.w-tage i { align-self: end; display: block; border-radius: 6px 6px 2px 2px; background: var(--sonne); min-height: 3px; }
+.w-tage div.bester i { background: var(--sonne-2); }
+.w-tage b { font-size: .72rem; color: var(--text-2); font-variant-numeric: tabular-nums; }
+#w-tipp { margin-top: 10px; }
+
 /* Energieberater */
 .berater-kopf { margin: 2px 2px 14px; }
 .berater-kopf h2 { font-size: 1.35rem; letter-spacing: -.02em; }

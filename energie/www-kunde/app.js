@@ -34,7 +34,7 @@ function tabZeigen(name, merken = true) {
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("aktiv", t.id === "tab-" + name));
   if (merken) history.replaceState(null, "", name === "uebersicht" ? location.pathname : "#" + name);
   window.scrollTo({ top: 0 });
-  if (name === "verlauf") verlaufLaden();
+  if (name === "verlauf") { verlaufLaden(); if (!wocheAktuell) wocheLaden(); }
   zeichnen();
 }
 document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => tabZeigen(b.dataset.tab));
@@ -324,6 +324,47 @@ document.querySelectorAll("#seg-verlauf button").forEach(b => b.onclick = () => 
   document.querySelectorAll("#seg-verlauf button").forEach(x => x.classList.toggle("an", x === b));
   verlaufZeitraum = b.dataset.z; verlaufLaden();
 });
+
+/* ======================= Wochenbericht ======================= */
+let wocheAktuell = null, wocheNeueste = null;
+const isoWoche = d => { const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); const tag = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - tag); const j = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return `${t.getUTCFullYear()}-W${String(Math.ceil(((t - j) / 864e5 + 1) / 7)).padStart(2, "0")}`; };
+const wocheVersetzt = (w, n) => { const [j, k] = w.split("-W").map(Number); const d = new Date(Date.UTC(j, 0, 4));
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() || 7) - 1) + (k - 1 + n) * 7); return isoWoche(new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())); };
+async function wocheLaden(w) {
+  let b;
+  const spaeter = () => { if (!w) setTimeout(() => { if (!wocheAktuell) wocheLaden(); }, 30000); };   // z. B. kurz nach Neustart
+  try { b = await holen("wochenbericht" + (w ? `?woche=${w}` : "")); } catch { spaeter(); return; }
+  if (!b.aktiv) { if (!w) { spaeter(); return; } $("w-satz").textContent = b.grund || "Keine Daten."; $("w-titel").textContent = w; $("w-zahlen").innerHTML = ""; $("w-tage").innerHTML = ""; $("w-mehr").textContent = ""; $("w-tipp").hidden = true; wocheAktuell = w; navWoche(); return; }
+  if (!w) wocheNeueste = b.woche;
+  wocheAktuell = b.woche;
+  $("woche").hidden = false;
+  $("w-titel").textContent = b.titel;
+  $("w-satz").textContent = b.satz;
+  const v = b.vergleich, pfeil = p => p == null ? "" : `${p > 0 ? "+" : p < 0 ? "−" : "±"}${Math.abs(p)} % zur Vorwoche`;
+  const kachel = (t, w2, k) => `<div><span>${t}</span><b>${w2}</b><small>${k || "\u00a0"}</small></div>`;
+  $("w-zahlen").innerHTML =
+    kachel("Erzeugt", `${zahl(b.pv_kwh, 0)} kWh`, v ? pfeil(v.pv_pct) : "") +
+    kachel("Verbraucht", `${zahl(b.verbrauch_kwh, 0)} kWh`, v ? pfeil(v.verbrauch_pct) : "") +
+    kachel("Autarkie", b.autarkie_pct != null ? `${b.autarkie_pct} %` : "–", "aus eigenem Strom") +
+    kachel("Bilanz", `<span class="${b.saldo_chf >= 0 ? "plus" : "minus"}">${b.saldo_chf >= 0 ? "+" : "−"}${zahl(Math.abs(b.saldo_chf), 2)}</span>`, v ? `Vorwoche ${v.vorwoche_saldo_chf >= 0 ? "+" : "−"}${zahl(Math.abs(v.vorwoche_saldo_chf), 2)}` : "CHF");
+  const max = Math.max(...b.tage.map(t => t.pv_kwh), 1);
+  $("w-tage").innerHTML = b.tage.map(t => `<div class="${t.tag === b.bester_tag.tag ? "bester" : ""}" title="${t.name}: ${zahl(t.pv_kwh, 1)} kWh Sonne, ${zahl(t.verbrauch_kwh, 1)} kWh verbraucht">
+      <i style="height:${Math.max(3, Math.round(70 * t.pv_kwh / max))}px"></i><b>${zahl(t.pv_kwh, 0)}</b><span>${t.name.slice(0, 2)}</span></div>`).join("");
+  const teile = [`Bester Tag: ${b.bester_tag.name} mit ${zahl(b.bester_tag.pv_kwh, 1)} kWh`];
+  if (b.minuspreis_stunden) teile.push(`${b.minuspreis_stunden} Stunden mit negativen Börsenpreisen`);
+  if (b.amortisation) teile.push(`Solarstrom-Wert CHF ${zahl(b.amortisation.wert_chf, 2)} – Anlage +${zahl(b.amortisation.plus_pct, 2)} % abbezahlt`);
+  if (b.batterie && b.batterie.length) { const bb = b.batterie.reduce((a, x) => x.ersparnis_chf > a.ersparnis_chf ? x : a); teile.push(`Eine ${bb.kwh}-kWh-Batterie hätte CHF ${zahl(bb.ersparnis_chf, 2)} gespart`); }
+  if (b.vollstaendig_pct < 95) teile.push(`${100 - b.vollstaendig_pct} % der Woche ohne Messwerte`);
+  $("w-mehr").textContent = teile.join(" · ");
+  const t = b.tipp, tk = $("w-tipp");
+  if (t) { tk.hidden = false; tk.innerHTML = `<b>Tipp der Woche</b>${esc(t.titel)}${t.chf_jahr ? ` (rund CHF ${t.chf_jahr} im Jahr)` : ""}: ${esc(t.aktion)}`; } else tk.hidden = true;
+  navWoche();
+}
+function navWoche() { $("w-vor").disabled = !wocheAktuell || wocheAktuell === wocheNeueste; }
+$("w-zurueck").onclick = () => wocheAktuell && wocheLaden(wocheVersetzt(wocheAktuell, -1));
+$("w-vor").onclick = () => wocheAktuell && wocheAktuell !== wocheNeueste && wocheLaden(wocheVersetzt(wocheAktuell, 1));
 
 /* ======================= Strompreis ======================= */
 let planTag = "heute";

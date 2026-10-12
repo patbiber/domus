@@ -92,7 +92,7 @@ def berater():
             "chf_jahr": round(kwh_nacht * 365 * diff), "kwh_jahr": round(kwh_nacht * 365),
             "text": f"Zwischen 22 und 6 Uhr läuft an {len(gross)} von {round(tage)} Tagen ein grosser Verbraucher "
                     f"(über 600 W, im Mittel {kwh_nacht:.1f} kWh pro Nacht) – {ursache}.",
-            "warum": f"Nachts kommt jede kWh aus dem Netz zu {rp(bezug)}. Läuft derselbe Verbraucher mittags, deckt ihn "
+            "warum": f"Nachts kommt jede kWh aus dem Netz (zu {rp(bezug)}). Läuft derselbe Verbraucher mittags, deckt ihn "
                      f"deine Anlage – statt dass du den Strom für {rp(rueck)} einspeist.",
             "rechnung": [f"10-Minuten-Werte über 600 W zwischen 22 und 6 Uhr: an {len(gross)} von {round(tage)} Tagen",
                          f"im Mittel {kwh_nacht:.2f} kWh pro Nacht × 365 = {tsd(kwh_nacht * 365)} kWh/Jahr",

@@ -122,6 +122,15 @@
 
   <!-- ===================== Verlauf ===================== -->
   <section id="tab-verlauf" class="tab">
+    <article class="karte woche" id="woche" hidden>
+      <div class="karte-kopf"><h2>Wochenbericht</h2>
+        <div class="w-nav"><button type="button" class="link" id="w-zurueck" aria-label="Vorwoche">‹</button><span id="w-titel" class="leise"></span><button type="button" class="link" id="w-vor" aria-label="Nächste Woche">›</button></div></div>
+      <p id="w-satz" class="w-satz"></p>
+      <div class="w-zahlen" id="w-zahlen"></div>
+      <div class="w-tage" id="w-tage" aria-label="Solarstrom pro Tag"></div>
+      <p class="leise" id="w-mehr"></p>
+      <div class="aktion" id="w-tipp" hidden></div>
+    </article>
     <div class="seg" id="seg-verlauf" role="tablist">
       <button type="button" data-z="tag">Tag</button>
       <button type="button" data-z="woche" class="an">Woche</button>
@@ -201,6 +210,7 @@
         <label class="schalter"><input type="checkbox" value="minuspreis" checked><span></span><div><b>Negative Strompreise</b><small>morgens um 06:45, nur wenn es sie gibt</small></div></label>
         <label class="schalter"><input type="checkbox" value="prognose" checked><span></span><div><b>Sonnenprognose</b><small>jeden Abend um 19:00 für morgen</small></div></label>
         <label class="schalter"><input type="checkbox" value="ausfall" checked><span></span><div><b>Störungen</b><small>wenn die Anlage nicht mehr antwortet</small></div></label>
+        <label class="schalter"><input type="checkbox" value="wochenbericht" checked><span></span><div><b>Wochenbericht</b><small>montags um 08:00 die letzte Woche</small></div></label>
         <div class="knoepfe">
           <button type="button" class="knopf haupt" id="push-an">Benachrichtigungen einschalten</button>
           <button type="button" class="knopf" id="push-test" hidden>Testnachricht senden</button>

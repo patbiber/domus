@@ -12,6 +12,7 @@ Endpunkte:
   /api/amortisation  bisher erwirtschaftet, Break-even (Investition/Förderung in anlage.json)
   /api/berater  Energieberater: drei Tipps mit Begründung und Rechenweg, Batterie-Empfehlung
   /api/info     Anzeigename und Leistung der Anlage
+  /api/wochenbericht  letzte ganze Woche (Mo–So) mit Vorwochen-Vergleich, ?woche=2026-W41
   /api/push     GET: öffentlicher VAPID-Schlüssel; POST: App-Push an-/abmelden, Testnachricht
   /             statische Webseite: www/ (Retro) bzw. www-kunde/ für <name>.homi.solar
 
@@ -40,6 +41,7 @@ from homi.konfig import ANLAGE_CFG, ARCHIV_DIR, ARCHIV_TAGE, KUNDE_HOST, PORT, P
 from homi.prognose import poll_prognose
 from homi.push_abo import push_lesen, push_schluessel, push_schreiben
 from homi.speicher import SpeicherSimulation
+from homi.wochenbericht import wochenbericht
 from homi.zustand import history, lock, state
 
 
@@ -94,6 +96,15 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/speicher":
             with lock:
                 return self.send_json(zustand.speicher_sim.report())
+        if path == "/api/wochenbericht":
+            q = {k: v[0] for k, v in parse_qs(urlsplit(self.path).query).items()}
+            try:
+                return self.send_json(wochenbericht(q.get("woche")))
+            except ValueError as e:
+                return self.send_json({"aktiv": False, "grund": str(e) or "ungültige Woche (Format 2026-W41)"})
+            except (OSError, KeyError, ZeroDivisionError) as e:
+                print("Wochenbericht:", e, flush=True)
+                return self.send_json({"aktiv": False, "grund": "Bericht gerade nicht verfügbar"})
         if path == "/api/berater":
             try:
                 return self.send_json(berater())

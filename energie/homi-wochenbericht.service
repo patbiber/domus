@@ -1,0 +1,9 @@
+# Wochenbericht: Mail an Patrick und Push an die App (Thema «wochenbericht»)
+[Unit]
+Description=homi: Wochenbericht (Mail und Push)
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=-%h/domus/energie/wochenbericht-mail.py
+ExecStart=%h/domus/energie/push.py wochenbericht

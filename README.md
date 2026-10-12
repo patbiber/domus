@@ -155,7 +155,8 @@ Laufzeit-Zustand), `erfassung` (5-s-Schleife), `fronius`, `tarif`, `boerse`, `ar
   - Anmelden: `POST /api/push` (`anmelden`/`abmelden`/`lesen`/`test`; nur Endpunkte der bekannten Push-Dienste
     Google, Mozilla, Apple, Microsoft) → `energie/data/push/abos/<hash>.json` (nicht im Repo).
   - Versand auf dem Host: `energie/push.py` (Web Push mit VAPID, RFC 8291/8292, `python3-cryptography`), Unit-Vorlage
-    `homi-push@.service`; Timer `homi-push-minuspreis` (06:45), `homi-push-prognose` (19:00), `homi-push-ausfall`
+    `homi-push@.service`; Push-Themen: minuspreis, prognose, ausfall, wochenbericht (Montag 08:00, siehe Wochenbericht);
+  Timer `homi-push-minuspreis` (06:45), `homi-push-prognose` (19:00), `homi-push-ausfall`
     (alle 5 min: homi weg oder Dienst aus ≥ 15 min, Fronius tagsüber 9–16 Uhr ≥ 30 min; meldet auch die Erholung),
     Pfad-Unit `homi-push-test.path` (Testknopf). Abgelaufene Abos (HTTP 404/410) werden automatisch gelöscht.
   - VAPID-Schlüssel: `energie/data/push/vapid_private.pem` (Secret, nicht im Repo; einmalig `./push.py schluessel`).
@@ -376,6 +377,17 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   + Sprüche,
   HA `sensor.energieberater_tipp_1…3`, `sensor.energieberater_sparpotenzial`, `sensor.energieberater_batterie`
   (Attribute inkl. `warum`, `rechnung`, `geprueft`).
+- **Wochenbericht** (`/api/wochenbericht`, `homi/wochenbericht.py`; `?woche=2026-W41`, sonst letzte ganze Woche
+  Mo–So): erzeugt, verbraucht, eingespeist, bezogen, Autarkie, Bilanz, Vergleich zur Vorwoche, Tage mit bestem Tag,
+  Minuspreis-Stunden, Wert des Solarstroms und Fortschritt der Amortisation, Ersparnis der simulierten Batterien,
+  Tipp der Woche (Berater-Tipps reihum). Jeden Montag 08:00 (Timer `homi-wochenbericht`): Mail an Patrick
+  (`energie/wochenbericht-mail.py`) und Push-Thema «wochenbericht» (`push.py wochenbericht`). Überall: Kunden-UI
+  Karte oben unter «Verlauf» (Wochen blätterbar), Retro-Kachel «Letzte Woche» + Spruch, HA
+  `sensor.wochenbericht_solarstrom` (Attribute mit allen Werten) und `sensor.wochenbericht_bilanz`.
+
+  ```bash
+  cd ~/.config/systemd/user && ln -sf ~/domus/energie/homi-wochenbericht.{service,timer} . && systemctl --user daemon-reload && systemctl --user enable --now homi-wochenbericht.timer
+  ```
 - **Grundsatz:** Jede Funktion in allen Oberflächen (Retro, Kunden-UI, Home Assistant), ausser gerätespezifische
   (z. B. Verbrauch des NUC). Stand 10.10.2026 zusätzlich angeglichen: Batterie-Simulation in der Retro-Seite,
   Verlauf «Tag» und «Gesamt» in der Kunden-UI, HA-Sensoren `sensor.einspeisung_dynamisch_heute`,

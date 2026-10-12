@@ -86,6 +86,7 @@
   .zahle .v { color: var(--red); } .bekomme .v { color: var(--green); } .session .v { color: var(--purple); }
   .srv .v { color: var(--cyan); }
   .prog .v { color: var(--yellow); }
+  .woche .v { color: var(--cyan); }
   .amort .v { color: var(--green); } .batt .v { color: var(--purple); } .rat .v { color: var(--yellow); }
   .rat ol { margin: 4px 0 0; padding-left: 18px; font-size: 12px; color: var(--white); }
   .rat ol li { margin: 2px 0; cursor: help; } .rat ol li:hover { color: var(--yellow); } .rat ol li span { color: var(--green); }
@@ -134,6 +135,7 @@
       <div class="stat prog"><div class="k">Solarprognose morgen</div><div class="v" id="s-prog">–</div><div class="s" id="s-prog2">&nbsp;</div></div>
       <div class="stat srv"><div class="k">homi-Server (unter der Treppe)</div><div class="v" id="s-srv">–</div><div class="s" id="s-srv2">&nbsp;</div></div>
       <div class="stat boerse" id="t-boerse"><div class="k">Strombörse Day-Ahead CH</div><div class="v" id="s-boerse">–</div><div class="s" id="s-boerse2">&nbsp;</div></div>
+      <div class="stat woche" title="Wochenbericht: kommt jeden Montag um 08:00 auch als Mail und Push"><div class="k" id="s-woche0">Letzte Woche</div><div class="v" id="s-woche">–</div><div class="s" id="s-woche2">&nbsp;</div></div>
       <div class="stat rat" title="Energieberater: drei Tipps aus den Messwerten der letzten 14 Tage"><div class="k">Energieberater · Tipp antippen = Warum</div><div class="v" id="s-rat">–</div><ol id="s-rat2"></ol><div class="s" id="s-rat3">&nbsp;</div></div>
       <div class="stat batt"><div class="k">Batterie-Simulation</div><div class="v" id="s-batt">–</div><div class="s" id="s-batt2">&nbsp;</div></div>
       <div class="stat amort" title="Investition minus bisheriger Ertrag (selbst verbraucht × Bezugstarif + eingespeist × Rücklieferung), heutige Tarife"><div class="k">Anlage abbezahlt</div><div class="v" id="s-amort">–</div><div class="s" id="s-amort2">&nbsp;</div><span class="balken8"><i id="s-amort3" style="width:0"></i></span></div>
@@ -155,6 +157,7 @@
       <label><input type="checkbox" value="minuspreis" checked> Minuspreise (06:45)</label>
       <label><input type="checkbox" value="prognose" checked> Prognose (19:00)</label>
       <label><input type="checkbox" value="ausfall" checked> Störungen</label>
+      <label><input type="checkbox" value="wochenbericht" checked> Wochenbericht (Mo 08:00)</label>
     </div>
     <div class="knoepfe">
       <button type="button" id="app-install" hidden>📲 Installieren</button>
@@ -376,6 +379,18 @@ async function poll() {
   } catch { S = null; }
   onData();
 }
+// Wochenbericht (wie in der Kunden-Oberfläche), stündlich
+let woche = null;
+async function pollWoche() {
+  try { woche = await (await fetch("api/wochenbericht", { cache: "no-store" })).json(); } catch { return; }
+  if (!woche || !woche.aktiv) return;
+  $("s-woche0").textContent = `Letzte Woche · ${woche.titel}`;
+  $("s-woche").textContent = `${Math.round(woche.pv_kwh)} kWh · ${woche.saldo_chf >= 0 ? "+" : "−"}${Math.abs(woche.saldo_chf).toFixed(2)} CHF`;
+  const v = woche.vergleich;
+  $("s-woche2").textContent = (v && v.pv_pct != null ? `${v.pv_pct > 0 ? "+" : v.pv_pct < 0 ? "−" : "±"}${Math.abs(v.pv_pct)} % Sonne zur Vorwoche · ` : "")
+    + (woche.autarkie_pct != null ? `Autarkie ${woche.autarkie_pct} % · ` : "") + `bester Tag ${woche.bester_tag.name} (${woche.bester_tag.pv_kwh.toFixed(0)} kWh)`;
+}
+
 // Energieberater (wie in der Kunden-Oberfläche): drei Tipps + Batterie-Urteil
 let rat = null;
 async function pollBerater() {
@@ -562,6 +577,7 @@ function chatter() {
     [`Die Börse zahlt gerade ${bo.rp_kwh.toFixed(1)} Rp/kWh. Die GWS gibt mir ${rp}.`],
     [bo.naechster_negativer ? `Achtung, ab ${bo.naechster_negativer.slice(11, 16)} Uhr wird der Börsenpreis negativ!` : "Keine negativen Börsenpreise in Sicht."]);
   if (rat && rat.aktiv) {
+    if (woche && woche.aktiv) lines.push([`Letzte Woche: ${Math.round(woche.pv_kwh)} kWh Sonne, Bilanz ${woche.saldo_chf >= 0 ? "+" : "−"}${Math.abs(woche.saldo_chf).toFixed(2)} CHF. Bester Tag: ${woche.bester_tag.name}!`, "#55ffff"]);
     for (const t of rat.tipps) lines.push([`Tipp vom Energieberater: ${t.titel}!${t.chf_jahr ? ` Bringt ${Math.round(t.chf_jahr)} CHF im Jahr.` : ""}`, "#ffff55"]);
     if (rat.batterie && rat.batterie.modus === "kaufen") lines.push([`Eine Batterie? Mein Urteil: ${rat.batterie.urteil}.`, "#ff55ff"]);
   }
@@ -1009,7 +1025,7 @@ async function pushApi(aktion, abo) {
   if (!r.ok) throw new Error("Server antwortet " + r.status);
   return r.json();
 }
-const THEMA_NAME = { minuspreis: "Minuspreise", prognose: "Prognose", ausfall: "Störungen" };
+const THEMA_NAME = { minuspreis: "Minuspreise", prognose: "Prognose", ausfall: "Störungen", wochenbericht: "Wochenbericht" };
 function pushAnzeigen(an) {
   $("push-an").hidden = an; $("push-aus").hidden = !an; $("push-test").hidden = !an;
   const st = $("push-status"), themen = themenBoxen().filter(x => x.checked).map(x => THEMA_NAME[x.value]);
@@ -1095,6 +1111,7 @@ pollBoerse(); setInterval(pollBoerse, 15 * 60000);
 pollEinspeisung(); setInterval(pollEinspeisung, 10 * 60000);
 pollAmort(); setInterval(pollAmort, 10 * 60000);
 pollBerater(); setInterval(pollBerater, 60 * 60000);
+pollWoche(); setInterval(pollWoche, 60 * 60000);
 // Klick auf einen Tipp: die Figur erklärt, warum (Rechenweg im Tooltip)
 $("s-rat2").addEventListener("click", e => {
   const li = e.target.closest("li[data-i]");

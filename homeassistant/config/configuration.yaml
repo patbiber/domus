@@ -203,6 +203,22 @@ rest:
         unique_id: homi_minuspreise_morgen
         value_template: "{{ (value_json.morgen.minuspreis_bloecke | join(', ') if value_json.morgen.minuspreis_bloecke else 'keine') if value_json.morgen else 'noch offen' }}"
         icon: mdi:cash-minus
+  - resource: http://127.0.0.1:8099/api/wochenbericht
+    scan_interval: 3600
+    sensor:
+      - name: Wochenbericht Solarstrom
+        unique_id: homi_woche_pv
+        value_template: "{{ value_json.pv_kwh }}"
+        availability: "{{ value_json.aktiv | default(false) }}"
+        unit_of_measurement: kWh
+        icon: mdi:calendar-week
+        json_attributes: [woche, titel, satz, verbrauch_kwh, einspeisung_kwh, bezug_kwh, autarkie_pct, eigenverbrauch_pct, erloes_chf, kosten_chf, bester_tag, vergleich, amortisation, batterie, tipp, minuspreis_stunden, vollstaendig_pct]
+      - name: Wochenbericht Bilanz
+        unique_id: homi_woche_bilanz
+        value_template: "{{ value_json.saldo_chf }}"
+        availability: "{{ value_json.aktiv | default(false) }}"
+        unit_of_measurement: CHF
+        icon: mdi:cash-plus
   - resource: http://127.0.0.1:8099/api/berater
     scan_interval: 3600
     sensor:
