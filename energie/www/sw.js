@@ -1,7 +1,7 @@
 // Service Worker von homi: macht die Seite installierbar, zeigt Push-Nachrichten
 // und eine Offline-Seite, wenn der NUC nicht erreichbar ist. Live-Daten werden nie zwischengespeichert.
 "use strict";
-const CACHE = "homi-v2";
+const CACHE = "homi-v3";
 const OFFLINE = ["/offline.html", "/icons/homi-192.png"];
 
 self.addEventListener("install", e => {
@@ -22,7 +22,9 @@ self.addEventListener("fetch", e => {
     // Frisch holen; verlangt der Server das Passwort (401), die Original-Anfrage durchlassen, damit der Browser
     // seinen Login-Dialog zeigen kann
     e.respondWith(fetch(e.request.url, { cache: "no-cache", credentials: "same-origin" })
-      .then(r => r.status === 401 ? fetch(e.request) : r)
+      // 401: Original-Anfrage (Login-Dialog); Weiterleitung (z. B. zur Anmeldung): als echte Weiterleitung zurückgeben,
+      // denn eine bereits gefolgte Antwort nimmt der Browser für Seitenaufrufe nicht an
+      .then(r => r.status === 401 ? fetch(e.request) : r.redirected ? Response.redirect(r.url, 302) : r)
       .catch(() => caches.match("/offline.html")));
   } else if (url.origin === self.location.origin && /\.(js|css|webmanifest)$/.test(url.pathname)) {
     e.respondWith(fetch(e.request, { cache: "no-cache" }));

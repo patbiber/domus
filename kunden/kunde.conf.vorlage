@@ -1,6 +1,6 @@
 # {{FQDN}} – homi-Instanz «{{NAME}}», erzeugt von kunden/kunde.py (nicht von Hand ändern, nicht im Repo)
 # ziel: {{ZIEL}}
-# passwort: {{PASSWORT}}
+# zugang: {{ZUGANG}}
 # angelegt: {{ANGELEGT}}
 
 server {

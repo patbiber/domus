@@ -181,7 +181,7 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
 | Aufbewahrung | Container-Logs max. 3 × 10 MB, keine Protokollierung der laufenden API-Abrufe, HA-Backups: letzte 10 |
 | Öffentliche Ports | Nur 80/443 (Router → NUC); Port 8099 nur im LAN |
 | Home Assistant | TLS, IP-Sperre, 2-Faktor-Login |
-| Kunden-Instanzen | Wildcard-Zertifikat (Namen nicht in CT-Logs), eigenes Passwort je Instanz, unbekannte Namen werden abgelehnt, Konfiguration nicht im Repo |
+| Kunden-Instanzen | Wildcard-Zertifikat (Namen nicht in CT-Logs), Anmeldung per Code/Passkey (homi-login, nur im Docker-Netz erreichbar), unbekannte Namen werden abgelehnt, Konfiguration nicht im Repo |
 | Energie-Seite | Passwortschutz (Basic Auth), nur lesend (ausser Push-Anmeldung, nur bekannte Push-Dienste), Rate-Limit, CSP |
 | Push | VAPID-Privatschlüssel nur in `energie/data/push/`; Inhalte für Google/Apple/Mozilla unlesbar verschlüsselt |
 
@@ -243,6 +243,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 10.10.2026 | Alle Funktionen in allen Oberflächen: Amortisation/Batterie-Simulation in Retro, Verlauf Tag/Gesamt in der Kunden-UI, neue HA-Sensoren |
 | 11.10.2026 | Energieberater: drei Tipps mit CHF/Jahr und Batterie-Empfehlung in Kunden-UI, Retro und Home Assistant |
 | 12.10.2026 | Aufgeräumt: server.py in Module (homi/) aufgeteilt, HA-Konfiguration im Repo |
+| 12.10.2026 | Kunden-Login statt Browser-Passwort: Code per Mail, Passkey (Face ID/Fingerabdruck), 180 Tage angemeldet (`login/`) |
 | 12.10.2026 | Wochenbericht jeden Montag per Mail und Push, in App, Retro und Home Assistant |
 
 ## 8. Offene Punkte

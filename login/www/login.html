@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Anmelden · homi</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#0b1730">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="homi">
+<style>
+  :root { --bg: #f4f6fb; --flaeche: #fff; --flaeche-2: #f1f4fa; --linie: #e3e8f2; --text: #0f1b2d; --text-2: #3a4863; --leise: #6b7a93;
+    --navy: #0b1730; --sonne: #ffb020; --sonne-2: #ff7a1a; --gruen: #12b76a; --rot: #f04438; --blau: #2e90fa; color-scheme: light; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #070f20; --flaeche: #0f1c35; --flaeche-2: #15264a; --linie: #1f3359;
+    --text: #eef2fa; --text-2: #c3cde0; --leise: #8a9bbb; color-scheme: dark; } }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px 16px; }
+  main { width: 100%; max-width: 400px; background: var(--flaeche); border-radius: 22px; padding: 28px 24px;
+    box-shadow: 0 1px 2px rgba(15,27,45,.05), 0 12px 32px rgba(15,27,45,.1); }
+  .marke { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+  .marke b { display: block; font-size: 1.3rem; letter-spacing: -.02em; }
+  .marke span { color: var(--leise); font-size: .86rem; word-break: break-all; }
+  h1 { font-size: 1.15rem; margin: 0 0 6px; }
+  p { margin: 0 0 16px; color: var(--text-2); line-height: 1.45; font-size: .95rem; }
+  label { display: block; font-size: .82rem; font-weight: 600; color: var(--leise); margin-bottom: 6px; }
+  input { width: 100%; font: inherit; font-size: 1.05rem; padding: 13px 14px; border-radius: 12px; border: 1px solid var(--linie);
+    background: var(--flaeche-2); color: var(--text); }
+  input:focus-visible { outline: 2px solid var(--blau); outline-offset: 1px; }
+  #code { font-size: 1.6rem; letter-spacing: .4em; text-align: center; font-variant-numeric: tabular-nums; }
+  button { width: 100%; font: inherit; font-weight: 700; font-size: 1rem; padding: 13px 16px; border-radius: 12px; border: 0;
+    cursor: pointer; margin-top: 12px; }
+  .haupt { background: linear-gradient(135deg, var(--sonne), var(--sonne-2)); color: #1d1300; box-shadow: 0 6px 18px rgba(255,140,30,.3); }
+  .zweit { background: var(--flaeche-2); color: var(--text); border: 1px solid var(--linie); }
+  .link { background: none; color: var(--blau); padding: 6px; font-weight: 600; font-size: .9rem; }
+  button:disabled { opacity: .6; cursor: wait; }
+  button:focus-visible { outline: 2px solid var(--blau); outline-offset: 2px; }
+  .oder { display: flex; align-items: center; gap: 10px; color: var(--leise); font-size: .82rem; margin: 18px 0 2px; }
+  .oder::before, .oder::after { content: ""; flex: 1; height: 1px; background: var(--linie); }
+  .meldung { min-height: 1.4em; margin: 12px 0 0; font-size: .9rem; color: var(--text-2); }
+  .meldung.fehler { color: var(--rot); }
+  [hidden] { display: none !important; }
+  footer { margin-top: 18px; color: var(--leise); font-size: .8rem; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <div class="marke">
+    <svg width="44" height="44" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="#0b1730"/><circle cx="23" cy="9" r="5.5" fill="#FFB020"/><path d="M3 18 14 8.5 25 18v11H3z" fill="#fff"/><rect x="11" y="20" width="6" height="9" rx="1" fill="#FFB020"/></svg>
+    <div><b>homi</b><span id="adresse"></span></div>
+  </div>
+
+  <section id="s-email">
+    <h1>Anmelden</h1>
+    <p>Gib deine E-Mail-Adresse ein. Du bekommst einen Code, mit dem du dich anmeldest – ganz ohne Passwort.</p>
+    <form id="f-email" novalidate>
+      <label for="email">E-Mail-Adresse</label>
+      <input id="email" type="email" autocomplete="username email" inputmode="email" required placeholder="name@beispiel.ch">
+      <button class="haupt" type="submit">Code per Mail senden</button>
+    </form>
+    <div id="pk-bereich" hidden>
+      <div class="oder">oder</div>
+      <button class="zweit" type="button" id="pk-anmelden">Mit Face ID, Fingerabdruck oder Passkey</button>
+    </div>
+  </section>
+
+  <section id="s-code" hidden>
+    <h1>Code eingeben</h1>
+    <p id="code-text">Wir haben dir einen 6-stelligen Code geschickt. Er gilt 15 Minuten.</p>
+    <form id="f-code" novalidate>
+      <label for="code">Code aus der Mail</label>
+      <input id="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="6" required placeholder="······">
+      <button class="haupt" type="submit">Anmelden</button>
+    </form>
+    <button class="link" type="button" id="neu-senden">Neuen Code senden</button>
+    <button class="link" type="button" id="andere">Andere Adresse</button>
+  </section>
+
+  <section id="s-link" hidden>
+    <h1>Anmelden bestätigen</h1>
+    <p>Du hast den Link aus der Mail geöffnet. Tippe auf den Knopf, um dich in diesem Browser anzumelden.</p>
+    <button class="haupt" type="button" id="link-ok">Jetzt anmelden</button>
+  </section>
+
+  <p class="meldung" id="meldung" role="status" aria-live="polite"></p>
+</main>
+<footer>homi von Biber Solar</footer>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const q = new URLSearchParams(location.search);
+const ziel = (q.get("ziel") || "/").startsWith("/") && !(q.get("ziel") || "").startsWith("//") ? (q.get("ziel") || "/") : "/";
+$("adresse").textContent = location.hostname;
+const meldung = (t, fehler = false) => { const m = $("meldung"); m.textContent = t; m.className = "meldung" + (fehler ? " fehler" : ""); };
+const zeige = id => ["s-email", "s-code", "s-link"].forEach(s => { $(s).hidden = s !== id; });
+const merken = { lesen() { try { return localStorage.getItem("homi-email") || ""; } catch { return ""; } },
+                 setzen(v) { try { localStorage.setItem("homi-email", v); } catch {} } };
+async function post(pfad, daten) {
+  const r = await fetch(pfad, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten), credentials: "same-origin" });
+  let j = {}; try { j = await r.json(); } catch {}
+  if (!r.ok) throw new Error(j.fehler || "Das hat nicht geklappt (Fehler " + r.status + ").");
+  return j;
+}
+const fertig = () => { meldung("Angemeldet – einen Moment …"); location.replace(ziel); };
+const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const u8 = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), c => c.charCodeAt(0));
+
+$("email").value = merken.lesen();
+if (q.get("t")) { zeige("s-link"); }
+if (q.get("abgelaufen")) meldung("Der Link ist abgelaufen. Fordere einfach einen neuen Code an.", true);
+
+async function codeSenden() {
+  const email = $("email").value.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(email)) { meldung("Bitte eine gültige E-Mail-Adresse eingeben.", true); $("email").focus(); return; }
+  merken.setzen(email);
+  meldung("Sende Code …");
+  try {
+    const j = await post("/login/code", { email });
+    $("code-text").textContent = `Falls ${email} für dieses homi freigeschaltet ist, kommt gleich eine Mail mit einem 6-stelligen Code. Er gilt 15 Minuten.`;
+    zeige("s-code"); meldung(""); $("code").value = ""; $("code").focus();
+  } catch (e) { meldung(e.message, true); }
+}
+$("f-email").onsubmit = e => { e.preventDefault(); codeSenden(); };
+$("neu-senden").onclick = codeSenden;
+$("andere").onclick = () => { zeige("s-email"); meldung(""); $("email").focus(); };
+$("code").oninput = () => { $("code").value = $("code").value.replace(/\D/g, "").slice(0, 6); if ($("code").value.length === 6) $("f-code").requestSubmit(); };
+$("f-code").onsubmit = async e => {
+  e.preventDefault();
+  const knopf = e.target.querySelector("button"); knopf.disabled = true;
+  try { await post("/login/code-pruefen", { email: $("email").value.trim(), code: $("code").value }); fertig(); }
+  catch (err) { meldung(err.message, true); $("code").select(); }
+  finally { knopf.disabled = false; }
+};
+$("link-ok").onclick = async () => {
+  $("link-ok").disabled = true;
+  try { await post("/login/link-pruefen", { t: q.get("t") }); fertig(); }
+  catch (err) { meldung(err.message, true); zeige("s-email"); }
+  finally { $("link-ok").disabled = false; }
+};
+
+// Passkey (Face ID / Fingerabdruck), nur wenn der Browser es kann
+if (window.PublicKeyCredential) $("pk-bereich").hidden = false;
+$("pk-anmelden").onclick = async () => {
+  meldung("");
+  try {
+    const o = await (await fetch("/login/passkey/optionen", { cache: "no-store" })).json();
+    const c = await navigator.credentials.get({ publicKey: { challenge: u8(o.challenge), rpId: o.rpId, userVerification: o.userVerification, timeout: o.timeout } });
+    await post("/login/passkey/anmelden", { credential: { id: c.id, rawId: b64(c.rawId), response: {
+      clientDataJSON: b64(c.response.clientDataJSON), authenticatorData: b64(c.response.authenticatorData),
+      signature: b64(c.response.signature), userHandle: c.response.userHandle ? b64(c.response.userHandle) : null } } });
+    fertig();
+  } catch (err) {
+    meldung(err.name === "NotAllowedError" ? "Abgebrochen oder kein Passkey für dieses homi gefunden. Melde dich mit dem Code an und richte den Passkey danach unter «Mehr» ein." : err.message, true);
+  }
+};
+</script>
+</body>
+</html>

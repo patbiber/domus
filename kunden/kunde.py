@@ -1,17 +1,25 @@
 #!/usr/bin/env python3
-"""Kunden-Instanzen von homi unter <name>.homi.solar einrichten: nginx-Konfiguration, Let's-Encrypt-Zertifikat, Passwort.
+"""Kunden-Instanzen von homi unter <name>.homi.solar einrichten: nginx-Konfiguration, Zertifikat, Zugang.
 
 Der Wildcard-Eintrag *.homi.solar zeigt auf den NUC. Zertifikat: das Wildcard-Zertifikat *.homi.solar
 (proxy/wildcard-cert.sh), sonst ein Einzelzertifikat per HTTP-01 über den Standardserver (proxy/conf.d/00-default.conf). Erzeugt werden (nur auf dem NUC, nicht im Repo):
   proxy/conf.d/kunde-<name>.conf       aus kunden/kunde.conf.vorlage
-  proxy/conf.d/kunde-<name>.htpasswd   Benutzer «homi», Passwort wird einmal angezeigt
+  proxy/conf.d/kunde-<name>.htpasswd   nur bei Zugang «passwort»: Benutzer «homi»
+  login/data/instanzen/<name>.json     bei Zugang «login»: wer sich anmelden darf
 
 Aufruf:
-  kunde.py neu <name> [--ziel <ziel>] [--ohne-passwort]
+  kunde.py neu <name> [--ziel <ziel>] [--email <adresse>] [--zugang login|passwort|offen]
   kunde.py ziel <name> <ziel>          wohin die Adresse zeigt (siehe unten)
-  kunde.py passwort <name>             neues Passwort erzeugen
+  kunde.py zugang <name> login|passwort|offen
+  kunde.py benutzer <name> [+adresse …] [-adresse …]   Anmelde-Adressen zeigen, hinzufügen, entfernen
+  kunde.py passwort <name>             neues Browser-Passwort (stellt auf Zugang «passwort» um)
   kunde.py liste
-  kunde.py entfernen <name> --ja       Konfiguration, Passwort und Zertifikat löschen
+  kunde.py entfernen <name> --ja       Konfiguration, Zugang und Zertifikat löschen
+
+Zugang:
+  login     Anmeldung mit Code per Mail oder Passkey (Face ID/Fingerabdruck), 180 Tage angemeldet (Standard)
+  passwort  Browser-Passwortfenster (Basic Auth), Benutzer «homi»
+  offen     ohne Anmeldung (nur für Musterseiten wie beispiel.homi.solar)
 
 Ziel:
   platzhalter            Seite «Hier wohnt bald ein homi» (Standard)
@@ -22,6 +30,7 @@ Name: 2–30 Zeichen a–z, 0–9, Bindestrich. Tipp: neutrale Namen (sonnenhof 
 werden öffentlich protokolliert (Certificate Transparency), der Name ist also für alle sichtbar.
 """
 import base64
+import json
 import os
 import re
 import secrets
@@ -35,6 +44,10 @@ HIER = os.path.dirname(os.path.abspath(__file__))
 CONF_D = os.path.join(HIER, "..", "proxy", "conf.d")
 ENV = os.path.join(HIER, "..", ".env")
 ICON = os.path.join(HIER, "..", "energie", "www", "icons", "homi-192.png")
+LOGIN_DATEN = os.path.join(HIER, "..", "login", "data")
+LOGIN_PORT = 8098                                # homi-login (Host-Dienst) am Gateway des Docker-Netzes
+ZUGAENGE = ("login", "passwort", "offen")
+EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,190}\.[a-z]{2,24}$", re.I)
 BENUTZER = "homi"
 WILDCARD = f"wildcard.{DOMAIN}"                  # Zertifikatsname von proxy/wildcard-cert.sh
 RESERVIERT = {"www", "mail", "smtp", "imap", "pop", "api", "admin", "app", "status", "test", "demo", "homi", "kunden",
@@ -71,8 +84,7 @@ def ziel_aufloesen(ziel):
         return ziel, None
     m = re.fullmatch(r"host:(\d{1,5})", ziel)
     if m:
-        gw = docker("network", "inspect", "proxy_default", "-f", "{{(index .IPAM.Config 0).Gateway}}").stdout.strip()
-        return ziel, f"http://{gw}:{m.group(1)}"
+        return ziel, f"http://{gateway()}:{m.group(1)}"
     if ZIEL_RE.match(ziel):
         return ziel, ziel
     fehler("Ziel: platzhalter, host:<port> oder http://<name>:<port>")
@@ -82,15 +94,21 @@ def kopf(conf):
     werte = {}
     with open(conf, encoding="utf-8") as f:
         for zeile in f:
-            m = re.match(r"^# (ziel|passwort|angelegt): (.*)$", zeile)
+            m = re.match(r"^# (ziel|passwort|zugang|angelegt): (.*)$", zeile)
             if m:
                 werte[m.group(1)] = m.group(2).strip()
             elif zeile.startswith("server"):
                 break
+    if "zugang" not in werte:                    # ältere Konfigurationen: «passwort: an|aus»
+        werte["zugang"] = "passwort" if werte.get("passwort") == "an" else "offen"
     return werte
 
 
-def inhalt(name, ziel_url, passwort):
+def gateway():
+    return docker("network", "inspect", "proxy_default", "-f", "{{(index .IPAM.Config 0).Gateway}}").stdout.strip()
+
+
+def inhalt(name, ziel_url, zugang):
     fqdn = f"{name}.{DOMAIN}"
     if ziel_url is None:
         with open(os.path.join(HIER, "platzhalter.html"), encoding="utf-8") as f:
@@ -108,39 +126,70 @@ def inhalt(name, ziel_url, passwort):
                 f"        return 200 '{html}';\n"
                 "    }")
     auth = (f"    auth_basic           \"{fqdn}\";\n"
-            f"    auth_basic_user_file /etc/nginx/conf.d/kunde-{name}.htpasswd;\n") if passwort else ""
+            f"    auth_basic_user_file /etc/nginx/conf.d/kunde-{name}.htpasswd;\n") if zugang == "passwort" else ""
     weiter = ("        proxy_pass $ziel;\n"
               "        proxy_set_header Host $host;\n"
               "        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n")
+    pruefen = ("        auth_request /_auth;\n"
+               "        error_page 401 = @anmelden;\n") if zugang == "login" else ""
+    login = ""
+    if zugang == "login":
+        lg = f"http://{gateway()}:{LOGIN_PORT}"
+        login = (
+            "    # Anmeldung über homi-login (Host-Dienst, nur im Docker-Netz erreichbar)\n"
+            "    location /login/ {\n"
+            "        limit_req zone=home_login burst=20 nodelay;\n"
+            "        client_max_body_size 16k;\n"
+            f"        proxy_pass {lg};\n"
+            "        proxy_set_header Host $host;\n"
+            f"        proxy_set_header X-Homi-Instanz {name};\n"
+            "        proxy_set_header X-Forwarded-For $remote_addr;\n"
+            "    }\n\n"
+            "    location = /_auth {\n"
+            "        internal;\n"
+            f"        proxy_pass {lg}/pruefen;\n"
+            "        proxy_pass_request_body off;\n"
+            "        proxy_set_header Content-Length \"\";\n"
+            "        proxy_set_header Host $host;\n"
+            f"        proxy_set_header X-Homi-Instanz {name};\n"
+            "    }\n\n"
+            "    # nicht angemeldet: Daten-Abfragen bekommen 401, Seiten leiten zur Anmeldung\n"
+            "    location @anmelden {\n"
+            "        if ($uri ~ ^/api/) { return 401; }\n"
+            "        return 302 /login/?ziel=$uri;\n"
+            "    }\n\n")
     return (f"    resolver 127.0.0.11 valid=30s ipv6=off;\n"
             f"    set $ziel {ziel_url};\n\n"
             f"{auth}\n"
-            "    # App-Hülle (Manifest, Service Worker, Icons, Offline-Seite) ohne Passwort, enthält keine Daten\n"
-            "    location ~ ^/(manifest\\.webmanifest|sw\\.js|offline\\.html|icons/[a-z0-9-]+\\.png)$ {\n"
+            f"{login}"
+            "    # App-Hülle (Manifest, Service Worker, Icons, Offline-Seite) ohne Anmeldung, enthält keine Daten\n"
+            "    location ~ ^/(manifest\\.webmanifest|sw\\.js|offline\\.html|icons/[a-z0-9-]+\\.(png|svg))$ {\n"
             "        auth_basic off;\n"
             "        limit_req zone=home_api burst=60 nodelay;\n"
             f"{weiter}"
             "    }\n\n"
             "    location = /api/push {\n"
+            f"{pruefen}"
             "        limit_req zone=home_push burst=10 nodelay;\n"
             "        client_max_body_size 4k;\n"
             f"{weiter}"
             "    }\n\n"
             "    location / {\n"
+            f"{pruefen}"
             "        limit_req zone=home_api burst=60 nodelay;\n"
             f"{weiter}"
             "    }")
 
 
-def schreiben(name, ziel, passwort, angelegt):
+def schreiben(name, ziel, zugang, angelegt):
     """Konfiguration schreiben, mit nginx -t prüfen, bei Fehler den alten Stand wiederherstellen, dann neu laden"""
     conf, _ = pfade(name)
     anzeige, url = ziel_aufloesen(ziel)
     with open(os.path.join(HIER, "kunde.conf.vorlage"), encoding="utf-8") as f:
         text = f.read()
     for k, v in {"{{FQDN}}": f"{name}.{DOMAIN}", "{{NAME}}": name, "{{ZERTIFIKAT}}": zert_name(f"{name}.{DOMAIN}"), "{{ZIEL}}": anzeige,
-                 "{{PASSWORT}}": "an" if passwort else "aus", "{{ANGELEGT}}": angelegt,
-                 "{{INHALT}}": inhalt(name, url, passwort)}.items():
+                 "{{ZUGANG}}": zugang, "{{ANGELEGT}}": angelegt,
+                 "{{INHALT}}": inhalt(name, url, zugang)}.items():
         text = text.replace(k, v)
     alt = open(conf, encoding="utf-8").read() if os.path.exists(conf) else None
     fd, tmp = tempfile.mkstemp(dir=CONF_D, prefix=".kunde-", suffix=".tmp")
@@ -201,39 +250,94 @@ def dns_pruefen(fqdn):
         fehler(f"{fqdn} zeigt im DNS auf {ip[-1] if ip else 'nichts'}, nicht auf den NUC ({eigene}). Wildcard *.{DOMAIN} prüfen.")
 
 
-def neu(name, ziel, passwort):
+def benutzer_datei(name):
+    return os.path.join(LOGIN_DATEN, "instanzen", name + ".json")
+
+
+def benutzer_lesen(name):
+    try:
+        with open(benutzer_datei(name), encoding="utf-8") as f:
+            return json.load(f).get("benutzer", [])
+    except (OSError, ValueError):
+        return []
+
+
+def benutzer_schreiben(name, liste):
+    os.makedirs(os.path.dirname(benutzer_datei(name)), mode=0o700, exist_ok=True)
+    tmp = benutzer_datei(name) + ".tmp"
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump({"benutzer": sorted(set(liste))}, f, ensure_ascii=False)
+    os.replace(tmp, benutzer_datei(name))
+
+
+def neu(name, ziel, zugang, email=None):
     name_pruefen(name)
     conf, _ = pfade(name)
     if os.path.exists(conf):
         fehler(f"{name}.{DOMAIN} gibt es schon (kunde.py liste)")
+    if zugang not in ZUGAENGE:
+        fehler(f"Zugang: {', '.join(ZUGAENGE)}")
+    if email and not EMAIL_RE.match(email):
+        fehler(f"ungültige Adresse: {email}")
     ziel_aufloesen(ziel)
     fqdn = f"{name}.{DOMAIN}"
     dns_pruefen(fqdn)
     zertifikat(fqdn)
-    pw = passwort_setzen(name) if passwort else None
-    schreiben(name, ziel, passwort, date.today().isoformat())
-    print(f"\n✓ https://{fqdn} ist eingerichtet (Ziel: {ziel})")
+    pw = passwort_setzen(name) if zugang == "passwort" else None
+    if email:
+        benutzer_schreiben(name, benutzer_lesen(name) + [email.lower()])
+    schreiben(name, ziel, zugang, date.today().isoformat())
+    print(f"\n✓ https://{fqdn} ist eingerichtet (Ziel: {ziel}, Zugang: {zugang})")
     if pw:
         print(f"  Benutzer: {BENUTZER}\n  Passwort: {pw}   ← jetzt notieren, wird nicht gespeichert")
+    if zugang == "login":
+        print(f"  Anmelden können: {', '.join(benutzer_lesen(name)) or 'noch niemand – kunde.py benutzer ' + name + ' +adresse'}")
+
+
+def vorhanden(name):
+    conf, _ = pfade(name)
+    if not os.path.exists(conf):
+        fehler(f"{name}.{DOMAIN} gibt es nicht")
+    return kopf(conf)
 
 
 def ziel_aendern(name, ziel):
-    conf, _ = pfade(name)
-    if not os.path.exists(conf):
-        fehler(f"{name}.{DOMAIN} gibt es nicht")
-    k = kopf(conf)
-    schreiben(name, ziel, k.get("passwort") == "an", k.get("angelegt", "?"))
+    k = vorhanden(name)
+    schreiben(name, ziel, k["zugang"], k.get("angelegt", "?"))
     print(f"✓ https://{name}.{DOMAIN} zeigt jetzt auf: {ziel}")
 
 
+def zugang_aendern(name, zugang):
+    k = vorhanden(name)
+    if zugang not in ZUGAENGE:
+        fehler(f"Zugang: {', '.join(ZUGAENGE)}")
+    if zugang == "passwort" and not os.path.exists(pfade(name)[1]):
+        fehler("noch kein Passwort – kunde.py passwort " + name)
+    schreiben(name, k.get("ziel", "platzhalter"), zugang, k.get("angelegt", "?"))
+    print(f"✓ https://{name}.{DOMAIN}: Zugang {zugang}")
+    if zugang == "login" and not benutzer_lesen(name):
+        print(f"  Achtung: noch niemand darf sich anmelden – kunde.py benutzer {name} +adresse")
+
+
+def benutzer(name, aenderungen):
+    vorhanden(name)
+    liste = benutzer_lesen(name)
+    for x in aenderungen:
+        adr = x[1:].lower()
+        if x[:1] not in "+-" or not EMAIL_RE.match(adr):
+            fehler(f"«{x}»: +adresse zum Hinzufügen, -adresse zum Entfernen")
+        liste = liste + [adr] if x[0] == "+" else [e for e in liste if e != adr]
+    if aenderungen:
+        benutzer_schreiben(name, liste)
+    print(f"{name}.{DOMAIN}: " + (", ".join(sorted(set(liste))) or "niemand"))
+
+
 def passwort(name):
-    conf, _ = pfade(name)
-    if not os.path.exists(conf):
-        fehler(f"{name}.{DOMAIN} gibt es nicht")
-    k = kopf(conf)
+    k = vorhanden(name)
     pw = passwort_setzen(name)
-    if k.get("passwort") != "an":
-        schreiben(name, k.get("ziel", "platzhalter"), True, k.get("angelegt", "?"))
+    if k["zugang"] != "passwort":
+        schreiben(name, k.get("ziel", "platzhalter"), "passwort", k.get("angelegt", "?"))
     print(f"✓ Neues Passwort für https://{name}.{DOMAIN}\n  Benutzer: {BENUTZER}\n  Passwort: {pw}")
 
 
@@ -243,8 +347,9 @@ def liste():
         print("noch keine Kunden-Instanzen")
     for f in dateien:
         k = kopf(os.path.join(CONF_D, f))
-        print(f"{f[6:-5] + '.' + DOMAIN:34} Ziel {k.get('ziel', '?'):24} Passwort {k.get('passwort', '?'):4} "
-              f"seit {k.get('angelegt', '?')}")
+        name = f[6:-5]
+        wer = f" ({', '.join(benutzer_lesen(name)) or 'niemand'})" if k["zugang"] == "login" else ""
+        print(f"{name + '.' + DOMAIN:30} Ziel {k.get('ziel', '?'):20} Zugang {k['zugang']}{wer}  seit {k.get('angelegt', '?')}")
 
 
 def entfernen(name):
@@ -255,6 +360,9 @@ def entfernen(name):
     os.remove(conf)
     if os.path.exists(htpasswd):
         os.remove(htpasswd)
+    for p in (benutzer_datei(name), os.path.join(LOGIN_DATEN, "passkeys", name + ".json")):
+        if os.path.exists(p):
+            os.remove(p)
     docker("exec", "nginx", "nginx", "-s", "reload")
     if zert_da(f"{name}.{DOMAIN}"):
         docker("exec", "certbot", "certbot", "delete", "-n", "--cert-name", f"{name}.{DOMAIN}", pruefen=False)
@@ -263,11 +371,15 @@ def entfernen(name):
 
 if __name__ == "__main__":
     a = sys.argv[1:]
+    wert = lambda opt, std=None: a[a.index(opt) + 1] if opt in a and a.index(opt) + 1 < len(a) else std
     if len(a) >= 2 and a[0] == "neu":
-        z = a[a.index("--ziel") + 1] if "--ziel" in a and a.index("--ziel") + 1 < len(a) else "platzhalter"
-        neu(a[1], z, "--ohne-passwort" not in a)
+        neu(a[1], wert("--ziel", "platzhalter"), "offen" if "--ohne-passwort" in a else wert("--zugang", "login"), wert("--email"))
     elif len(a) == 3 and a[0] == "ziel":
         ziel_aendern(a[1], a[2])
+    elif len(a) == 3 and a[0] == "zugang":
+        zugang_aendern(a[1], a[2])
+    elif len(a) >= 2 and a[0] == "benutzer":
+        benutzer(a[1], a[2:])
     elif len(a) == 2 and a[0] == "passwort":
         passwort(a[1])
     elif a == ["liste"]:

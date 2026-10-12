@@ -51,3 +51,6 @@ training/ausgabe/
 # Anfragen aus dem Formular auf energy.biber.solar (Personendaten, nicht ins Repo)
 energy/anfragen/
 energy/abos/
+
+# homi-login: Anmelde-Adressen, Sitzungen, Passkeys der Kunden (Personendaten)
+login/data/

@@ -1,0 +1,13 @@
+# Anmeldung für die Kunden-Instanzen <name>.homi.solar (nginx auth_request), nur am Docker-Netz proxy_default
+[Unit]
+Description=homi-login: Anmeldung mit Code per Mail und Passkey
+After=network-online.target docker.service
+
+[Service]
+Environment=LOGIN_BIND=172.18.0.1:8098
+ExecStart=/usr/bin/python3 %h/domus/login/server.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

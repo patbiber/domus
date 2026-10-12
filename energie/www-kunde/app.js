@@ -15,6 +15,10 @@ async function holen(pfad, versuch = 0) {
   // Bei Fehlern (z. B. 503 der Ratenbegrenzung beim gleichzeitigen Start) bis zu zweimal kurz warten und neu versuchen
   try {
     const r = await fetch("/api/" + pfad, { cache: "no-store" });
+    if (r.status === 401 && !r.headers.get("WWW-Authenticate")) {      // Sitzung abgelaufen: zur Anmeldung
+      location.href = "/login/?ziel=" + encodeURIComponent(location.pathname);
+      throw new Error("nicht angemeldet");
+    }
     if (!r.ok) throw new Error(r.status);
     return await r.json();
   } catch (e) {
@@ -564,6 +568,58 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) { st
 const anfang = (location.hash || "").slice(1);
 if (["verlauf", "preise", "berater", "mehr"].includes(anfang)) tabZeigen(anfang, false);
 start();
+
+/* ======================= Konto (homi-login) ======================= */
+const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const kontoMeldung = t => { $("k-meldung").textContent = t; };
+const geraetName = () => { const u = navigator.userAgent;
+  return /iPhone/.test(u) ? "iPhone" : /iPad/.test(u) ? "iPad" : /Android/.test(u) ? "Android" : /Mac/.test(u) ? "Mac" : /Windows/.test(u) ? "Windows" : "Gerät"; };
+async function loginPost(pfad, daten) {
+  const r = await fetch(pfad, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten || {}) });
+  let j = {}; try { j = await r.json(); } catch {}
+  if (!r.ok) throw new Error(j.fehler || "Fehler " + r.status);
+  return j;
+}
+async function kontoLaden() {
+  let r;
+  try { r = await fetch("/login/ich", { cache: "no-store" }); } catch { return; }
+  if (r.status !== 200) return;                        // Instanz ohne Login (Browser-Passwort oder offen)
+  const k = await r.json();
+  $("konto").hidden = false;
+  $("k-email").textContent = k.email;
+  const datumKurz = s => s ? new Date(s).toLocaleDateString("de-CH") : "noch nie";
+  $("k-passkeys").innerHTML = k.passkeys.map(p => `<li><div>🔐 ${esc(p.name)}<small>eingerichtet ${datumKurz(p.erstellt)} · zuletzt benutzt ${datumKurz(p.zuletzt)}</small></div>
+    <button type="button" data-id="${esc(p.id)}">Entfernen</button></li>`).join("");
+  $("k-pk-text").hidden = k.passkeys.length > 0;
+  $("k-pk-neu").textContent = k.passkeys.length ? "Weiteres Gerät einrichten" : "Face ID / Fingerabdruck einrichten";
+  if (!window.PublicKeyCredential) { $("k-pk-neu").hidden = true; $("k-pk-text").textContent = "Dieser Browser kann keine Passkeys – du meldest dich mit dem Code per Mail an."; }
+}
+$("k-passkeys").onclick = async e => {
+  const b = e.target.closest("button[data-id]");
+  if (!b) return;
+  try { await loginPost("/login/passkey/entfernen", { id: b.dataset.id }); kontoMeldung("Passkey entfernt."); kontoLaden(); }
+  catch (err) { kontoMeldung("Entfernen hat nicht geklappt: " + err.message); }
+};
+$("k-pk-neu").onclick = async () => {
+  try {
+    const o = await (await fetch("/login/passkey/neu-optionen", { cache: "no-store" })).json();
+    const c = await navigator.credentials.create({ publicKey: {
+      challenge: u8(o.challenge), rp: o.rp, user: { ...o.user, id: u8(o.user.id) }, pubKeyCredParams: o.pubKeyCredParams,
+      authenticatorSelection: o.authenticatorSelection, attestation: o.attestation, timeout: o.timeout,
+      excludeCredentials: (o.excludeCredentials || []).map(x => ({ type: x.type, id: u8(x.id) })) } });
+    await loginPost("/login/passkey/neu", { name: geraetName(), credential: { id: c.id, rawId: b64url(c.rawId),
+      response: { clientDataJSON: b64url(c.response.clientDataJSON), attestationObject: b64url(c.response.attestationObject) } } });
+    kontoMeldung("Eingerichtet! Ab jetzt meldest du dich hier mit Face ID oder Fingerabdruck an.");
+    kontoLaden();
+  } catch (err) {
+    kontoMeldung(err.name === "InvalidStateError" ? "Dieses Gerät ist schon eingerichtet." : err.name === "NotAllowedError" ? "Abgebrochen." : "Einrichten hat nicht geklappt: " + err.message);
+  }
+};
+$("k-abmelden").onclick = async () => {
+  try { await loginPost("/login/abmelden"); } catch {}
+  location.href = "/login/";
+};
+kontoLaden();
 
 /* ======================= App & Push ======================= */
 const app = {

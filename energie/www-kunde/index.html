@@ -203,6 +203,18 @@
   <!-- ===================== Mehr ===================== -->
   <section id="tab-mehr" class="tab">
     <div class="raster">
+      <article class="karte" id="konto" hidden>
+        <div class="karte-kopf"><h2>Dein Konto</h2></div>
+        <div class="zeile"><span>Angemeldet als</span><b id="k-email">–</b></div>
+        <ul class="geraete" id="k-passkeys"></ul>
+        <p class="leise" id="k-pk-text">Mit einem Passkey meldest du dich auf diesem Gerät mit Face ID oder Fingerabdruck an – ohne Code per Mail.</p>
+        <div class="knoepfe">
+          <button type="button" class="knopf haupt" id="k-pk-neu">Face ID / Fingerabdruck einrichten</button>
+          <button type="button" class="knopf leise-knopf" id="k-abmelden">Abmelden</button>
+        </div>
+        <p id="k-meldung" class="meldung" aria-live="polite"></p>
+      </article>
+
       <article class="karte" id="app">
         <div class="karte-kopf"><h2>App und Benachrichtigungen</h2></div>
         <p id="app-text" class="leise">Installiere homi auf deinem Handy: <b>iPhone</b> Teilen → «Zum Home-Bildschirm», <b>Android</b> Menü ⋮ → «App installieren».</p>

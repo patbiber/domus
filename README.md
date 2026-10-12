@@ -330,17 +330,19 @@ systemctl --user daemon-reload && systemctl --user enable --now energy-warnung.p
 - DNS bei OVH: A-Einträge `homi.solar`, `www` und Wildcard `*` → NUC. Neue Kunden brauchen keinen DNS-Eintrag.
 - `homi.solar` ist zugleich die Adresse der Verkaufsseite (siehe oben), `www.homi.solar` leitet dorthin weiter.
 - Nicht eingerichtete Namen lehnt `proxy/conf.d/00-default.conf` ab (HTTP 444, HTTPS `ssl_reject_handshake`).
-- **`kunden/kunde.py`** richtet eine Instanz in einem Schritt ein: DNS prüfen, Zertifikat (HTTP-01 über den
-  Standardserver), Passwort (Benutzer `homi`, wird einmal angezeigt), nginx-Konfiguration aus `kunden/kunde.conf.vorlage`
+- **`kunden/kunde.py`** richtet eine Instanz in einem Schritt ein: DNS prüfen, Zertifikat, Zugang (Standard «login»:
+  Anmeldung per Code/Passkey, siehe unten; «passwort»: Browser-Passwort, Benutzer `homi`; «offen»), nginx-Konfiguration aus `kunden/kunde.conf.vorlage`
   (wie home.biber.solar: Basic Auth, CSP, nur GET/HEAD + Push-Anmeldung, App-Hülle ohne Passwort), `nginx -t` mit
   Zurückrollen bei Fehler, Reload.
   Erzeugt `proxy/conf.d/kunde-<name>.conf` und `.htpasswd` – **nicht im Repo** (Kundennamen = Personendaten).
 
 ```bash
-kunden/kunde.py neu sonnenhof                    # Platzhalterseite, Passwort wird erzeugt
+kunden/kunde.py neu sonnenhof --email kunde@beispiel.ch   # Platzhalterseite, Zugang login für diese Adresse
+kunden/kunde.py benutzer sonnenhof +zweite@beispiel.ch    # weitere Adresse
+kunden/kunde.py zugang sonnenhof login|passwort|offen
 kunden/kunde.py ziel sonnenhof host:8099         # homi-Dienst auf dem NUC (Port)
 kunden/kunde.py ziel sonnenhof http://homi-sonnenhof:8099   # Container im Netz proxy_default / WireGuard-Adresse
-kunden/kunde.py passwort sonnenhof               # neues Passwort
+kunden/kunde.py passwort sonnenhof               # Browser-Passwort statt Login (neues Passwort)
 kunden/kunde.py liste
 kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zertifikat löschen
 ```
@@ -392,7 +394,8 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   (z. B. Verbrauch des NUC). Stand 10.10.2026 zusätzlich angeglichen: Batterie-Simulation in der Retro-Seite,
   Verlauf «Tag» und «Gesamt» in der Kunden-UI, HA-Sensoren `sensor.einspeisung_dynamisch_heute`,
   `sensor.minuspreise_heute`, `sensor.minuspreise_morgen`.
-- **Erste Instanz: https://biber.homi.solar** = Patricks eigenes homi (Ziel `host:8099`, seit 09.10.2026; home.biber.solar
+- **Erste Instanz: https://biber.homi.solar** = Patricks eigenes homi (Ziel `host:8099`, seit 09.10.2026, Zugang login
+  für patrick@biber.solar seit 12.10.2026; home.biber.solar
   läuft parallel weiter). Push-Abos und Daten teilen sich beide Adressen, die App muss pro Adresse installiert werden.
 - Der Platzhalter (`kunden/platzhalter.html`, «Hier wohnt bald ein homi») ist immer öffentlich; das Passwort gilt,
   sobald ein Ziel gesetzt ist. `beispiel.homi.solar` ist die öffentliche Musterseite (ohne Passwort).
@@ -407,6 +410,27 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
 - DNS bleibt öffentlich: Wer den Namen kennt, kann ihn auflösen → trotzdem neutrale Namen empfehlen.
 - IP-Nachführung: `system/ovh-dns.py` führt beide Zonen nach (biber.solar und homi.solar mit `""`, `www`, `*`;
   TTL 300 s). Fehlen für eine Zone Rechte, meldet es sie als «NICHT möglich» (Exit-Code 2), die anderen laufen weiter.
+
+### Anmeldung der Kunden-Instanzen (`login/`)
+
+Statt Browser-Passwortfenster: **Code per Mail** (6 Ziffern, 15 min gültig, max. 5 Versuche; dazu ein Link, der erst
+nach Klick auf «Jetzt anmelden» gilt – Mail-Scanner öffnen Links) und danach optional **Passkey** (Face ID /
+Fingerabdruck, WebAuthn ES256). Angemeldet bleibt man 180 Tage (Cookie `__Host-homi`, HttpOnly, Secure, SameSite=Lax,
+gleitend verlängert); «Abmelden» unter «Mehr → Dein Konto» in der App, dort auch Passkeys einrichten und entfernen.
+- Dienst `login/server.py` (systemd-User-Dienst `homi-login`, Host-Python mit `python3-cryptography`), lauscht nur am
+  Gateway des Docker-Netzes (`172.18.0.1:8098`). nginx fragt per `auth_request /_auth` → `/pruefen`, setzt pro Instanz
+  `X-Homi-Instanz`; nicht angemeldet: Seiten → 302 `/login/`, `/api/` → 401 (die App leitet dann selbst um).
+- Schutz: POST nur mit passendem `Origin`, max. 3 Code-Mails pro Adresse in 15 min, gleiche Antwort für unbekannte
+  Adressen (keine Rückschlüsse), nginx-Zone `home_login` (20/min). Mails über `energy/mailer.py` (Absender domus@biber.solar).
+- Daten in `login/data/` (nicht im Repo, nur Besitzer lesbar): `instanzen/<name>.json` (wer sich anmelden darf),
+  `sitzungen/`, `passkeys/`. Test ohne echten Versand: `LOGIN_MAIL_DATEI=<datei>` (schreibt Mails in die Datei).
+- Service Worker (beide Oberflächen, Cache v3): gibt Weiterleitungen (z. B. zur Anmeldung) als echte Weiterleitung
+  zurück – sonst zeigt eine installierte App bei abgelaufener Sitzung eine Fehlerseite.
+
+```bash
+cd ~/.config/systemd/user && ln -sf ~/domus/login/homi-login.service . && systemctl --user daemon-reload && systemctl --user enable --now homi-login.service
+kunden/kunde.py benutzer biber +neue@adresse.ch      # Anmelde-Adressen pflegen (-adresse entfernt)
+```
 
 ### Trainingsseite training.biber.solar (`training/`)
 
