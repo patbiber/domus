@@ -329,8 +329,8 @@ systemctl --user daemon-reload && systemctl --user enable --now energy-warnung.p
 `homi.solar` ist die Basis-Domain für alle Kunden-Instanzen: **`<name>.homi.solar`** (z. B. `sonnenhof.homi.solar`).
 - DNS bei OVH: A-Einträge `homi.solar`, `www` und Wildcard `*` → NUC. Neue Kunden brauchen keinen DNS-Eintrag.
 - Mail-DNS wie biber.solar (Proton, seit 13.10.2026): MX `mail.protonmail.ch` (10) / `mailsec.protonmail.ch` (20),
-  TXT `v=spf1 include:_spf.protonmail.ch ~all`, `_dmarc` TXT `v=DMARC1; p=quarantine`. **Offen:** homi.solar in Proton
-  hinzufügen (Einstellungen → Domainnamen), dann den Bestätigungs-TXT `protonmail-verification=…` und die drei DKIM-CNAMEs
+  TXT `v=spf1 include:_spf.protonmail.ch ~all`, `_dmarc` TXT `v=DMARC1; p=quarantine`, Proton-Bestätigung
+  `protonmail-verification=ff0b…c039` (13.10.2026). **Offen:** die drei DKIM-CNAMEs
   `protonmail{,2,3}._domainkey` mit den von Proton angezeigten Werten setzen (pro Domain eigene Kennung, nicht von
   biber.solar kopierbar). Vorher (zum Zurückstellen): MX 1/5/100 `mx{1,2,3}.mail.ovh.net.`, SPF `v=spf1 include:mx.ovh.com -all`.
 - `homi.solar` ist zugleich die Adresse der Verkaufsseite (siehe oben), `www.homi.solar` leitet dorthin weiter.
