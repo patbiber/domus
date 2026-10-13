@@ -245,10 +245,10 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 12.10.2026 | Aufgeräumt: server.py in Module (homi/) aufgeteilt, HA-Konfiguration im Repo |
 | 12.10.2026 | Kunden-Login statt Browser-Passwort: Code per Mail, Passkey (Face ID/Fingerabdruck), 180 Tage angemeldet (`login/`) |
 | 12.10.2026 | Wochenbericht jeden Montag per Mail und Push, in App, Retro und Home Assistant |
+| 13.10.2026 | Mail-DNS für homi.solar bei Proton (MX, SPF, DMARC, Bestätigung, DKIM) |
 
 ## 8. Offene Punkte
 
-- homi.solar: DKIM-Einträge von Proton setzen (MX, SPF, DMARC und Bestätigung sind gesetzt).
 - Kunden-Konfigurationen (`proxy/conf.d/kunde-*`) ins Backup ausser Haus aufnehmen (USB-Platte).
 - Rückliefervergütung 2027 nachtragen, sobald die GWS sie veröffentlichen (`energie/tarif.json`).
 - MQTT, Zigbee2MQTT und Hue einbinden.
