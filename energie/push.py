@@ -20,6 +20,7 @@ import hmac
 import json
 import os
 import struct
+import subprocess
 import sys
 import time
 import urllib.error
@@ -225,6 +226,9 @@ def ausfall():
                 probleme["dienst_" + dienst] = (f"Der Dienst «{dienst}»", f"Der Dienst «{dienst}» läuft nicht.")
     except (OSError, ValueError):
         probleme["homi"] = ("homi", "homi selbst antwortet nicht (Container energie).")
+    # Anmeldedienst der Kunden-Instanzen (läuft auf dem Host, nicht im Status von homi enthalten)
+    if subprocess.run(["systemctl", "--user", "is-active", "--quiet", "homi-login.service"]).returncode:
+        probleme["dienst_homi-login"] = ("Die Anmeldung (homi-login)", "Die Anmeldung für <name>.homi.solar läuft nicht – niemand kann sich anmelden.")
     neu = {}
     for k, (wer, text) in probleme.items():
         seit = zustand.get(k, {}).get("seit", jetzt)

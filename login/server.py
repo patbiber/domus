@@ -58,7 +58,8 @@ def senden(an, betreff, text, **kw):
         return
     _senden(an, betreff, text, **kw)
 
-BIND = os.environ.get("LOGIN_BIND", "172.18.0.1:8098")
+BIND_BETRIEB = "172.18.0.1:8098"
+BIND = os.environ.get("LOGIN_BIND", BIND_BETRIEB)
 COOKIE = "__Host-homi"
 SITZUNG_S = 180 * 86400
 CODE_S, CODE_VERSUCHE = 15 * 60, 5
@@ -444,6 +445,9 @@ homi von Biber Solar
 
 
 if __name__ == "__main__":
+    if MAIL_DATEI and BIND == BIND_BETRIEB:
+        # 12.10.2026: ein vergessener Testdienst belegte den Betriebsport, Codes landeten in der Testdatei statt im Postfach
+        sys.exit("Testmodus (LOGIN_MAIL_DATEI) nur mit eigenem LOGIN_BIND, nie auf dem Betriebsport " + BIND_BETRIEB)
     for d in ("instanzen", "sitzungen", "passkeys"):
         os.makedirs(os.path.join(DATEN, d), mode=0o700, exist_ok=True)
     adresse, port = BIND.rsplit(":", 1)
