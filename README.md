@@ -214,7 +214,14 @@ neue Rückliefervergütung pro Jahr unter `rueckliefer` eintragen. Danach `cd en
 
 ### E-Mail-Versand (Proton SMTP)
 
-Absender `domus@biber.solar` über `smtp.protonmail.ch:587` (STARTTLS) mit einem Proton-SMTP-Token.
+Zwei Absender über `smtp.protonmail.ch:587` (STARTTLS), je mit eigenem Proton-SMTP-Token (Proton erlaubt pro Token
+nur die eigene Adresse), beide in `/etc/msmtprc` (root:msmtp 640, nicht im Repo; Sicherung `/etc/msmtprc.vor-homi`):
+- Konto `proton` (Standard): **domus@biber.solar** – Systemmails des NUC (Updates, IP-Wechsel, Neustart, Tarifabruf,
+  Home Assistant).
+- Konto `homi` (seit 13.10.2026): **support@homi.solar** – alle homi-Mails über `energy/mailer.py` (`senden(…)`, Konto
+  `homi`, Antwort an support@homi.solar), mit Namen je Mailart: «homi» (Prognose, Minuspreis-Warnung, Bestätigung der
+  Gratis-Warnung, Messbericht), «homi Anmeldung» (Login-Codes), «homi Wochenbericht», «homi Anfragen» (Anfragen von
+  homi.solar, Antwort an die anfragende Person). `set_from_header auto`, damit der Name erhalten bleibt.
 
 - **Home Assistant:** Integration **SMTP** („domus_mail“, eingerichtet per einmaligem YAML-Import), Entität
   `notify.domus_mail_patrick_biber_solar`. Zugangsdaten zusätzlich als `smtp_username` / `smtp_password` in

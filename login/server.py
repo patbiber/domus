@@ -46,7 +46,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 HIER = os.path.dirname(os.path.abspath(__file__))
 DATEN = os.path.join(HIER, "data")
 sys.path.insert(0, os.path.join(HIER, "..", "energy"))
-from mailer import senden as _senden  # noqa: E402  (msmtp, Absender domus@biber.solar)
+from mailer import ABSENDER, senden as _senden  # noqa: E402  (msmtp, Konto homi, support@homi.solar)
 
 MAIL_DATEI = os.environ.get("LOGIN_MAIL_DATEI")     # nur für Tests: Mails in eine Datei statt versenden
 
@@ -377,7 +377,7 @@ https://{self.host}/login/link?t={link}
 Hast du keinen Code angefordert? Dann kannst du diese Mail einfach löschen – ohne Code kommt niemand in dein homi.
 
 homi von Biber Solar
-""", absender="homi <domus@biber.solar>")
+""", absender=ABSENDER["anmeldung"])
         return self.antwort(200, antwort)
 
     def code_pruefen(self, email, code):

@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Abendmail (Timer homi-prognose, 19:00): Solarprognose für morgen, bestes Zeitfenster, Treffer von heute."""
 import json
-import subprocess
+import os
+import sys
 import urllib.request
 from datetime import date
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "energy"))
+from mailer import ABSENDER, senden  # noqa: E402  (Konto homi, support@homi.solar)
 
 API = "http://127.0.0.1:8099/api/"
 p = json.load(urllib.request.urlopen(API + "prognose", timeout=20))
@@ -42,5 +45,5 @@ if len(gestern) >= 3:
     zeilen.append(f"Treffsicherheit der letzten {len(gestern)} Tage: im Mittel ±{100 * fehler:.0f} %")
 zeilen += ["", spruch, "", "Dein homi · https://home.biber.solar",
            "Prognose: Open-Meteo (CC BY 4.0), geeicht mit deinen eigenen Messwerten."]
-subprocess.run(["mail", "-s", betreff, "root"], input="\n".join(zeilen).encode(), check=True)
+senden("root", betreff, "\n".join(zeilen), absender=ABSENDER["homi"])
 print(betreff)

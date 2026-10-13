@@ -246,6 +246,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 12.10.2026 | Kunden-Login statt Browser-Passwort: Code per Mail, Passkey (Face ID/Fingerabdruck), 180 Tage angemeldet (`login/`) |
 | 12.10.2026 | Wochenbericht jeden Montag per Mail und Push, in App, Retro und Home Assistant |
 | 13.10.2026 | Mail-DNS für homi.solar bei Proton (MX, SPF, DMARC, Bestätigung, DKIM) |
+| 13.10.2026 | homi-Mails von support@homi.solar (Anmeldung, Wochenbericht, Prognose, Warnungen, Anfragen); Systemmails weiter domus@biber.solar |
 
 ## 8. Offene Punkte
 

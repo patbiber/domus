@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """Wochenbericht per Mail (Montag 08:00, homi-wochenbericht.service): die letzte Woche Mo–So mit Vorwochen-Vergleich."""
 import json
-import subprocess
+import os
+import sys
 import urllib.request
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "energy"))
+from mailer import ABSENDER, senden  # noqa: E402  (Konto homi, support@homi.solar)
 
 w = json.load(urllib.request.urlopen("http://127.0.0.1:8099/api/wochenbericht", timeout=60))
 if not w.get("aktiv"):
@@ -37,5 +40,5 @@ if w.get("vollstaendig_pct", 100) < 95:
     zeilen += ["", f"Hinweis: Für {100 - w['vollstaendig_pct']} % der Woche fehlen Messwerte (z. B. Neustart)."]
 zeilen += ["", "Dein homi · https://biber.homi.solar/#verlauf"]
 betreff = f"homi: Deine Woche – {w['pv_kwh']:.0f} kWh Sonne, Bilanz {chf(w['saldo_chf'])}"
-subprocess.run(["mail", "-s", betreff, "root"], input="\n".join(z for z in zeilen if z is not None).encode(), check=True)
+senden("root", betreff, "\n".join(z for z in zeilen if z is not None), absender=ABSENDER["wochenbericht"])
 print(betreff)

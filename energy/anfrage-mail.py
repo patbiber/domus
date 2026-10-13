@@ -4,10 +4,11 @@ Reply-To = Interessent, damit «Antworten» direkt an ihn geht. Danach nach anfr
 Ausgelöst von der Pfad-Unit energy-anfrage.path (sofort) und stündlich vom Timer energy-anfrage.timer (Nachzügler)."""
 import json
 import os
-import subprocess
 import sys
-from email.message import EmailMessage
-from email.utils import formataddr, formatdate, make_msgid
+from email.utils import formataddr
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from mailer import ABSENDER, senden  # noqa: E402
 
 BASIS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "anfragen")
 NEU, FERTIG = os.path.join(BASIS, "neu"), os.path.join(BASIS, "versendet")
@@ -27,15 +28,8 @@ for name in sorted(f for f in os.listdir(NEU) if f.endswith(".json") and not f.s
             f"Eingegangen: {a['zeit'].replace('T', ' ')}", "",
             "Mit «Antworten» schreibst du direkt an die anfragende Person.",
         ]
-        m = EmailMessage()
-        m["From"] = "homi Anfragen <domus@biber.solar>"
-        m["To"] = "root"
-        m["Reply-To"] = formataddr((a["name"], a["email"]))
-        m["Subject"] = f"homi-Anfrage: {a['name']}" + (f", {a['ort']}" if a.get("ort") else "") + f" ({a.get('objekt')}, {a.get('paket')})"
-        m["Date"] = formatdate(localtime=True)
-        m["Message-ID"] = make_msgid(domain="biber.solar")
-        m.set_content("\n".join(zeilen))
-        subprocess.run(["/usr/bin/msmtp", "-t"], input=m.as_bytes(), check=True)
+        senden("root", f"homi-Anfrage: {a['name']}" + (f", {a['ort']}" if a.get("ort") else "") + f" ({a.get('objekt')}, {a.get('paket')})",
+               "\n".join(zeilen), absender=ABSENDER["anfragen"], reply_to=formataddr((a["name"], a["email"])))
         os.replace(pfad, os.path.join(FERTIG, name))
         print("verschickt:", name)
     except Exception as e:

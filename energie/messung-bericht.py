@@ -3,10 +3,12 @@
 Aufruf: messung-bericht.py "<name>" [--nur-anzeigen]"""
 import json
 import statistics
-import subprocess
+import os
 import sys
 import urllib.request
 from datetime import datetime
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "energy"))
+from mailer import ABSENDER, senden  # noqa: E402  (Konto homi, support@homi.solar)
 
 API = "http://127.0.0.1:8099/api/"
 name = sys.argv[1] if len(sys.argv) > 1 else "Grundlast Abwesenheit"
@@ -80,6 +82,5 @@ text = "\n".join(x for x in out if x is not None)
 if "--nur-anzeigen" in sys.argv:
     print(text)
 else:
-    subprocess.run(["mail", "-s", f"homi: Grundbedarf des Hauses = {k['mittel_w']:.0f} W ({jahr_kwh:.0f} kWh/Jahr)", "root"],
-                   input=text.encode(), check=True)
+    senden("root", f"homi: Grundbedarf des Hauses = {k['mittel_w']:.0f} W ({jahr_kwh:.0f} kWh/Jahr)", text, absender=ABSENDER["homi"])
     print("Bericht gesendet")
