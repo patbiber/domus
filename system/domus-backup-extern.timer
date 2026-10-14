@@ -1,6 +1,6 @@
 # Täglich um 03:10 (vor dem möglichen Neustart um 03:30); verpasste Läufe werden beim Start nachgeholt
 [Unit]
-Description=domus: Backup ausser Haus (täglich 03:10)
+Description=domus: verschlüsseltes Gesamt-Backup (täglich 03:10)
 
 [Timer]
 OnCalendar=*-*-* 03:10:00

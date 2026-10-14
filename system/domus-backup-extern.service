@@ -1,6 +1,6 @@
-# Backup ausser Haus: verschlüsselt nach Proton Drive (siehe backup-extern.sh)
+# Verschlüsseltes Gesamt-Backup (siehe backup-extern.sh)
 [Unit]
-Description=domus: Backup ausser Haus (Proton Drive)
+Description=domus: verschlüsseltes Gesamt-Backup (für den Reserve-PC)
 After=network-online.target
 
 [Service]

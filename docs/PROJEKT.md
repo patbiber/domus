@@ -247,10 +247,11 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 12.10.2026 | Wochenbericht jeden Montag per Mail und Push, in App, Retro und Home Assistant |
 | 13.10.2026 | Mail-DNS für homi.solar bei Proton (MX, SPF, DMARC, Bestätigung, DKIM) |
 | 13.10.2026 | homi-Mails von support@homi.solar (Anmeldung, Wochenbericht, Prognose, Warnungen, Anfragen); Systemmails weiter domus@biber.solar |
+| 14.10.2026 | Verschlüsseltes Gesamt-Backup nachts (lokal); Autoinstall für den Reserve-PC domus-reserve (Ausfallsicherung) |
 
 ## 8. Offene Punkte
 
-- Backup ausser Haus: Anmeldung des Proton-Drive-CLI mit dem eigenen Backup-Konto, dann Timer aktivieren.
+- Reserve-PC domus-reserve installieren (Autoinstall per Mail verschickt), dann Abgleich, Backups auf der grossen Platte und automatische Übernahme einrichten.
 - Rückliefervergütung 2027 nachtragen, sobald die GWS sie veröffentlichen (`energie/tarif.json`).
 - MQTT, Zigbee2MQTT und Hue einbinden.
 - LAN-Adresse im README prüfen (dort steht `192.168.178.121`, der NUC meldet `192.168.1.x`).

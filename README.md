@@ -246,25 +246,27 @@ cd <dienst> && docker compose pull && docker compose up -d
 docker compose logs -f
 ```
 
-### Backup ausser Haus (Proton Drive, `system/backup-extern.sh`)
+### Gesamt-Backup und Reserve-PC (`system/backup-extern.sh`, `reserve/`)
 
-Täglich 03:10 (Timer `domus-backup-extern`, verpasste Läufe beim Start): alles, was nur auf dem NUC liegt – `.env`,
-`energie/data` (Archiv, Push-Schlüssel), `login/data`, `energy/abos` + `anfragen`, `proxy/conf.d` (inkl. Kunden-Instanzen),
-`proxy/certbot/conf` (Zertifikate, OVH-Zugang), `strompreise/data`, `/etc/msmtprc`, `/etc/aliases`, neuestes
-HA-Backup, Liste der aktiven Units – als `tar.gz`, **mit gpg (AES-256) verschlüsselt**, Probe-Entschlüsselung, dann
-Upload mit dem offiziellen Proton-Drive-CLI (`~/.local/bin/proton-drive`, v0.9.0, SHA-512 geprüft) nach
-`/my-files/homi-backup/` eines **eigenen Backup-Kontos** (nicht Patricks Hauptkonto – die CLI-Anmeldung hätte sonst
-Zugriff aufs ganze Drive). Behalten: 7 Tage + erster Stand jedes Monats (12 Monate); lokal die letzten 3 in `backups/extern/`.
-~54 MB pro Stand. Fehler → Mail; Störungs-Push, wenn das letzte gelungene Backup älter als 2 Tage ist.
-- Schlüssel: `~/.config/domus/backup-schluessel` (600, nicht im Repo); Patrick hat ihn per Mail bekommen und im
-  Passwortmanager. **Wiederherstellen:** `gpg --decrypt homi-backup-JJJJ-MM-TT.tar.gz.gpg | tar xzf -`
-- Anmeldung des CLI (einmalig, Link auf beliebigem Gerät bestätigen; Sitzung als Datei, da der Server keinen
-  Schlüsselbund hat): `PROTON_DRIVE_CREDENTIALS_STORE=unsafe_file ~/.local/bin/proton-drive auth login`
-  (Sitzung in `~/.local/share/proton-drive-cli/`, 600). Nur lokal testen: `backup-extern.sh --ohne-upload`.
+**Gesamt-Backup** täglich 03:10 (Timer `domus-backup-extern`, verpasste Läufe beim Start): alles, was nur auf dem NUC
+liegt – `.env`, `energie/data` (Archiv, Push-Schlüssel), `login/data`, `energy/abos` + `anfragen`, `proxy/conf.d` (inkl.
+Kunden-Instanzen), `proxy/certbot/conf`, `strompreise/data`, `/etc/msmtprc`, `/etc/aliases`, neuestes HA-Backup, Liste
+der aktiven Units – als `tar.gz`, **mit gpg (AES-256) verschlüsselt**, Probe-Entschlüsselung, lokal die letzten 3 in
+`backups/extern/` (~54 MB). Fehler → Mail; Störungs-Push, wenn das letzte gelungene Backup älter als 2 Tage ist.
+Schlüssel `~/.config/domus/backup-schluessel` (600, nicht im Repo, Kopie bei Patrick).
+**Wiederherstellen:** `gpg --decrypt homi-backup-JJJJ-MM-TT.tar.gz.gpg | tar xzf -`
+(Online-Backup auf Proton Drive am 14.10.2026 verworfen, Proton-CLI und Sitzung wieder entfernt.)
 
-```bash
-cd ~/.config/systemd/user && ln -sf ~/domus/system/domus-backup-extern.{service,timer} . && systemctl --user daemon-reload && systemctl --user enable --now domus-backup-extern.timer
-```
+**Reserve-PC `domus-reserve`** (geplant, Ausfallsicherung im Haus): zweiter PC mit grosser Platte, übernimmt, wenn
+der NUC ausfällt. Installation per Ubuntu-Autoinstall: `reserve/autoinstall-vorlage.yaml` (ohne Geheimnisse) →
+`reserve/usb-erzeugen.py` erzeugt `user-data` + `meta-data` für einen USB-Stick «CIDATA» (in `backups/reserve-usb/`,
+nicht im Repo) und mailt sie mit Anleitung an Patrick. Ergebnis: Ubuntu Server 26.04 LTS wie der NUC (Benutzer
+`claude`, sudo, Linger, Docker CE aus derselben Quelle, msmtp, Python), Hostname `domus-reserve`, feste Adresse
+192.168.1.24 + DHCP, SSH nur mit Schlüssel `~/.ssh/domus_reserve` des NUC, keepalived installiert (noch aus).
+Den Datenträger fürs System wählt Patrick im Installer selbst; die grosse Daten-Platte wird danach nur mit Rückfrage
+eingerichtet. **Nächste Schritte, sobald er läuft:** Daten-Abgleich NUC → Reserve (Gesamt-Backup und laufend die
+Dienst-Daten), versionierte Backups auf der grossen Platte, automatische Übernahme (keepalived, gemeinsame Adresse,
+auf die der Router weiterleitet) und Rückkehr zum NUC.
 
 ### Backup Home Assistant
 

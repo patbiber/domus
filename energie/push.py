@@ -226,11 +226,11 @@ def ausfall():
                 probleme["dienst_" + dienst] = (f"Der Dienst «{dienst}»", f"Der Dienst «{dienst}» läuft nicht.")
     except (OSError, ValueError):
         probleme["homi"] = ("homi", "homi selbst antwortet nicht (Container energie).")
-    # Backup ausser Haus: Alarm, wenn das letzte gelungene Backup älter als 2 Tage ist
+    # Gesamt-Backup: Alarm, wenn das letzte gelungene Backup älter als 2 Tage ist
     stand = os.path.expanduser("~/.local/state/domus/backup-extern")
     alter_h = (time.time() - os.path.getmtime(stand)) / 3600 if os.path.exists(stand) else None
     if alter_h is not None and alter_h > 50:
-        probleme["backup"] = ("Das Backup ausser Haus", f"Seit {alter_h / 24:.0f} Tagen kein Backup auf Proton Drive gelungen.")
+        probleme["backup"] = ("Das Gesamt-Backup", f"Seit {alter_h / 24:.0f} Tagen kein Gesamt-Backup gelungen.")
     # Anmeldedienst der Kunden-Instanzen (läuft auf dem Host, nicht im Status von homi enthalten)
     if subprocess.run(["systemctl", "--user", "is-active", "--quiet", "homi-login.service"]).returncode:
         probleme["dienst_homi-login"] = ("Die Anmeldung (homi-login)", "Die Anmeldung für <name>.homi.solar läuft nicht – niemand kann sich anmelden.")

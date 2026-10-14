@@ -1,0 +1,73 @@
+#cloud-config
+# Ubuntu-Autoinstall für den Reserve-PC «domus-reserve» (Ausfallsicherung des NUC).
+# Vorlage ohne Geheimnisse; reserve/usb-erzeugen.py setzt Passwort-Hash, SSH-Schlüssel des NUC und Docker-Schlüssel
+# ein und schreibt user-data + meta-data für einen USB-Stick mit dem Namen CIDATA.
+# Gleich wie der NUC: Ubuntu Server LTS, Benutzer claude (sudo ohne Passwort, Linger), Docker CE aus der offiziellen
+# Quelle, Mail (msmtp), Python mit cryptography, DNS Cloudflare. Zusätzlich keepalived für die Übernahme.
+autoinstall:
+  version: 1
+  # Den Datenträger wählst du im Installer selbst – es wird nichts ungefragt gelöscht.
+  interactive-sections:
+    - storage
+  locale: de_CH.UTF-8
+  keyboard:
+    layout: ch
+  timezone: Europe/Zurich
+  identity:
+    hostname: domus-reserve
+    realname: domus Reserve
+    username: claude
+    password: "{{PASSWORT_HASH}}"
+  ssh:
+    install-server: true
+    allow-pw: false
+    authorized-keys:
+      - "{{SSH_NUC}}"
+  network:
+    version: 2
+    ethernets:
+      lan:
+        match:
+          name: "en*"
+        dhcp4: true
+        dhcp4-overrides:
+          use-dns: false
+        addresses:
+          - 192.168.1.24/24
+        nameservers:
+          addresses: [1.1.1.1, 1.0.0.1]
+  apt:
+    sources:
+      docker.list:
+        source: "deb [signed-by=$KEY_FILE] https://download.docker.com/linux/ubuntu $RELEASE stable"
+        key: |
+{{DOCKER_KEY}}
+  packages:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - docker-buildx-plugin
+    - docker-compose-plugin
+    - msmtp
+    - msmtp-mta
+    - bsd-mailx
+    - python3-cryptography
+    - python3-yaml
+    - gnupg
+    - rsync
+    - git
+    - curl
+    - jq
+    - sqlite3
+    - dnsutils
+    - keepalived
+    - arping
+  late-commands:
+    - curtin in-target -- usermod -aG docker claude
+    - "echo 'claude ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/claude && chmod 440 /target/etc/sudoers.d/claude"
+    - mkdir -p /target/var/lib/systemd/linger && touch /target/var/lib/systemd/linger/claude
+    - curtin in-target -- install -d -o claude -g claude -m 755 /home/claude/domus
+    # keepalived erst einschalten, wenn die Übernahme eingerichtet ist (Konfiguration kommt vom NUC)
+    - curtin in-target -- systemctl disable keepalived
+    - "echo 'domus-reserve: Reserve-PC für den NUC domus, installiert per Autoinstall' > /target/etc/domus-reserve"
+  shutdown: reboot
