@@ -250,7 +250,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 
 ## 8. Offene Punkte
 
-- Kunden-Konfigurationen (`proxy/conf.d/kunde-*`) ins Backup ausser Haus aufnehmen (USB-Platte).
+- Backup ausser Haus: Anmeldung des Proton-Drive-CLI mit dem eigenen Backup-Konto, dann Timer aktivieren.
 - Rückliefervergütung 2027 nachtragen, sobald die GWS sie veröffentlichen (`energie/tarif.json`).
 - MQTT, Zigbee2MQTT und Hue einbinden.
 - LAN-Adresse im README prüfen (dort steht `192.168.178.121`, der NUC meldet `192.168.1.x`).

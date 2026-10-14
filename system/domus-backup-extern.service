@@ -1,0 +1,9 @@
+# Backup ausser Haus: verschlüsselt nach Proton Drive (siehe backup-extern.sh)
+[Unit]
+Description=domus: Backup ausser Haus (Proton Drive)
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/system/backup-extern.sh
+Nice=10

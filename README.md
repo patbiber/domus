@@ -246,6 +246,26 @@ cd <dienst> && docker compose pull && docker compose up -d
 docker compose logs -f
 ```
 
+### Backup ausser Haus (Proton Drive, `system/backup-extern.sh`)
+
+Täglich 03:10 (Timer `domus-backup-extern`, verpasste Läufe beim Start): alles, was nur auf dem NUC liegt – `.env`,
+`energie/data` (Archiv, Push-Schlüssel), `login/data`, `energy/abos` + `anfragen`, `proxy/conf.d` (inkl. Kunden-Instanzen),
+`proxy/certbot/conf` (Zertifikate, OVH-Zugang), `strompreise/data`, `/etc/msmtprc`, `/etc/aliases`, neuestes
+HA-Backup, Liste der aktiven Units – als `tar.gz`, **mit gpg (AES-256) verschlüsselt**, Probe-Entschlüsselung, dann
+Upload mit dem offiziellen Proton-Drive-CLI (`~/.local/bin/proton-drive`, v0.9.0, SHA-512 geprüft) nach
+`/my-files/homi-backup/` eines **eigenen Backup-Kontos** (nicht Patricks Hauptkonto – die CLI-Anmeldung hätte sonst
+Zugriff aufs ganze Drive). Behalten: 7 Tage + erster Stand jedes Monats (12 Monate); lokal die letzten 3 in `backups/extern/`.
+~54 MB pro Stand. Fehler → Mail; Störungs-Push, wenn das letzte gelungene Backup älter als 2 Tage ist.
+- Schlüssel: `~/.config/domus/backup-schluessel` (600, nicht im Repo); Patrick hat ihn per Mail bekommen und im
+  Passwortmanager. **Wiederherstellen:** `gpg --decrypt homi-backup-JJJJ-MM-TT.tar.gz.gpg | tar xzf -`
+- Anmeldung des CLI (einmalig, Link auf beliebigem Gerät bestätigen; Sitzung als Datei, da der Server keinen
+  Schlüsselbund hat): `PROTON_DRIVE_CREDENTIALS_STORE=unsafe_file ~/.local/bin/proton-drive auth login`
+  (Sitzung in `~/.local/share/proton-drive-cli/`, 600). Nur lokal testen: `backup-extern.sh --ohne-upload`.
+
+```bash
+cd ~/.config/systemd/user && ln -sf ~/domus/system/domus-backup-extern.{service,timer} . && systemctl --user daemon-reload && systemctl --user enable --now domus-backup-extern.timer
+```
+
 ### Backup Home Assistant
 
 ```bash
