@@ -248,6 +248,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 13.10.2026 | Mail-DNS für homi.solar bei Proton (MX, SPF, DMARC, Bestätigung, DKIM) |
 | 13.10.2026 | homi-Mails von support@homi.solar (Anmeldung, Wochenbericht, Prognose, Warnungen, Anfragen); Systemmails weiter domus@biber.solar |
 | 14.10.2026 | Verschlüsseltes Gesamt-Backup nachts (lokal); Autoinstall für den Reserve-PC domus-reserve (Ausfallsicherung) |
+| 15.10.2026 | homi.solar neu: kurz, ohne Preise, alle (auch geplanten) Funktionen, Plattform-/Technik- und Investoren-Teil, Anmeldung mit Systemangaben per Mail |
 
 ## 8. Offene Punkte
 

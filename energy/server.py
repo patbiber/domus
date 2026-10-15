@@ -27,6 +27,10 @@ MAX_BYTES = 16 * 1024
 OBJEKTE = {"Einfamilienhaus", "Mehrfamilienhaus / Wohnung", "Gewerbe", "Landwirtschaft", "ZEV / LEG / Gemeinschaft", "Anderes"}
 PAKETE = {"Noch offen", "Einblick", "Kosten & Börse", "Steuerung", "Betrieb"}
 VORHANDEN = {"Solaranlage", "Batterie", "Wärmepumpe", "E-Auto / Wallbox", "Smart Meter", "Noch nichts"}
+ROLLEN = {"Privat", "Betrieb", "Gemeinschaft (ZEV / LEG)", "Installateur / Partner", "Investor"}
+SYSTEME = {"solar": "Solaranlage / Wechselrichter", "batterie": "Batterie", "heizung": "Wärmepumpe / Heizung",
+           "eauto": "E-Auto / Wallbox", "zaehler": "Smart Meter / Zähler", "warmwasser": "Warmwasser",
+           "versorger": "Energieversorger", "automation": "Hausautomation"}
 EMAIL = re.compile(r"^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]{2,}$")
 
 
@@ -118,6 +122,9 @@ class Handler(SimpleHTTPRequestHandler):
             "objekt": d.get("objekt") if d.get("objekt") in OBJEKTE else "Anderes",
             "paket": d.get("paket") if d.get("paket") in PAKETE else "Noch offen",
             "vorhanden": [v for v in d.get("vorhanden", []) if v in VORHANDEN][:6] if isinstance(d.get("vorhanden"), list) else [],
+            "rolle": d.get("rolle") if d.get("rolle") in ROLLEN else "Privat",
+            "systeme": {k: str(v).strip()[:120] for k, v in (d.get("systeme") or {}).items()
+                        if k in SYSTEME and isinstance(v, str) and v.strip()} if isinstance(d.get("systeme"), dict) else {},
             "demo": "betrieb" if d.get("demo") == "betrieb" else "heim",
         }
         if not a["name"] or not EMAIL.match(a["email"]) or d.get("einwilligung") is not True:

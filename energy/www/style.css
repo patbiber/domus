@@ -333,3 +333,88 @@ footer nav { display: flex; gap: 18px; flex-wrap: wrap; }
 
 /* Energieberater: gleiche Handy-Reihe wie #ansicht */
 .berater-note { text-align: center; color: var(--muted); font-size: .9rem; margin: 22px auto 0; max-width: 60ch; }
+
+/* ================= Neue Startseite (15.10.2026) ================= */
+.flow-top .raffer { border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); color: #fff; border-radius: 999px; padding: 5px 11px; font: inherit; font-size: .8rem; font-weight: 700; cursor: pointer; }
+.flow-top .raffer:hover { background: rgba(255,255,255,.16); }
+.flow-note { margin: 8px 6px 0; color: #9fb0cc; font-size: .78rem; }
+
+/* Funktionen */
+.features { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 1100px) { .features { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 820px) { .features { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 520px) { .features { grid-template-columns: 1fr; } }
+.features .feature { padding: 18px; display: flex; flex-direction: column; gap: 6px; }
+.features .feature h3 { margin: 4px 0 0; font-size: 1.08rem; }
+.features .feature .ic { margin: 0; width: 42px; height: 42px; font-size: 1.2rem; }
+.f-kopf { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.status { font-size: .72rem; font-weight: 800; letter-spacing: .03em; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
+.status.ja { background: var(--green-soft); color: #067647; }
+.status.bald { background: var(--blue-soft); color: #175cd3; }
+.feature details { margin-top: auto; padding-top: 6px; }
+.feature details summary { cursor: pointer; color: var(--sun-2); font-weight: 700; font-size: .88rem; list-style: none; }
+.feature details summary::-webkit-details-marker { display: none; }
+.feature details summary::after { content: " +"; }
+.feature details[open] summary::after { content: " –"; }
+.feature details p { margin: 6px 0 0; font-size: .9rem; color: var(--ink-2); }
+
+/* Einblick: vier Handys */
+#einblick { background: var(--surface); }
+.ansicht-reihe.vier { grid-template-columns: repeat(4, 1fr); gap: 22px; }
+.ansicht-reihe.vier img { max-width: 240px; border-width: 8px; border-radius: 32px; }
+
+/* Technik */
+#technik { background: var(--navy); color: #fff; }
+#technik .sub { color: #9fb0cc; }
+#technik h2 { color: #fff; }
+.tech-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 900px) { .tech-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .tech-grid { grid-template-columns: 1fr; } }
+.tech { display: flex; gap: 14px; align-items: flex-start; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); border-radius: 18px; padding: 16px; }
+.tech .ic { font-size: 1.4rem; line-height: 1; }
+.tech b { display: block; }
+.tech p { margin: 4px 0 0; color: #b6c3da; font-size: .92rem; }
+.aufbau { margin-top: 22px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); border-radius: 18px; padding: 6px 18px; }
+.aufbau summary { cursor: pointer; font-weight: 750; padding: 12px 0; color: #ffd36b; list-style: none; }
+.aufbau summary::-webkit-details-marker { display: none; }
+.aufbau summary::after { content: " +"; } .aufbau[open] summary::after { content: " –"; }
+.aufbau-fluss { display: grid; grid-template-columns: 1fr auto 1.3fr auto 1fr; gap: 10px; align-items: stretch; margin: 6px 0 14px; }
+@media (max-width: 760px) { .aufbau-fluss { grid-template-columns: 1fr; } .aufbau-fluss .pfeil { transform: rotate(90deg); justify-self: center; } }
+.stufe { background: rgba(255,255,255,.06); border-radius: 14px; padding: 12px 14px; display: grid; gap: 4px; }
+.stufe span { color: #b6c3da; font-size: .88rem; }
+.pfeil { align-self: center; color: #ffd36b; font-size: 1.4rem; font-weight: 900; }
+.aufbau-liste { margin: 0 0 14px; padding-left: 18px; display: grid; gap: 6px; color: #c8d3e6; font-size: .92rem; }
+
+/* Investoren */
+.investor-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 36px; align-items: center; }
+@media (max-width: 900px) { .investor-grid { grid-template-columns: 1fr; } }
+.investor-punkte { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .investor-punkte { grid-template-columns: 1fr; } }
+.investor-punkte > div { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: grid; gap: 4px; }
+.investor-punkte span { color: var(--muted); font-size: .9rem; }
+.investor-punkte .btn { grid-column: 1 / -1; justify-self: start; }
+
+/* Anmelden */
+#anmelden { background: linear-gradient(180deg, var(--bg), #fff); }
+.anmelde-grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 32px; align-items: start; }
+@media (max-width: 900px) { .anmelde-grid { grid-template-columns: 1fr; } }
+.vorteile { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 8px; }
+.vorteile li::before { content: "✓ "; color: var(--green); font-weight: 900; }
+.systeme { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; background: #f6f7fb; border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
+@media (max-width: 600px) { .systeme { grid-template-columns: 1fr; } }
+.systeme legend { grid-column: 1 / -1; float: left; width: 100%; margin-bottom: 4px; }
+.systeme legend span { font-weight: 500; color: var(--muted); }
+.systeme label { font-size: .86rem; }
+input, select, textarea { font-weight: 400; }
+input::placeholder, textarea::placeholder { font-weight: 400; color: #98a2b3; }
+@media (max-width: 600px) {
+  .features { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .features .feature { padding: 13px; gap: 4px; }
+  .features .feature > p { display: none; }
+  .features .feature h3 { font-size: .95rem; }
+  .features .feature .ic { width: 34px; height: 34px; font-size: 1rem; border-radius: 10px; }
+  .status { font-size: .64rem; padding: 3px 7px; }
+  .feature details summary { font-size: .8rem; }
+}
+.nur-handy { display: none; }
+@media (max-width: 600px) { .nur-handy { display: inline; font-weight: 600; } }

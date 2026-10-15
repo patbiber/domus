@@ -3,7 +3,9 @@
    reproduzierbar simuliert (gleicher Tag = gleiche Kurve). Keine externen Dienste. */
 "use strict";
 (() => {
-  const $ = id => document.getElementById(id);
+  // Fehlt ein Element (Abschnitt entfernt), läuft alles weiter: ein «leeres» Objekt nimmt jeden Zugriff an
+  const LEER = new Proxy(function () {}, { get: (t, k) => k === Symbol.toPrimitive ? () => "" : LEER, set: () => true, apply: () => LEER });
+  const $ = id => document.getElementById(id) || LEER;
   const N = 288;                                   // 5-Minuten-Schritte pro Tag
   const PROFILE = {
     heim: {
@@ -383,16 +385,18 @@
     fragen("frei", t, t);
   });
 
-  // ---------- Pakete → Formular ----------
-  document.querySelectorAll("[data-paket]").forEach(a => a.addEventListener("click", () => { $("paket").value = a.dataset.paket; }));
+  // ---------- Knöpfe mit Rolle (z. B. «Gespräch vereinbaren» für Investoren) → Formular ----------
+  document.querySelectorAll("[data-rolle]").forEach(a => a.addEventListener("click", () => { $("rolle").value = a.dataset.rolle; }));
 
   // ---------- Anfrageformular ----------
   const geladen = Date.now();
   $("anfrage").addEventListener("submit", async e => {
     e.preventDefault();
     const f = e.target, st = $("form-status"), fd = new FormData(f);
+    const systeme = {};
+    for (const [k, v] of fd.entries()) if (k.startsWith("sys_") && String(v).trim()) systeme[k.slice(4)] = String(v).trim();
     const daten = { name: fd.get("name").trim(), email: fd.get("email").trim(), telefon: fd.get("telefon").trim(), ort: fd.get("ort").trim(),
-      objekt: fd.get("objekt"), paket: fd.get("paket"), vorhanden: fd.getAll("vorhanden"), wunsch: fd.get("wunsch").trim(),
+      rolle: fd.get("rolle"), objekt: fd.get("objekt"), systeme, wunsch: fd.get("wunsch").trim(),
       website: fd.get("website"), einwilligung: fd.get("einwilligung") === "on", t: Date.now() - geladen, demo: profil };
     st.className = "form-status fehler";
     if (!daten.name) return st.textContent = "Bitte gib deinen Namen an.";
@@ -404,12 +408,13 @@
       const r = await fetch("api/anfrage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.ok) throw new Error(j.fehler || "Fehler " + r.status);
-      f.outerHTML = `<div class="card danke"><div class="gross">☀️</div><h3>Danke, ${daten.name.split(" ")[0].replace(/[<>&]/g, "")}!</h3><p class="sub">Deine Anfrage ist angekommen. Ich melde mich innerhalb von zwei Arbeitstagen bei dir.</p></div>`;
+      f.outerHTML = `<div class="card danke"><div class="gross">☀️</div><h3>Danke, ${daten.name.split(" ")[0].replace(/[<>&]/g, "")}!</h3><p class="sub">Deine Anmeldung ist angekommen. Ich melde mich in den nächsten Tagen persönlich bei dir.</p></div>`;
     } catch (err) {
       f.querySelector("button[type=submit]").disabled = false;
-      const body = encodeURIComponent(`Name: ${daten.name}\nTelefon: ${daten.telefon}\nOrt: ${daten.ort}\nObjekt: ${daten.objekt}\nInteresse: ${daten.paket}\nVorhanden: ${daten.vorhanden.join(", ")}\n\n${daten.wunsch}`);
+      const body = encodeURIComponent(`Name: ${daten.name}\nTelefon: ${daten.telefon}\nOrt: ${daten.ort}\nIch bin: ${daten.rolle}\nObjekt: ${daten.objekt}\n`
+        + Object.entries(daten.systeme).map(([k, v]) => `${k}: ${v}`).join("\n") + `\n\n${daten.wunsch}`);
       st.className = "form-status fehler";
-      st.innerHTML = `Das hat leider nicht geklappt (${String(err.message).replace(/[<>&]/g, "")}). <a href="mailto:patrick@biber.solar?subject=homi%20Anfrage&body=${body}">Stattdessen per Mail senden</a>`;
+      st.innerHTML = `Das hat leider nicht geklappt (${String(err.message).replace(/[<>&]/g, "")}). <a href="mailto:support@homi.solar?subject=homi%20Anmeldung&body=${body}">Stattdessen per Mail senden</a>`;
     }
   });
 

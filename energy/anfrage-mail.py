@@ -9,6 +9,7 @@ from email.utils import formataddr
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from mailer import ABSENDER, senden  # noqa: E402
+from server import SYSTEME  # noqa: E402  (Bezeichnungen der Systeme, gleiche Quelle wie das Formular)
 
 BASIS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "anfragen")
 NEU, FERTIG = os.path.join(BASIS, "neu"), os.path.join(BASIS, "versendet")
@@ -18,17 +19,18 @@ for name in sorted(f for f in os.listdir(NEU) if f.endswith(".json") and not f.s
     pfad = os.path.join(NEU, name)
     try:
         a = json.load(open(pfad, encoding="utf-8"))
+        systeme = a.get("systeme") or {}
         zeilen = [
-            "Neue Anfrage über https://homi.solar", "",
+            f"Neue Anmeldung über https://homi.solar – {a.get('rolle', 'Privat')}", "",
             f"Name:       {a['name']}", f"E-Mail:     {a['email']}", f"Telefon:    {a.get('telefon') or '–'}",
-            f"Ort:        {a.get('ort') or '–'}", f"Objekt:     {a.get('objekt')}", f"Interesse:  {a.get('paket')}",
-            f"Vorhanden:  {', '.join(a.get('vorhanden') or []) or '–'}",
-            f"Demo:       {'Gewerbebetrieb' if a.get('demo') == 'betrieb' else 'Einfamilienhaus'} angesehen",
-            "", "Wunsch:", a.get("wunsch") or "–", "",
+            f"Ort:        {a.get('ort') or '–'}", f"Ich bin:    {a.get('rolle') or '–'}", f"Objekt:     {a.get('objekt')}",
+            "", "SYSTEME",
+        ] + ([f"  {SYSTEME.get(k, k) + ':':32} {v}" for k, v in systeme.items()] or ["  (keine Angaben)"]) + [
+            "", "Was ist wichtig:", a.get("wunsch") or "–", "",
             f"Eingegangen: {a['zeit'].replace('T', ' ')}", "",
             "Mit «Antworten» schreibst du direkt an die anfragende Person.",
         ]
-        senden("root", f"homi-Anfrage: {a['name']}" + (f", {a['ort']}" if a.get("ort") else "") + f" ({a.get('objekt')}, {a.get('paket')})",
+        senden("root", f"homi-Anmeldung ({a.get('rolle', 'Privat')}): {a['name']}" + (f", {a['ort']}" if a.get("ort") else "") + f" – {a.get('objekt')}",
                "\n".join(zeilen), absender=ABSENDER["anfragen"], reply_to=formataddr((a["name"], a["email"])))
         os.replace(pfad, os.path.join(FERTIG, name))
         print("verschickt:", name)

@@ -309,25 +309,20 @@ alten Mails und Formular-POSTs alter Seiten funktionieren weiter). Mail-Links ve
 homi als Angebot für Haus & Betrieb – Start des Geschäfts. Statische Seite `energy/www/` (index.html, style.css, app.js,
 keine externen Ressourcen, kein Tracking) und kleiner Python-Server `energy/server.py` (Container `energy`, Port 8080
 nur im Netz `proxy_default`).
-- **Simulierte Live-Demo** (app.js): echte Zürcher Uhrzeit und Sonnenstand für Stäfa, Wetter/Verbrauch pro Tag
-  reproduzierbar simuliert; Profile Einfamilienhaus (9.8 kWp, 10 kWh Batterie, WP, E-Auto) und Gewerbebetrieb (60 kWp).
-  Energiefluss, Tagesverlauf mit Prognose, Börsenpreise, Verbraucher, Meldungen, Zeitraffer „Ein Tag in 30 Sekunden“.
-- **KI-Demo**: Wunsch-Chips bauen sichtbar neue Kacheln; freier Wunsch wird ins Formular übernommen.
-- **Preise** aus dem Businessplan (Pilotpreise, anpassen in index.html, Abschnitt `#preise`).
-- **Anfrageformular** → `POST /api/anfrage` (Pflichtfelder, Honigtopf, Mindestzeit; nginx: max. 2/min pro IP) →
-  `energy/anfragen/neu/*.json` (nicht im Repo) → Pfad-Unit `energy-anfrage.path` ruft sofort `energy/anfrage-mail.py`
-  auf: Mail an root (→ patrick@biber.solar) mit Reply-To des Interessenten, Datei nach `anfragen/versendet/`.
-  Timer `energy-anfrage.timer` holt stündlich fehlgeschlagene Sendungen nach. Der Container braucht keine Mail-Zugangsdaten.
-- **Eigene Adresse `<name>.homi.solar`**: erwähnt in «So geht's» (Schritt 3), in der App-Liste mit Link auf
-  https://beispiel.homi.solar und in der FAQ «Wie erreiche ich mein homi?».
-- **Abschnitt «So sieht dein homi aus»** (`#ansicht`): drei echte Handy-Screenshots der Kunden-Oberfläche
-  (`img/app-uebersicht.png`, `app-verlauf.png`, `app-preise.png`), auf dem Handy wischbar. Neu aufnehmen mit
-  `energy/handy-screenshots.py` (Timer `homi-screenshots`, 11:30–14:30: nur bei Solar ≥ 2 kW, ersetzt Bilder und Text,
-  committet, pusht, mailt und schaltet sich ab; bis 17.10.2026). `--probe <ordner>` nimmt nur auf, ohne etwas zu ändern.
-- **Abschnitt «Energieberater»** (`#berater`, auch im Menü): drei echte Handy-Ansichten des Beraters
-  (`img/berater-tipps.png`, `berater-erklaerung.png`, `berater-batterie.png`, 11.10.2026), mit Hinweis auf das Beispielhaus.
-- **Abschnitt «homi als App»** (`#app`): Handy-Rahmen mit echtem homi-Screenshot (`img/app-uebersicht.png`) und
-  eingeblendeter Beispiel-Push-Nachricht.
+- **Aufbau seit 15.10.2026** (kurz, ohne Preise, Ziel: viele Anmeldungen und Investoren): Hero mit simuliertem
+  Energiefluss (app.js, echte Zürcher Zeit und Sonnenstand, «Ein Tag in 30 Sekunden»), **Funktionen** (`#funktionen`,
+  12 Karten mit Status «Verfügbar» / «In Entwicklung», Details aufklappbar; auf dem Handy zweispaltig und kompakt),
+  **Minuspreise** (`#einspeisung`, Beispieltag und Gratis-Warnung), **Einblick** (`#einblick`, 4 echte Handy-Ansichten),
+  **Plattform** (`#technik`, betriebsbereite Technik ohne Gerätedetails, aufklappbarer technischer Aufbau),
+  **Investoren** (`#investoren`), So geht's, **Anmelden** (`#anmelden`), FAQ. Gestrichen: Preise, Dashboard-Demo, KI-Chat.
+  Fehlt ein Element, das app.js anspricht, läuft die Seite weiter (`$()` liefert dann ein leeres Objekt).
+  Alte Fassung als Vorlage: Git-Verlauf vor dem 15.10.2026.
+- **Anmeldeformular** → `POST /api/anfrage` (Pflichtfelder, Honigtopf, Mindestzeit; nginx: max. 2/min pro IP):
+  Rolle (Privat, Betrieb, Gemeinschaft, Installateur/Partner, Investor), Objekt, Kontakt und **Systeme** (Solaranlage/
+  Wechselrichter, Batterie, Wärmepumpe/Heizung, E-Auto/Wallbox, Smart Meter, Warmwasser, Energieversorger,
+  Hausautomation; je Freitext, `SYSTEME` in `energy/server.py`) → `energy/anfragen/neu/*.json` (nicht im Repo) →
+  Pfad-Unit `energy-anfrage.path` → `energy/anfrage-mail.py`: Mail «homi-Anmeldung (Rolle): Name» von «homi Anfragen»
+  (support@homi.solar) an Patrick, Antwort geht an die anfragende Person. Timer `energy-anfrage.timer` holt stündlich nach.
 - Proxy `proxy/conf.d/homi.solar.conf`: Let's Encrypt, strenge CSP, nur GET bzw. POST fürs Formular
   (`energy.biber.solar.conf` enthält nur noch die Weiterleitung).
 
