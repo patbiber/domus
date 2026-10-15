@@ -418,3 +418,77 @@ input::placeholder, textarea::placeholder { font-weight: 400; color: #98a2b3; }
 }
 .nur-handy { display: none; }
 @media (max-width: 600px) { .nur-handy { display: inline; font-weight: 600; } }
+
+/* ================= Funktionen als Bento-Raster (15.10.2026) ================= */
+#funktionen { background: linear-gradient(180deg, var(--bg), #fff 70%); }
+.bento { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: minmax(210px, auto); gap: 16px; }
+.b-karte { position: relative; overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 22px;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 16px; box-shadow: var(--shadow); transition: transform .25s ease, box-shadow .25s ease; }
+.b-karte:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+.b-gross { grid-column: span 2; grid-row: span 2; }
+.b-breit { grid-column: span 2; }
+.b-karte h3 { margin: 6px 0 6px; font-size: 1.18rem; letter-spacing: -.01em; }
+.b-gross h3 { font-size: 1.7rem; }
+.b-karte p { margin: 0; color: var(--muted); font-size: .94rem; line-height: 1.5; }
+.b-dunkel { background: radial-gradient(120% 120% at 100% 0%, #1d3566 0%, var(--navy) 60%); border-color: transparent; color: #fff; }
+.b-dunkel p { color: #b6c3da; }
+.b-tag { display: inline-block; font-size: .72rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.12); color: #ffd36b; }
+.b-tag.gelb { background: #fff4df; color: #b54708; } .b-tag.rot { background: #fef3f2; color: #d92d20; }
+.b-tag.gruen { background: var(--green-soft); color: #067647; } .b-tag.lila { background: #f4f3ff; color: #5925dc; }
+.b-tag.blau { background: var(--blue-soft); color: #175cd3; }
+/* Live */
+.live-vis { display: grid; gap: 14px; }
+.lv-zahl span { color: #9fb0cc; font-size: .85rem; } .lv-zahl b { display: block; font-size: 2.6rem; letter-spacing: -.03em; color: #32d583; line-height: 1.1; }
+.lv-zahl small { color: #b6c3da; }
+.lv-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.lv-chips span { font-size: .82rem; font-weight: 700; padding: 6px 11px; border-radius: 999px; background: rgba(255,255,255,.08); }
+.lv-chips .sonne { color: #ffd36b; } .lv-chips .haus { color: #fff; } .lv-chips .netz { color: #32d583; }
+.lv-kurve { width: 100%; height: auto; }
+/* Berater */
+.b-tipps { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; counter-reset: t; }
+.b-tipps li { counter-increment: t; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: #f6f7fb; font-size: .92rem; }
+.b-tipps li::before { content: counter(t); width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; background: #fff4df; color: #b54708; font-weight: 800; font-size: .8rem; flex: none; }
+.b-tipps span { flex: 1; } .b-tipps b { color: var(--green); white-space: nowrap; }
+/* Minuspreise, Prognose, Amortisation */
+.b-balken { width: 100%; height: auto; }
+.b-prognose { display: flex; align-items: center; gap: 14px; }
+.sonne-ic { width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle, #ffd36b 0 45%, #ffb020 46% 60%, transparent 61%); box-shadow: 0 0 0 6px rgba(255,176,32,.15), 0 0 24px rgba(255,176,32,.5); flex: none; }
+.b-prognose b { display: block; font-size: 1.6rem; letter-spacing: -.02em; } .b-prognose small { color: var(--muted); }
+.b-amort .balken { height: 10px; border-radius: 99px; background: #eef1f6; overflow: hidden; }
+.b-amort .balken i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--green), #5ee0a0); }
+.b-amort-zeile { display: flex; justify-content: space-between; margin-top: 8px; font-size: .9rem; } .b-amort-zeile span { color: var(--muted); }
+/* Wochenbericht */
+.b-push { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 16px; background: #f6f7fb; border: 1px solid var(--line); font-size: .82rem; }
+.b-push img { border-radius: 9px; flex: none; } .b-push small { display: block; color: var(--muted); } .b-push b { display: block; } .b-push span { color: var(--ink-2); }
+/* App */
+.b-app { flex-direction: row; align-items: center; padding-bottom: 0; }
+.b-app .b-text { flex: 1; align-self: center; padding-bottom: 22px; }
+.b-haken { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.b-haken li { font-size: .8rem; font-weight: 700; padding: 5px 10px; border-radius: 999px; background: var(--blue-soft); color: #175cd3; }
+.b-handy { width: 150px; flex: none; align-self: flex-end; height: 200px; overflow: hidden; }
+.b-handy img { width: 150px; height: auto; border: 7px solid #0b0b0f; border-bottom: 0; border-radius: 26px 26px 0 0; display: block; }
+/* Batterie */
+.b-batt { display: grid; gap: 7px; } .b-batt div { display: grid; grid-template-columns: 48px 1fr; align-items: center; gap: 8px; font-size: .82rem; color: var(--muted); }
+.b-batt i { display: block; height: 9px; border-radius: 99px; background: linear-gradient(90deg, #a48bff, #7a5af8); }
+/* Steuerung */
+.b-schalter { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.b-schalter li { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 14px; background: rgba(255,255,255,.07); font-size: .9rem; }
+.b-schalter i { width: 38px; height: 22px; border-radius: 99px; background: rgba(255,255,255,.2); position: relative; flex: none; }
+.b-schalter i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .2s; }
+.b-schalter i.an { background: #32d583; } .b-schalter i.an::after { transform: translateX(16px); }
+/* Betriebe */
+.b-betrieb { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.b-betrieb div { background: #f6f7fb; border-radius: 12px; padding: 8px; text-align: center; }
+.b-betrieb b { display: block; font-size: 1.05rem; } .b-betrieb span { font-size: .7rem; color: var(--muted); }
+/* Responsiv */
+@media (max-width: 1050px) { .bento { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 620px) {
+  .bento { grid-template-columns: 1fr; grid-auto-rows: auto; gap: 12px; }
+  .b-gross, .b-breit { grid-column: auto; grid-row: auto; }
+  .b-gross h3 { font-size: 1.35rem; } .lv-zahl b { font-size: 2.1rem; }
+  .b-karte { padding: 18px; gap: 12px; }
+  .b-handy { width: 120px; height: 170px; } .b-handy img { width: 120px; }
+}
+@media (prefers-reduced-motion: reduce) { .b-karte { transition: none; } .b-karte:hover { transform: none; } }
+.b-batt div { grid-template-columns: 56px 1fr; } .b-batt span { white-space: nowrap; }
+.b-betrieb { gap: 5px; } .b-betrieb div { padding: 8px 4px; } .b-betrieb b { font-size: .95rem; white-space: nowrap; } .b-betrieb span { font-size: .66rem; line-height: 1.2; display: block; }

@@ -112,69 +112,91 @@
     <div class="section-head center rein">
       <span class="kicker">Funktionen</span>
       <h2>Alles, was deine Energie braucht – in einer App</h2>
-      <p class="sub">Was heute schon läuft und was als Nächstes kommt. Tippe auf «Mehr erfahren» für Details.</p>
+      <p class="sub">Von der Live-Übersicht bis zur automatischen Steuerung. Beispielwerte aus einem echten homi.</p>
     </div>
-    <div class="features">
-      <article class="card feature rein">
-        <div class="f-kopf"><div class="ic" style="background:#fff4df">⚡</div><span class="status ja">Verfügbar</span></div>
-        <h3>Live in Franken</h3><p>Was Solaranlage, Haus, Batterie und Netz gerade machen – und was es kostet oder bringt.</p>
-        <details><summary>Mehr erfahren</summary><p><span class="nur-handy">Was Solaranlage, Haus, Batterie und Netz gerade machen – und was es kostet oder bringt. </span>Alle 5 Sekunden frische Werte direkt von deinen Geräten, gerechnet mit dem echten Tarif deines Energieversorgers. Tagesbilanz, Autarkie und Verlauf über Tage, Monate und Jahre.</p></details>
+    <div class="bento">
+
+      <article class="b-karte b-gross b-dunkel rein">
+        <div class="b-text"><span class="b-tag">Live</span><h3>Deine Energie in Franken</h3>
+          <p>Alle 5 Sekunden: was die Anlage liefert, was das Haus braucht und was es kostet – mit deinem echten Tarif.</p></div>
+        <div class="b-vis live-vis" aria-hidden="true">
+          <div class="lv-zahl"><span>Heute</span><b>+ CHF 3.24</b><small>Bilanz · 51 % aus eigenem Strom</small></div>
+          <div class="lv-chips"><span class="sonne">☀ 4.2 kW Solar</span><span class="haus">⌂ 0.6 kW Haus</span><span class="netz">↗ 3.6 kW ins Netz</span></div>
+          <svg viewBox="0 0 300 80" class="lv-kurve"><defs><linearGradient id="lvg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#FFB020" stop-opacity=".55"/><stop offset="1" stop-color="#FFB020" stop-opacity="0"/></linearGradient></defs>
+            <path d="M0 78 C40 78 60 70 85 50 S130 8 150 10 S200 30 225 55 S270 78 300 78 Z" fill="url(#lvg)"/>
+            <path d="M0 78 C40 78 60 70 85 50 S130 8 150 10 S200 30 225 55 S270 78 300 78" fill="none" stroke="#FFB020" stroke-width="2.5"/>
+            <path d="M0 70 L60 68 L90 72 L150 70 L210 66 L250 60 L300 64" fill="none" stroke="#53B1FD" stroke-width="2" stroke-dasharray="4 4"/></svg>
+        </div>
       </article>
-      <article class="card feature rein">
-        <div class="f-kopf"><div class="ic" style="background:#fff8e5">💡</div><span class="status ja">Verfügbar</span></div>
-        <h3>Energieberater</h3><p>Drei Tipps, die zu deinem Haus passen – mit Franken pro Jahr.</p>
-        <details><summary>Mehr erfahren</summary><p><span class="nur-handy">Drei Tipps, die zu deinem Haus passen – mit Franken pro Jahr. </span>homi wertet deine Messwerte aus und zeigt die drei wirksamsten Massnahmen: Grundlast senken, Verbrauch in die Sonnenstunden verschieben, Überschuss nutzen. Jeder Tipp erklärt, warum er kommt und wie gerechnet wurde.</p></details>
+
+      <article class="b-karte b-breit rein">
+        <div class="b-text"><span class="b-tag gelb">Energieberater</span><h3>Drei Tipps, die zu deinem Haus passen</h3>
+          <p>homi rechnet mit deinen Messwerten und sagt, was es in Franken bringt – mit Begründung.</p></div>
+        <ol class="b-tipps" aria-hidden="true">
+          <li><span>Grundlast senken</span><b>CHF 66/Jahr</b></li>
+          <li><span>Geräte in die Sonnenstunden</span><b>CHF 28/Jahr</b></li>
+          <li><span>Nachtverbraucher in den Mittag</span><b>CHF 27/Jahr</b></li>
+        </ol>
       </article>
-      <article class="card feature rein">
-        <div class="f-kopf"><div class="ic" style="background:#ffeceb">📉</div><span class="status ja">Verfügbar</span></div>
-        <h3>Minuspreis-Warnung</h3><p>Weiss morgens, wann Einspeisen heute Geld kostet.</p>
-        <details><summary>Mehr erfahren</summary><p><span class="nur-handy">Weiss morgens, wann Einspeisen heute Geld kostet. </span>Day-Ahead-Börsenpreise der Schweiz live, Warnung per Mail und Push an Tagen mit negativen Preisen, dazu ein Fahrplan Stunde für Stunde.</p></details>
+
+      <article class="b-karte rein">
+        <div class="b-text"><span class="b-tag rot">Minuspreise</span><h3>Warnung am Morgen</h3>
+          <p>Wann Einspeisen heute Geld kostet – per Push und Mail.</p></div>
+        <svg class="b-balken" viewBox="0 0 240 70" aria-hidden="true">
+          <line x1="0" x2="240" y1="40" y2="40" stroke="#d0d5dd"/>
+          <g fill="#2e90fa"><rect x="4" y="22" width="14" height="18" rx="2"/><rect x="24" y="18" width="14" height="22" rx="2"/><rect x="44" y="20" width="14" height="20" rx="2"/><rect x="64" y="26" width="14" height="14" rx="2"/></g>
+          <g fill="#f04438"><rect x="84" y="40" width="14" height="6" rx="2"/><rect x="104" y="40" width="14" height="16" rx="2"/><rect x="124" y="40" width="14" height="24" rx="2"/><rect x="144" y="40" width="14" height="12" rx="2"/></g>
+          <g fill="#2e90fa"><rect x="164" y="30" width="14" height="10" rx="2"/><rect x="184" y="14" width="14" height="26" rx="2"/><rect x="204" y="8" width="14" height="32" rx="2"/><rect x="224" y="16" width="14" height="24" rx="2"/></g></svg>
       </article>
-      <article class="card feature rein">
-        <div class="f-kopf"><div class="ic" style="background:#eef6ff">🌤️</div><span class="status ja">Verfügbar</span></div>
-        <h3>Solarprognose</h3><p>Wie viel Sonne morgen kommt und wann die beste Zeit für Waschmaschine & Co. ist.</p>
-        <details><summary>Mehr erfahren</summary><p><span class="nur-handy">Wie viel Sonne morgen kommt und wann die beste Zeit für Waschmaschine & Co. ist. </span>Wetterprognose auf deine Dachfläche gerechnet und laufend mit deinen eigenen Messwerten geeicht. Jeden Abend per Push.</p></details>
+
+      <article class="b-karte rein">
+        <div class="b-text"><span class="b-tag gelb">Prognose</span><h3>Sonne von morgen</h3>
+          <p>Wie viel Solarstrom kommt – und wann die beste Zeit für Waschmaschine &amp; Co. ist.</p></div>
+        <div class="b-prognose" aria-hidden="true"><span class="sonne-ic"></span><div><b>18 kWh</b><small>beste Zeit 13–15 Uhr</small></div></div>
       </article>
-      <article class="card feature rein">
-        <div class="f-kopf"><div class="ic" style="background:#e8f8f0">📈</div><span class="status ja">Verfügbar</span></div>
-        <h3>Amortisation</h3><p>Wann deine Anlage bezahlt ist – und was das schneller macht.</p>
-        <details><summary>Mehr erfahren</summary><p><span class="nur-handy">Wann deine Anlage bezahlt ist – und was das schneller macht. </span>Bisher erwirtschaftet, Ertrag pro Jahr und Break-even, inklusive Förderung. Mit dem Effekt jedes Tipps auf die Dauer.</p></details>
+
+      <article class="b-karte rein">
+        <div class="b-text"><span class="b-tag gruen">Amortisation</span><h3>Wann ist die Anlage bezahlt?</h3>
+          <p>Zurückverdient, Ertrag pro Jahr und Break-even – inklusive Förderung.</p></div>
+        <div class="b-amort" aria-hidden="true"><div class="balken"><i style="width:20%"></i></div><div class="b-amort-zeile"><b>20 %</b><span>Break-even 2042</span></div></div>
       </article>
-      <article class="card feature rein">
-        <div class="f-kopf"><div class="ic" style="background:#f1edff">📬</div><span class="status ja">Verfügbar</span></div>
-        <h3>Wochenbericht</h3><p>Jeden Montag deine Woche in einer Nachricht.</p>
-        <details><summary>Mehr erfahren</summary><p><span class="nur-handy">Jeden Montag deine Woche in einer Nachricht. </span>Erzeugt, verbraucht, Bilanz und Vergleich zur Vorwoche, bester Sonnentag, Fortschritt der Amortisation und ein Tipp der Woche – per Mail und Push.</p></details>
+
+      <article class="b-karte rein">
+        <div class="b-text"><span class="b-tag lila">Wochenbericht</span><h3>Jeden Montag deine Woche</h3>
+          <p>Bilanz, bester Sonnentag und ein Tipp – als Nachricht aufs Handy.</p></div>
+        <div class="b-push" aria-hidden="true"><img src="img/homi-app-icon.png" alt="" width="34" height="34"><div><small>homi · Mo 08:00</small><b>Deine Woche: Bilanz + CHF 11.17</b><span>121 kWh erzeugt, bester Tag: Dienstag</span></div></div>
       </article>
-      <article class="card feature rein">
-        <div class="f-kopf"><div class="ic" style="background:#eef6ff">📱</div><span class="status ja">Verfügbar</span></div>
-        <h3>App & eigene Adresse</h3><p>homi auf jedem Handy – ohne App Store, mit Face ID.</p>
-        <details><summary>Mehr erfahren</summary><p><span class="nur-handy">homi auf jedem Handy – ohne App Store, mit Face ID. </span>Jedes homi hat eine eigene Adresse wie <b>sonnenhof.homi.solar</b>, lässt sich als App installieren und schickt Push-Nachrichten. Anmeldung mit Code per Mail oder Passkey, ganz ohne Passwort.</p></details>
+
+      <article class="b-karte b-breit b-app rein">
+        <div class="b-text"><span class="b-tag blau">App</span><h3>Auf jedem Handy – ohne App Store</h3>
+          <p>Deine eigene Adresse wie <b>sonnenhof.homi.solar</b>, Anmeldung mit Face ID oder Fingerabdruck, Push-Nachrichten für alles Wichtige.</p>
+          <ul class="b-haken"><li>Face ID &amp; Passkey</li><li>Push-Nachrichten</li><li>Eigene Adresse</li></ul></div>
+        <div class="b-handy" aria-hidden="true"><img src="img/app-uebersicht.png" alt="" width="1170" height="2532" loading="lazy"></div>
       </article>
-      <article class="card feature rein">
-        <div class="f-kopf"><div class="ic" style="background:#f1edff">🔋</div><span class="status ja">Verfügbar</span></div>
-        <h3>Batterie-Check</h3><p>Lohnt sich eine Batterie? homi rechnet es mit deinen Daten.</p>
-        <details><summary>Mehr erfahren</summary><p><span class="nur-handy">Lohnt sich eine Batterie? homi rechnet es mit deinen Daten. </span>Drei Batteriegrössen laufen virtuell mit deinem echten Verbrauch mit. Ergebnis: Ersparnis pro Jahr, Amortisation und ein ehrliches Urteil – auch wenn es «lohnt sich nicht» heisst.</p></details>
+
+      <article class="b-karte rein">
+        <div class="b-text"><span class="b-tag lila">Batterie-Check</span><h3>Lohnt sich ein Speicher?</h3>
+          <p>homi simuliert drei Grössen mit deinem echten Verbrauch – ehrliches Urteil inklusive.</p></div>
+        <div class="b-batt" aria-hidden="true"><div><span>2 kWh</span><i style="width:55%"></i></div><div><span>5 kWh</span><i style="width:72%"></i></div><div><span>10 kWh</span><i style="width:100%"></i></div></div>
       </article>
-      <article class="card feature rein">
-        <div class="f-kopf"><div class="ic" style="background:#ffeceb">⛔</div><span class="status bald">In Entwicklung</span></div>
-        <h3>Einspeisestopp</h3><p>Bei negativen Preisen drosselt homi den Wechselrichter selbst.</p>
-        <details><summary>Mehr erfahren</summary><p><span class="nur-handy">Bei negativen Preisen drosselt homi den Wechselrichter selbst. </span>Über die offizielle Steuer-Schnittstelle des Wechselrichters (Modbus/SunSpec), zuerst im Testmodus und mit Nachweis, was es bringt.</p></details>
+
+      <article class="b-karte b-breit b-dunkel rein">
+        <div class="b-text"><span class="b-tag">Bald</span><h3>Automatisch steuern</h3>
+          <p>homi schaltet für dich – nach Sonne und Börsenpreis, über offene Standards und zuerst im Testmodus.</p></div>
+        <ul class="b-schalter" aria-hidden="true">
+          <li><span>Einspeisestopp bei Minuspreisen</span><i class="an"></i></li>
+          <li><span>Batterie lädt in den günstigsten Stunden</span><i class="an"></i></li>
+          <li><span>Wallbox lädt mit Sonnenstrom</span><i class="an"></i></li>
+          <li><span>Wärmepumpe nutzt den Überschuss</span><i></i></li>
+        </ul>
       </article>
-      <article class="card feature rein">
-        <div class="f-kopf"><div class="ic" style="background:#e8f8f0">🔌</div><span class="status bald">In Entwicklung</span></div>
-        <h3>Batterie, Wallbox, Wärmepumpe</h3><p>Laden und heizen, wenn Sonne und Preis stimmen.</p>
-        <details><summary>Mehr erfahren</summary><p><span class="nur-handy">Laden und heizen, wenn Sonne und Preis stimmen. </span>Batterie lädt in den günstigsten Stunden statt bei Sonnenaufgang, E-Auto und Wärmepumpe laufen mit Überschuss. Über offene Standards wie OCPP, SG-Ready und Modbus – herstellerunabhängig.</p></details>
+
+      <article class="b-karte rein">
+        <div class="b-text"><span class="b-tag blau">Bald · für Betriebe</span><h3>Lastspitzen im Griff</h3>
+          <p>Mehrere Zähler und Standorte, Verbrauch pro Maschine oder Halle, Warnung vor teuren Lastspitzen.</p></div>
+        <div class="b-betrieb" aria-hidden="true"><div><b>42 kW</b><span>Spitze heute</span></div><div><b>–18 %</b><span>mit Lastverschiebung</span></div><div><b>3</b><span>Standorte</span></div></div>
       </article>
-      <article class="card feature rein">
-        <div class="f-kopf"><div class="ic" style="background:#fff4df">🏘️</div><span class="status bald">In Entwicklung</span></div>
-        <h3>Gemeinschaften & LEG</h3><p>Solarstrom mit Nachbarn teilen und abrechnen.</p>
-        <details><summary>Mehr erfahren</summary><p><span class="nur-handy">Solarstrom mit Nachbarn teilen und abrechnen. </span>Eigenverbrauchsgemeinschaften (ZEV, vZEV) und lokale Elektrizitätsgemeinschaften (LEG) nach dem neuen Stromgesetz: Verbrauch pro Partei, Abrechnung, Überschuss im Quartier verkaufen.</p></details>
-      </article>
-      <article class="card feature rein">
-        <div class="f-kopf"><div class="ic" style="background:#eef6ff">🏭</div><span class="status bald">In Entwicklung</span></div>
-        <h3>Für Betriebe</h3><p>Lastspitzen vermeiden, Verbrauch pro Bereich sehen.</p>
-        <details><summary>Mehr erfahren</summary><p><span class="nur-handy">Lastspitzen vermeiden, Verbrauch pro Bereich sehen. </span>Mehrere Zähler und Standorte, Verbrauch pro Maschine, Halle oder Mieter, Lastspitzen-Warnung und verschiebbare Lasten nach Börsenpreis.</p></details>
-      </article>
+
     </div>
   </div>
 </section>

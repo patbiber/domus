@@ -311,7 +311,8 @@ keine externen Ressourcen, kein Tracking) und kleiner Python-Server `energy/serv
 nur im Netz `proxy_default`).
 - **Aufbau seit 15.10.2026** (kurz, ohne Preise, Ziel: viele Anmeldungen und Investoren): Hero mit simuliertem
   Energiefluss (app.js, echte Zürcher Zeit und Sonnenstand, «Ein Tag in 30 Sekunden»), **Funktionen** (`#funktionen`,
-  12 Karten mit Status «Verfügbar» / «In Entwicklung», Details aufklappbar; auf dem Handy zweispaltig und kompakt),
+  ein gemeinsames Bento-Raster mit 10 Karten und kleinen Grafiken; geplante Funktionen mit dezentem «Bald»: Automatisch
+  steuern, Für Betriebe),
   **Minuspreise** (`#einspeisung`, Beispieltag und Gratis-Warnung), **Einblick** (`#einblick`, 4 echte Handy-Ansichten),
   **Plattform** (`#technik`, betriebsbereite Technik ohne Gerätedetails, aufklappbarer technischer Aufbau),
   **Investoren** (`#investoren`), So geht's, **Anmelden** (`#anmelden`), FAQ. Gestrichen: Preise, Dashboard-Demo, KI-Chat.
