@@ -311,12 +311,14 @@ keine externen Ressourcen, kein Tracking) und kleiner Python-Server `energy/serv
 nur im Netz `proxy_default`).
 - **Aufbau seit 15.10.2026** (kurz, ohne Preise, Ziel: viele Anmeldungen und Investoren): Hero mit simuliertem
   Energiefluss (app.js, echte Zürcher Zeit und Sonnenstand, «Ein Tag in 30 Sekunden»), **Funktionen** (`#funktionen`,
-  ein gemeinsames Bento-Raster mit 10 Karten und kleinen Grafiken; geplante Funktionen mit dezentem «Bald»: Automatisch
-  steuern, Für Betriebe),
+  sechs Gruppen ohne Rahmen – Sehen, Verstehen, Benachrichtigt, Steuern («Bald»), Immer dabei, Nach Mass – mit
+  Symbol im Farbverlauf und Aufzählung mit runden Haken; Geplantes mit Uhr-Symbol),
   **Minuspreise** (`#einspeisung`, Beispieltag und Gratis-Warnung), **Einblick** (`#einblick`, 4 echte Handy-Ansichten),
   **Plattform** (`#technik`, betriebsbereite Technik ohne Gerätedetails, aufklappbarer technischer Aufbau),
   **Investoren** (`#investoren`), So geht's, **Anmelden** (`#anmelden`), FAQ. Gestrichen: Preise, Dashboard-Demo, KI-Chat.
   Fehlt ein Element, das app.js anspricht, läuft die Seite weiter (`$()` liefert dann ein leeres Objekt).
+  Server schickt `Cache-Control: no-cache` für HTML/CSS/JS, dazu Versionsnummer `?v=` an style.css/app.js (bei
+  Änderungen hochzählen) – sonst mischt der Browser alte und neue Fassung (verzerrte Bilder, fehlendes Layout).
   Alte Fassung als Vorlage: Git-Verlauf vor dem 15.10.2026.
 - **Anmeldeformular** → `POST /api/anfrage` (Pflichtfelder, Honigtopf, Mindestzeit; nginx: max. 2/min pro IP):
   Rolle (Privat, Betrieb, Gemeinschaft, Installateur/Partner, Investor), Objekt, Kontakt und **Systeme** (Solaranlage/

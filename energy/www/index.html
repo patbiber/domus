@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#0b1730">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=20261015d">
 </head>
 <body>
 
@@ -112,91 +112,75 @@
     <div class="section-head center rein">
       <span class="kicker">Funktionen</span>
       <h2>Alles, was deine Energie braucht – in einer App</h2>
-      <p class="sub">Von der Live-Übersicht bis zur automatischen Steuerung. Beispielwerte aus einem echten homi.</p>
+      <p class="sub">Von der Live-Übersicht bis zur automatischen Steuerung.</p>
     </div>
-    <div class="bento">
-
-      <article class="b-karte b-gross b-dunkel rein">
-        <div class="b-text"><span class="b-tag">Live</span><h3>Deine Energie in Franken</h3>
-          <p>Alle 5 Sekunden: was die Anlage liefert, was das Haus braucht und was es kostet – mit deinem echten Tarif.</p></div>
-        <div class="b-vis live-vis" aria-hidden="true">
-          <div class="lv-zahl"><span>Heute</span><b>+ CHF 3.24</b><small>Bilanz · 51 % aus eigenem Strom</small></div>
-          <div class="lv-chips"><span class="sonne">☀ 4.2 kW Solar</span><span class="haus">⌂ 0.6 kW Haus</span><span class="netz">↗ 3.6 kW ins Netz</span></div>
-          <svg viewBox="0 0 300 80" class="lv-kurve"><defs><linearGradient id="lvg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#FFB020" stop-opacity=".55"/><stop offset="1" stop-color="#FFB020" stop-opacity="0"/></linearGradient></defs>
-            <path d="M0 78 C40 78 60 70 85 50 S130 8 150 10 S200 30 225 55 S270 78 300 78 Z" fill="url(#lvg)"/>
-            <path d="M0 78 C40 78 60 70 85 50 S130 8 150 10 S200 30 225 55 S270 78 300 78" fill="none" stroke="#FFB020" stroke-width="2.5"/>
-            <path d="M0 70 L60 68 L90 72 L150 70 L210 66 L250 60 L300 64" fill="none" stroke="#53B1FD" stroke-width="2" stroke-dasharray="4 4"/></svg>
-        </div>
-      </article>
-
-      <article class="b-karte b-breit rein">
-        <div class="b-text"><span class="b-tag gelb">Energieberater</span><h3>Drei Tipps, die zu deinem Haus passen</h3>
-          <p>homi rechnet mit deinen Messwerten und sagt, was es in Franken bringt – mit Begründung.</p></div>
-        <ol class="b-tipps" aria-hidden="true">
-          <li><span>Grundlast senken</span><b>CHF 66/Jahr</b></li>
-          <li><span>Geräte in die Sonnenstunden</span><b>CHF 28/Jahr</b></li>
-          <li><span>Nachtverbraucher in den Mittag</span><b>CHF 27/Jahr</b></li>
-        </ol>
-      </article>
-
-      <article class="b-karte rein">
-        <div class="b-text"><span class="b-tag rot">Minuspreise</span><h3>Warnung am Morgen</h3>
-          <p>Wann Einspeisen heute Geld kostet – per Push und Mail.</p></div>
-        <svg class="b-balken" viewBox="0 0 240 70" aria-hidden="true">
-          <line x1="0" x2="240" y1="40" y2="40" stroke="#d0d5dd"/>
-          <g fill="#2e90fa"><rect x="4" y="22" width="14" height="18" rx="2"/><rect x="24" y="18" width="14" height="22" rx="2"/><rect x="44" y="20" width="14" height="20" rx="2"/><rect x="64" y="26" width="14" height="14" rx="2"/></g>
-          <g fill="#f04438"><rect x="84" y="40" width="14" height="6" rx="2"/><rect x="104" y="40" width="14" height="16" rx="2"/><rect x="124" y="40" width="14" height="24" rx="2"/><rect x="144" y="40" width="14" height="12" rx="2"/></g>
-          <g fill="#2e90fa"><rect x="164" y="30" width="14" height="10" rx="2"/><rect x="184" y="14" width="14" height="26" rx="2"/><rect x="204" y="8" width="14" height="32" rx="2"/><rect x="224" y="16" width="14" height="24" rx="2"/></g></svg>
-      </article>
-
-      <article class="b-karte rein">
-        <div class="b-text"><span class="b-tag gelb">Prognose</span><h3>Sonne von morgen</h3>
-          <p>Wie viel Solarstrom kommt – und wann die beste Zeit für Waschmaschine &amp; Co. ist.</p></div>
-        <div class="b-prognose" aria-hidden="true"><span class="sonne-ic"></span><div><b>18 kWh</b><small>beste Zeit 13–15 Uhr</small></div></div>
-      </article>
-
-      <article class="b-karte rein">
-        <div class="b-text"><span class="b-tag gruen">Amortisation</span><h3>Wann ist die Anlage bezahlt?</h3>
-          <p>Zurückverdient, Ertrag pro Jahr und Break-even – inklusive Förderung.</p></div>
-        <div class="b-amort" aria-hidden="true"><div class="balken"><i style="width:20%"></i></div><div class="b-amort-zeile"><b>20 %</b><span>Break-even 2042</span></div></div>
-      </article>
-
-      <article class="b-karte rein">
-        <div class="b-text"><span class="b-tag lila">Wochenbericht</span><h3>Jeden Montag deine Woche</h3>
-          <p>Bilanz, bester Sonnentag und ein Tipp – als Nachricht aufs Handy.</p></div>
-        <div class="b-push" aria-hidden="true"><img src="img/homi-app-icon.png" alt="" width="34" height="34"><div><small>homi · Mo 08:00</small><b>Deine Woche: Bilanz + CHF 11.17</b><span>121 kWh erzeugt, bester Tag: Dienstag</span></div></div>
-      </article>
-
-      <article class="b-karte b-breit b-app rein">
-        <div class="b-text"><span class="b-tag blau">App</span><h3>Auf jedem Handy – ohne App Store</h3>
-          <p>Deine eigene Adresse wie <b>sonnenhof.homi.solar</b>, Anmeldung mit Face ID oder Fingerabdruck, Push-Nachrichten für alles Wichtige.</p>
-          <ul class="b-haken"><li>Face ID &amp; Passkey</li><li>Push-Nachrichten</li><li>Eigene Adresse</li></ul></div>
-        <div class="b-handy" aria-hidden="true"><img src="img/app-uebersicht.png" alt="" width="1170" height="2532" loading="lazy"></div>
-      </article>
-
-      <article class="b-karte rein">
-        <div class="b-text"><span class="b-tag lila">Batterie-Check</span><h3>Lohnt sich ein Speicher?</h3>
-          <p>homi simuliert drei Grössen mit deinem echten Verbrauch – ehrliches Urteil inklusive.</p></div>
-        <div class="b-batt" aria-hidden="true"><div><span>2 kWh</span><i style="width:55%"></i></div><div><span>5 kWh</span><i style="width:72%"></i></div><div><span>10 kWh</span><i style="width:100%"></i></div></div>
-      </article>
-
-      <article class="b-karte b-breit b-dunkel rein">
-        <div class="b-text"><span class="b-tag">Bald</span><h3>Automatisch steuern</h3>
-          <p>homi schaltet für dich – nach Sonne und Börsenpreis, über offene Standards und zuerst im Testmodus.</p></div>
-        <ul class="b-schalter" aria-hidden="true">
-          <li><span>Einspeisestopp bei Minuspreisen</span><i class="an"></i></li>
-          <li><span>Batterie lädt in den günstigsten Stunden</span><i class="an"></i></li>
-          <li><span>Wallbox lädt mit Sonnenstrom</span><i class="an"></i></li>
-          <li><span>Wärmepumpe nutzt den Überschuss</span><i></i></li>
+    <div class="f-gruppen">
+      <div class="f-gruppe gold rein">
+        <div class="f-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <h3>Sehen</h3>
+        <p>Alles auf einen Blick – live und in Franken.</p>
+        <ul class="f-liste">
+          <li><b>Live-Energiefluss</b> alle 5 Sekunden</li>
+          <li><b>Kosten und Erlös</b> mit deinem echten Tarif</li>
+          <li><b>Verlauf</b> über Tage, Monate und Jahre</li>
+          <li><b>Börsenpreise</b> der Schweiz live</li>
         </ul>
-      </article>
-
-      <article class="b-karte rein">
-        <div class="b-text"><span class="b-tag blau">Bald · für Betriebe</span><h3>Lastspitzen im Griff</h3>
-          <p>Mehrere Zähler und Standorte, Verbrauch pro Maschine oder Halle, Warnung vor teuren Lastspitzen.</p></div>
-        <div class="b-betrieb" aria-hidden="true"><div><b>42 kW</b><span>Spitze heute</span></div><div><b>–18 %</b><span>mit Lastverschiebung</span></div><div><b>3</b><span>Standorte</span></div></div>
-      </article>
-
+      </div>
+      <div class="f-gruppe gruen rein">
+        <div class="f-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg></div>
+        <h3>Verstehen</h3>
+        <p>homi rechnet für dich – und erklärt, warum.</p>
+        <ul class="f-liste">
+          <li><b>Energieberater:</b> drei Tipps mit Franken pro Jahr</li>
+          <li><b>Amortisation:</b> wann deine Anlage bezahlt ist</li>
+          <li><b>Batterie-Check</b> mit deinen echten Daten</li>
+          <li><b>Solarprognose</b> mit der besten Zeit für Waschmaschine &amp; Co.</li>
+        </ul>
+      </div>
+      <div class="f-gruppe rot rein">
+        <div class="f-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></div>
+        <h3>Benachrichtigt</h3>
+        <p>Du erfährst es, bevor es Geld kostet.</p>
+        <ul class="f-liste">
+          <li><b>Minuspreis-Warnung</b> jeden Morgen</li>
+          <li><b>Wochenbericht</b> jeden Montag</li>
+          <li><b>Sonnenprognose</b> am Abend</li>
+          <li><b>Störungsmeldung</b>, wenn etwas klemmt</li>
+        </ul>
+      </div>
+      <div class="f-gruppe blau rein">
+        <div class="f-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="5"/><circle cx="16" cy="12" r="3"/></svg></div>
+        <h3>Steuern <span class="bald-tag">Bald</span></h3>
+        <p>homi schaltet für dich – nach Sonne und Börsenpreis.</p>
+        <ul class="f-liste">
+          <li class="bald"><b>Einspeisestopp</b> bei negativen Preisen</li>
+          <li class="bald"><b>Batterie</b> lädt in den günstigsten Stunden</li>
+          <li class="bald"><b>Wallbox und Wärmepumpe</b> mit Sonnenstrom</li>
+          <li class="bald"><b>Lastspitzen</b> im Betrieb vermeiden</li>
+        </ul>
+      </div>
+      <div class="f-gruppe lila rein">
+        <div class="f-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></div>
+        <h3>Immer dabei</h3>
+        <p>Auf jedem Handy, sicher und ohne App Store.</p>
+        <ul class="f-liste">
+          <li><b>Eigene Adresse</b> wie sonnenhof.homi.solar</li>
+          <li><b>Face ID</b> oder Fingerabdruck statt Passwort</li>
+          <li><b>Push-Nachrichten</b> aufs Handy</li>
+          <li><b>Daten in der Schweiz</b>, kein Tracking</li>
+        </ul>
+      </div>
+      <div class="f-gruppe orange rein">
+        <div class="f-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg></div>
+        <h3>Nach Mass</h3>
+        <p>homi wächst mit deinen Wünschen.</p>
+        <ul class="f-liste">
+          <li><b>Herstellerunabhängig</b> über offene Standards</li>
+          <li><b>Neue Geräte</b> in Tagen angebunden</li>
+          <li><b>Eigene Auswertungen</b> auf Zuruf, KI-gestützt</li>
+          <li><b>Jede Steuerung</b> zuerst im Testmodus</li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>
@@ -392,6 +376,6 @@
   </div>
 </footer>
 
-<script src="app.js" defer></script>
+<script src="app.js?v=20261015d" defer></script>
 </body>
 </html>

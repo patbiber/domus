@@ -49,6 +49,14 @@ def schreiben(pfad, daten):
 
 class Handler(SimpleHTTPRequestHandler):
     server_version = "homi"
+
+    def end_headers(self):
+        # Seite, Design und Programm bei jedem Aufruf neu prüfen (sonst mischen Browser alte und neue Fassung);
+        # unverändert antwortet der Server knapp mit 304
+        p = self.path.split("?")[0]
+        if p == "/" or p.endswith((".html", ".css", ".js")):
+            self.send_header("Cache-Control", "no-cache")
+        super().end_headers()
     sys_version = ""
 
     def antwort(self, code, obj):
