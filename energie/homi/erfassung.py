@@ -45,6 +45,7 @@ def poll():
         with lock:
             state["status"] = status
             zustand.speicher_sim.step(status, now)
+            zustand.steuerung.step(status, now)
             try:
                 zustand.archiv.step(status, now)
             except OSError as e:
@@ -56,6 +57,10 @@ def poll():
                     zustand.speicher_sim.save()
                 except OSError as e:
                     print("Speicher-Simulation nicht gespeichert:", e, flush=True)
+                try:
+                    zustand.steuerung.save()
+                except OSError as e:
+                    print("Steuerungs-Test nicht gespeichert:", e, flush=True)
                 history.append({k: status.get(k) for k in
                                 ("zeit", "pv_w", "verbrauch_w", "netz_w", "kosten_chf_h", "erloes_chf_h")})
         time.sleep(POLL_S)

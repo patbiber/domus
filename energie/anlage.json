@@ -11,5 +11,6 @@
   "azimut": 30,
   "faktor_start": 5.98,
   "max_kw": 8.2,
+  "steuerung": {"modus": "test", "seit": "2026-10-16", "_kommentar": "Modbus-Steuerung des Fronius: aus | test (nur nachrechnen, nichts schreiben). Scharf schalten nur auf Patricks Wunsch."},
   "geraet_stunden": 2
 }

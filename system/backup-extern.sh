@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Verschlüsseltes Gesamt-Backup: alles, was nur auf dem NUC liegt, als tar.gz mit gpg (AES-256), Probe-Entschlüsselung.
-# Ablage lokal in backups/extern/ (die letzten 3); geht später auf den Reserve-PC domus-reserve (reserve/).
+# Ablage lokal in backups/extern/ (die letzten 3) und auf dem USB-Stick «BackupDomus» (die letzten 60);
+# später zusätzlich auf den Reserve-PC domus-reserve (reserve/).
 # (Online-Backup auf Proton Drive am 14.10.2026 verworfen – Patrick will stattdessen einen Reserve-PC im Haus.)
 #
 # Inhalt: .env, homi-Daten (Archiv, Push-Schlüssel, Speicher), Login-Daten (Anmelde-Adressen, Sitzungen, Passkeys),
@@ -51,6 +52,26 @@ GROESSE=$(du -h "$LOKAL/$NAME" | cut -f1)
 echo "Archiv $NAME: $GROESSE, $ANZAHL Einträge, Probe-Entschlüsseln ok"
 ls -t "$LOKAL"/homi-backup-*.tar.gz.gpg | tail -n +4 | xargs -r rm -f        # lokal die letzten 3 behalten
 
-# Weitergabe an den Reserve-PC (domus-reserve) folgt, sobald er läuft (reserve/).
+# --- Kopie auf den USB-Stick «BackupDomus» (ext4), bis der Reserve-PC (reserve/) läuft. Nur während der Kopie
+# eingehängt, damit Abziehen nichts kaputt macht. Die letzten 60 Stände bleiben (je ~56 MB).
+USB_LABEL=BackupDomus
+USB_MNT=/mnt/backup-usb
+if [ -e "/dev/disk/by-label/$USB_LABEL" ]; then
+  sudo mkdir -p "$USB_MNT"
+  sudo mount -o noatime "LABEL=$USB_LABEL" "$USB_MNT" || fehler "USB-Stick $USB_LABEL lässt sich nicht einhängen"
+  sudo install -d -o "$(id -u)" -g "$(id -g)" -m 700 "$USB_MNT/domus"
+  if cp "$LOKAL/$NAME" "$USB_MNT/domus/$NAME.tmp" && mv "$USB_MNT/domus/$NAME.tmp" "$USB_MNT/domus/$NAME" \
+     && cmp -s "$LOKAL/$NAME" "$USB_MNT/domus/$NAME"; then
+    ls -t "$USB_MNT"/domus/homi-backup-*.tar.gz.gpg | tail -n +61 | xargs -r rm -f
+    echo "USB-Stick: $(ls "$USB_MNT"/domus/homi-backup-*.tar.gz.gpg | wc -l) Stände, frei $(df -h --output=avail "$USB_MNT" | tail -1 | tr -d ' ')"
+    sync; sudo umount "$USB_MNT"
+  else
+    sync; sudo umount "$USB_MNT" || true
+    fehler "Kopie auf den USB-Stick $USB_LABEL fehlgeschlagen (voll oder defekt?)"
+  fi
+else
+  printf 'Der USB-Stick «%s» steckt nicht am NUC – das heutige Backup liegt nur auf dem NUC.\nBitte wieder einstecken.\n' \
+    "$USB_LABEL" | mail -s "domus: Backup-Stick fehlt" root || true
+fi
 date -Iseconds > "$STATUS"
 echo "Backup ok: $NAME ($GROESSE)"

@@ -87,7 +87,7 @@
   .srv .v { color: var(--cyan); }
   .prog .v { color: var(--yellow); }
   .woche .v { color: var(--cyan); }
-  .amort .v { color: var(--green); } .batt .v { color: var(--purple); } .rat .v { color: var(--yellow); }
+  .amort .v { color: var(--green); } .steu .v { color: var(--cyan); } .batt .v { color: var(--purple); } .rat .v { color: var(--yellow); }
   .rat ol { margin: 4px 0 0; padding-left: 18px; font-size: 12px; color: var(--white); }
   .rat ol li { margin: 2px 0; cursor: help; } .rat ol li:hover { color: var(--yellow); } .rat ol li span { color: var(--green); }
   .balken8 { display: block; height: 6px; margin-top: 4px; background: #222; }
@@ -137,6 +137,7 @@
       <div class="stat boerse" id="t-boerse"><div class="k">Strombörse Day-Ahead CH</div><div class="v" id="s-boerse">–</div><div class="s" id="s-boerse2">&nbsp;</div></div>
       <div class="stat woche" title="Wochenbericht: kommt jeden Montag um 08:00 auch als Mail und Push"><div class="k" id="s-woche0">Letzte Woche</div><div class="v" id="s-woche">–</div><div class="s" id="s-woche2">&nbsp;</div></div>
       <div class="stat rat" title="Energieberater: drei Tipps aus den Messwerten der letzten 14 Tage"><div class="k">Energieberater · Tipp antippen = Warum</div><div class="v" id="s-rat">–</div><ol id="s-rat2"></ol><div class="s" id="s-rat3">&nbsp;</div></div>
+      <div class="stat steu" id="t-steu" title="Wechselrichter-Steuerung über Modbus: bei negativem Börsenpreis auf Nulleinspeisung drosseln. Testmodus: homi rechnet nur nach und schaltet nichts."><div class="k" id="s-steu0">Fronius-Steuerung · Test</div><div class="v" id="s-steu">–</div><div class="s" id="s-steu2">&nbsp;</div></div>
       <div class="stat batt"><div class="k">Batterie-Simulation</div><div class="v" id="s-batt">–</div><div class="s" id="s-batt2">&nbsp;</div></div>
       <div class="stat amort" title="Investition minus bisheriger Ertrag (selbst verbraucht × Bezugstarif + eingespeist × Rücklieferung), heutige Tarife"><div class="k">Anlage abbezahlt</div><div class="v" id="s-amort">–</div><div class="s" id="s-amort2">&nbsp;</div><span class="balken8"><i id="s-amort3" style="width:0"></i></span></div>
     </div>
@@ -401,6 +402,18 @@ async function pollBerater() {
   $("s-rat2").innerHTML = rat.tipps.map((t, i) => `<li data-i="${i}" title="${attr("So geht's: " + t.aktion + "\n\nSo hat homi gerechnet:\n" + (t.rechnung || []).map(r => "• " + r).join("\n"))}">${t.titel}${t.chf_jahr ? ` <span>(${Math.round(t.chf_jahr)} CHF)</span>` : ""}</li>`).join("");
   const b = rat.batterie;
   $("s-rat3").textContent = b ? (b.modus === "kaufen" ? `Batterie: ${b.urteil}${b.beste_kwh ? ` (beste: ${b.beste_kwh} kWh, ${Math.round((b.optionen.find(o => o.kwh === b.beste_kwh) || {}).amortisation_jahre || 0)} J.)` : ""}` : b.titel) : "\u00a0";
+}
+
+// Wechselrichter-Steuerung über Modbus (wie in der Kunden-Oberfläche), jede Minute
+async function pollSteuerung() {
+  let s;
+  try { s = await (await fetch("api/steuerung", { cache: "no-store" })).json(); } catch { return; }
+  if (!s || s.modus === "aus") { $("t-steu").hidden = true; return; }
+  const m = s.modbus || {}, su = s.summe || {}, bis = new Date(s.auswertung_am);
+  $("s-steu0").textContent = `Fronius-Steuerung · ${s.modus === "test" ? "Test" : "aktiv"}`;
+  $("s-steu").textContent = !m.verbunden ? "Modbus offline" : m.begrenzung_aktiv ? `gedrosselt ${m.begrenzung_pct} %` : `Modbus ok · ${m.zustand}`;
+  $("s-steu2").textContent = `Jetzt: ${s.jetzt.wuerde} · bis ${bis.getDate()}.${bis.getMonth() + 1}.: ${su.minuspreis_h.toFixed(1)} h Minuspreis, ` +
+    `${su.abregeln_kwh.toFixed(1)} kWh abgeregelt → fix −${su.verlust_fix_chf.toFixed(2)} / Börse +${(-su.boerse_chf).toFixed(2)} CHF`;
 }
 
 // Amortisation und Batterie-Simulation (wie in der Kunden-Oberfläche), alle 10 Minuten
@@ -1111,6 +1124,7 @@ pollBoerse(); setInterval(pollBoerse, 15 * 60000);
 pollEinspeisung(); setInterval(pollEinspeisung, 10 * 60000);
 pollAmort(); setInterval(pollAmort, 10 * 60000);
 pollBerater(); setInterval(pollBerater, 60 * 60000);
+pollSteuerung(); setInterval(pollSteuerung, 60000);
 pollWoche(); setInterval(pollWoche, 60 * 60000);
 // Klick auf einen Tipp: die Figur erklärt, warum (Rechenweg im Tooltip)
 $("s-rat2").addEventListener("click", e => {

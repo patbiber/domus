@@ -252,7 +252,8 @@ docker compose logs -f
 liegt – `.env`, `energie/data` (Archiv, Push-Schlüssel), `login/data`, `energy/abos` + `anfragen`, `proxy/conf.d` (inkl.
 Kunden-Instanzen), `proxy/certbot/conf`, `strompreise/data`, `/etc/msmtprc`, `/etc/aliases`, neuestes HA-Backup, Liste
 der aktiven Units – als `tar.gz`, **mit gpg (AES-256) verschlüsselt**, Probe-Entschlüsselung, lokal die letzten 3 in
-`backups/extern/` (~54 MB). Fehler → Mail; Störungs-Push, wenn das letzte gelungene Backup älter als 2 Tage ist.
+`backups/extern/` (~54 MB) und die letzten 60 auf dem **USB-Stick «BackupDomus»** (ext4, 16 GB, am NUC; nur während
+der Kopie unter `/mnt/backup-usb` eingehängt, Kopie per `cmp` geprüft; Stick fehlt → Mail). Fehler → Mail; Störungs-Push, wenn das letzte gelungene Backup älter als 2 Tage ist.
 Schlüssel `~/.config/domus/backup-schluessel` (600, nicht im Repo, Kopie bei Patrick).
 **Wiederherstellen:** `gpg --decrypt homi-backup-JJJJ-MM-TT.tar.gz.gpg | tar xzf -`
 (Online-Backup auf Proton Drive am 14.10.2026 verworfen, Proton-CLI und Sitzung wieder entfernt.)
@@ -421,6 +422,15 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   ```bash
   cd ~/.config/systemd/user && ln -sf ~/domus/energie/homi-wochenbericht.{service,timer} . && systemctl --user daemon-reload && systemctl --user enable --now homi-wochenbericht.timer
   ```
+- **Fronius-Steuerung über Modbus** (`energie/homi/steuerung.py`, `/api/steuerung`, seit 16.10.2026): Modbus TCP am
+  Fronius aktiv («Wechselrichter-Steuerung über Modbus» EIN, eingeschränkt auf 192.168.1.23). homi liest alle 30 s
+  SunSpec-Modelle 113 (Leistung, Zustand), 120 (Nennleistung 8.2 kW) und 123 (Conn, WMaxLimPct, WMaxLim_Ena).
+  Regel: bei negativem Börsenpreis auf Nulleinspeisung drosseln (WMaxLimPct = Hausverbrauch, mit Rückfallzeit).
+  **Modus in `energie/anlage.json` → `steuerung.modus`: `test`** = nur nachrechnen, nichts schreiben (Stand in
+  `data/steuerung.json`): Minuspreis-Stunden, abgeregelte kWh, Kosten zum fixen Tarif vs. Nutzen zum Börsenpreis.
+  Auswertung per Mail am 30.10.2026 (`steuerung-bericht.py`, Timer `homi-steuerung-bericht`). Scharf schalten erst
+  auf Patricks Wunsch. Überall: Kunden-UI Karte im Tab «Strompreis», Retro-Kachel «Fronius-Steuerung», HA
+  `sensor.fronius_steuerung` (+ `_modbus`, `_begrenzung`, `sensor.steuerungstest_*`).
 - **Grundsatz:** Jede Funktion in allen Oberflächen (Retro, Kunden-UI, Home Assistant), ausser gerätespezifische
   (z. B. Verbrauch des NUC). Stand 10.10.2026 zusätzlich angeglichen: Batterie-Simulation in der Retro-Seite,
   Verlauf «Tag» und «Gesamt» in der Kunden-UI, HA-Sensoren `sensor.einspeisung_dynamisch_heute`,

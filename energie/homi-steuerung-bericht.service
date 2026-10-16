@@ -1,0 +1,8 @@
+# Auswertung des Steuerungs-Testmodus (Fronius über Modbus) per Mail
+[Unit]
+Description=homi: Testergebnis Fronius-Steuerung
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/energie/steuerung-bericht.py

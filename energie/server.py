@@ -11,6 +11,8 @@ Endpunkte:
                 Empfehlung pro Stunde, optimierter Batterie-Fahrplan (virtuelle Batterie) vs. einfaches Laden
   /api/amortisation  bisher erwirtschaftet, Break-even (Investition/Förderung in anlage.json)
   /api/berater  Energieberater: drei Tipps mit Begründung und Rechenweg, Batterie-Empfehlung
+  /api/steuerung  Wechselrichter-Steuerung über Modbus: Verbindung, Begrenzung, Testmodus-Auswertung (Minuspreis →
+                Nulleinspeisung: was homi getan hätte und was es gekostet/gebracht hätte)
   /api/info     Anzeigename und Leistung der Anlage
   /api/wochenbericht  letzte ganze Woche (Mo–So) mit Vorwochen-Vergleich, ?woche=2026-W41
   /api/push     GET: öffentlicher VAPID-Schlüssel; POST: App-Push an-/abmelden, Testnachricht
@@ -37,10 +39,11 @@ from homi.berater import berater, berater_cache
 from homi.boerse import boerse_now, poll_boerse
 from homi.einspeisung import einspeise_plan
 from homi.erfassung import poll
-from homi.konfig import ANLAGE_CFG, ARCHIV_DIR, ARCHIV_TAGE, KUNDE_HOST, PORT, PUSH_DIR, PUSH_HOSTS, PUSH_THEMEN, SPEICHER_FILE, WWW, WWW_KUNDE
+from homi.konfig import ANLAGE_CFG, ARCHIV_DIR, ARCHIV_TAGE, KUNDE_HOST, PORT, PUSH_DIR, PUSH_HOSTS, PUSH_THEMEN, SPEICHER_FILE, STEUERUNG_FILE, WWW, WWW_KUNDE
 from homi.prognose import poll_prognose
 from homi.push_abo import push_lesen, push_schluessel, push_schreiben
 from homi.speicher import SpeicherSimulation
+from homi.steuerung import SteuerungTest, poll_modbus
 from homi.wochenbericht import wochenbericht
 from homi.zustand import history, lock, state
 
@@ -117,6 +120,9 @@ class Handler(SimpleHTTPRequestHandler):
             except (OSError, ValueError, KeyError) as e:      # Fronius nachts aus o. Ä.: letzte Berechnung zeigen
                 print("Amortisation:", e, flush=True)
                 return self.send_json(amort_cache["daten"] or {"aktiv": False, "fehler": "Zähler nicht erreichbar"})
+        if path == "/api/steuerung":
+            with lock:
+                return self.send_json(zustand.steuerung.report(state["status"], state["modbus"]))
         if path == "/api/einspeisung":
             return self.send_json(einspeise_plan())
         if path == "/api/prognose":
@@ -214,6 +220,8 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     zustand.speicher_sim = SpeicherSimulation(SPEICHER_FILE)
     zustand.archiv = Archiv(ARCHIV_DIR)
+    zustand.steuerung = SteuerungTest(STEUERUNG_FILE)
+    threading.Thread(target=poll_modbus, daemon=True).start()
     threading.Thread(target=poll_boerse, daemon=True).start()
     threading.Thread(target=poll_prognose, daemon=True).start()
     threading.Thread(target=poll, daemon=True).start()

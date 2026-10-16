@@ -219,6 +219,40 @@ rest:
         availability: "{{ value_json.aktiv | default(false) }}"
         unit_of_measurement: CHF
         icon: mdi:cash-plus
+  - resource: http://127.0.0.1:8099/api/steuerung
+    scan_interval: 60
+    sensor:
+      - name: Fronius-Steuerung
+        unique_id: homi_steuerung
+        value_template: "{{ value_json.jetzt.wuerde }}"
+        availability: "{{ value_json.modus | default('aus') != 'aus' }}"
+        icon: mdi:solar-power-variant
+        json_attributes: [modus, regel, seit, auswertung_am, modbus, jetzt, summe]
+      - name: Fronius-Steuerung Modbus
+        unique_id: homi_steuerung_modbus
+        value_template: "{{ 'verbunden' if value_json.modbus.verbunden else 'getrennt' }}"
+        icon: mdi:lan-connect
+      - name: Fronius-Steuerung Begrenzung
+        unique_id: homi_steuerung_begrenzung
+        value_template: "{{ value_json.modbus.begrenzung_pct if value_json.modbus.begrenzung_aktiv else 100 }}"
+        availability: "{{ value_json.modbus.verbunden | default(false) }}"
+        unit_of_measurement: "%"
+        icon: mdi:speedometer
+      - name: Steuerungstest abgeregelt
+        unique_id: homi_steuerung_test_kwh
+        value_template: "{{ value_json.summe.abregeln_kwh | round(2) }}"
+        unit_of_measurement: kWh
+        icon: mdi:transmission-tower-off
+      - name: Steuerungstest Kosten fixer Tarif
+        unique_id: homi_steuerung_test_fix
+        value_template: "{{ (0 - value_json.summe.verlust_fix_chf) | round(2) }}"
+        unit_of_measurement: CHF
+        icon: mdi:cash-minus
+      - name: Steuerungstest Nutzen Börsenpreis
+        unique_id: homi_steuerung_test_boerse
+        value_template: "{{ (0 - value_json.summe.boerse_chf) | round(2) }}"
+        unit_of_measurement: CHF
+        icon: mdi:cash-plus
   - resource: http://127.0.0.1:8099/api/berater
     scan_interval: 3600
     sensor:

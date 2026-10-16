@@ -517,6 +517,25 @@ function beraterZeichnen() {
   $("b-bat-hinweis").textContent = bat.hinweis || "";
 }
 
+/* ======================= Strompreis: Wechselrichter-Steuerung ======================= */
+function steuerungZeichnen() {
+  const s = D.steuerung;
+  $("steuerung").hidden = !s || !s.modus || s.modus === "aus";
+  if ($("steuerung").hidden) return;
+  const m = s.modbus || {}, su = s.summe || {}, test = s.modus === "test";
+  const tag = d => new Date(d).toLocaleDateString("de-CH", { day: "numeric", month: "numeric" });
+  $("st-modus").textContent = test ? `Testmodus bis ${tag(s.auswertung_am)}` : "aktiv";
+  $("st-verb").textContent = !m.verbunden ? "keine Antwort" : m.begrenzung_aktiv ? `verbunden · begrenzt auf ${zahl(m.begrenzung_pct, 0)} %` : `verbunden · ${m.zustand}`;
+  $("st-jetzt").textContent = s.jetzt.wuerde;
+  $("st-jetzt").title = s.jetzt.grund;
+  $("st-h").textContent = `${zahl(su.minuspreis_h, 1)} h`;
+  $("st-kwh").textContent = `${zahl(su.abregeln_kwh, 1)} kWh`;
+  $("st-fix").textContent = chf(-su.verlust_fix_chf);
+  $("st-dyn").textContent = chf(-su.boerse_chf);
+  $("st-regel").textContent = s.regel;
+  $("st-hinweis").textContent = test ? `Seit ${tag(s.seit)} rechnet homi nur nach, was es getan hätte – am Wechselrichter wird nichts geschaltet.` : "";
+}
+
 /* ======================= Mehr: Speicher, Anlage ======================= */
 function speicherZeichnen() {
   const s = D.speicher;
@@ -532,7 +551,7 @@ function speicherZeichnen() {
 /* ======================= Laden ======================= */
 function zeichnen() {
   flussZeichnen(); kpisZeichnen(); prognoseZeichnen(); preisZeichnen(); warnungZeichnen();
-  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen();
+  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen(); steuerungZeichnen();
 }
 async function status() {
   try { D.status = await holen("status"); flussZeichnen(); kpisZeichnen(); preisZeichnen(); }
@@ -544,7 +563,7 @@ async function minute() {
   kpisZeichnen(); verlauf24Zeichnen(); amortZeichnen();
 }
 async function selten() {
-  for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"], ["berater", "berater"]]) {
+  for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"], ["berater", "berater"], ["steuerung", "steuerung"]]) {
     try { D[k] = await holen(p); } catch {}
   }
   zeichnen();
