@@ -43,7 +43,7 @@ from homi.konfig import ANLAGE_CFG, ARCHIV_DIR, ARCHIV_TAGE, KUNDE_HOST, PORT, P
 from homi.prognose import poll_prognose
 from homi.push_abo import push_lesen, push_schluessel, push_schreiben
 from homi.speicher import SpeicherSimulation
-from homi.steuerung import SteuerungTest, poll_modbus
+from homi.steuerung import Steuerung, regeln
 from homi.wochenbericht import wochenbericht
 from homi.zustand import history, lock, state
 
@@ -152,6 +152,8 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         """App-Push: {"aktion": "anmelden"|"abmelden"|"lesen"|"test", "abo": PushSubscription, "themen": [...]}"""
+        if self.path == "/api/steuerung":
+            return self.post_steuerung()
         if self.path != "/api/push":
             return self.send_error(405)
         try:
@@ -211,6 +213,35 @@ class Handler(SimpleHTTPRequestHandler):
         return self.send_json({"von": von.isoformat(), "bis": bis.isoformat(), "aufloesung": aufl,
                                "erste_daten": erste, **archiv_aggregat(rows, aufl)})
 
+    def post_steuerung(self):
+        """Wechselrichter-Schalter: {"wr": "ein"|"aus"} und/oder {"regel": true|false}.
+        Nur über nginx mit Anmeldung (home.biber.solar: Passwort, biber.homi.solar: Login) oder von Home Assistant
+        auf dem NUC (127.0.0.1) – nicht direkt aus dem LAN (Port 8099 ist dort offen, z. B. für Gäste-Geräte)."""
+        host = (self.headers.get("Host") or "").split(":")[0].lower()
+        ip = self.client_address[0]
+        von = {"home.biber.solar": "Retro", "biber.homi.solar": "App"}.get(host)
+        if ip.startswith("127.") and host in ("127.0.0.1", "localhost"):
+            von = "Home Assistant"
+        elif not ip.startswith("172.18."):
+            von = None
+        if not von:
+            return self.send_error(403)
+        try:
+            laenge = int(self.headers.get("Content-Length", "0"))
+            if not 0 < laenge <= 256:
+                raise ValueError
+            d = json.loads(self.rfile.read(laenge))
+            wr, regel = d.get("wr"), d.get("regel")
+            if wr not in (None, "ein", "aus") or regel not in (None, True, False) or (wr is None and regel is None):
+                raise ValueError
+        except (ValueError, AttributeError):
+            return self.send_error(400)
+        with lock:
+            zustand.steuerung.schalten(wr=wr, regel=regel, von=von)
+            antwort = zustand.steuerung.report(state["status"], state["modbus"])
+        print(f"Steuerung: {d} von {von}", flush=True)
+        return self.send_json(antwort)
+
     def list_directory(self, path):
         self.send_error(404)
 
@@ -220,8 +251,8 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     zustand.speicher_sim = SpeicherSimulation(SPEICHER_FILE)
     zustand.archiv = Archiv(ARCHIV_DIR)
-    zustand.steuerung = SteuerungTest(STEUERUNG_FILE)
-    threading.Thread(target=poll_modbus, daemon=True).start()
+    zustand.steuerung = Steuerung(STEUERUNG_FILE)
+    threading.Thread(target=regeln, daemon=True).start()
     threading.Thread(target=poll_boerse, daemon=True).start()
     threading.Thread(target=poll_prognose, daemon=True).start()
     threading.Thread(target=poll, daemon=True).start()

@@ -1,6 +1,6 @@
 # Einmalig am Ende der zweiwöchigen Testphase (Start 16.10.2026); war der NUC aus, wird nachgeholt
 [Unit]
-Description=homi: Testergebnis Fronius-Steuerung am 30.10.2026
+Description=homi: Auswertung Fronius-Steuerung am 30.10.2026
 
 [Timer]
 OnCalendar=2026-10-30 08:00:00

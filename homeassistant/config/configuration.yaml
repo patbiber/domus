@@ -227,7 +227,7 @@ rest:
         value_template: "{{ value_json.jetzt.wuerde }}"
         availability: "{{ value_json.modus | default('aus') != 'aus' }}"
         icon: mdi:solar-power-variant
-        json_attributes: [modus, regel, seit, auswertung_am, modbus, jetzt, summe]
+        json_attributes: [modus, scharf_seit, schalter, regel, seit, auswertung_am, modbus, jetzt, summe, aktionen]
       - name: Fronius-Steuerung Modbus
         unique_id: homi_steuerung_modbus
         value_template: "{{ 'verbunden' if value_json.modbus.verbunden else 'getrennt' }}"
@@ -312,3 +312,49 @@ sensor:
     method: left
     max_sub_interval:
       minutes: 1
+
+# Wechselrichter-Steuerung (homi, Modbus): Schalter schreiben über /api/steuerung (nur von 127.0.0.1 erlaubt)
+rest_command:
+  homi_wechselrichter:
+    url: http://127.0.0.1:8099/api/steuerung
+    method: POST
+    content_type: application/json
+    payload: '{"wr": "{{ wr }}"}'
+  homi_regel:
+    url: http://127.0.0.1:8099/api/steuerung
+    method: POST
+    content_type: application/json
+    payload: '{"regel": {{ "true" if an else "false" }}}'
+
+template:
+  - switch:
+      - name: Wechselrichter
+        unique_id: homi_wechselrichter_schalter
+        icon: mdi:solar-power-variant
+        state: "{{ state_attr('sensor.fronius_steuerung', 'schalter').wr | default('ein') == 'ein' }}"
+        availability: "{{ state_attr('sensor.fronius_steuerung', 'schalter') is not none }}"
+        turn_on:
+          - action: rest_command.homi_wechselrichter
+            data: {wr: ein}
+          - action: homeassistant.update_entity
+            target: {entity_id: sensor.fronius_steuerung}
+        turn_off:
+          - action: rest_command.homi_wechselrichter
+            data: {wr: aus}
+          - action: homeassistant.update_entity
+            target: {entity_id: sensor.fronius_steuerung}
+      - name: Automatik Minuspreis
+        unique_id: homi_regel_minuspreis
+        icon: mdi:transmission-tower-off
+        state: "{{ state_attr('sensor.fronius_steuerung', 'schalter').regel | default(false) }}"
+        availability: "{{ state_attr('sensor.fronius_steuerung', 'schalter') is not none }}"
+        turn_on:
+          - action: rest_command.homi_regel
+            data: {an: true}
+          - action: homeassistant.update_entity
+            target: {entity_id: sensor.fronius_steuerung}
+        turn_off:
+          - action: rest_command.homi_regel
+            data: {an: false}
+          - action: homeassistant.update_entity
+            target: {entity_id: sensor.fronius_steuerung}

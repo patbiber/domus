@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Auswertung des Steuerungs-Testmodus (Minuspreis → Nulleinspeisung) per Mail an Patrick.
+"""Auswertung der Fronius-Steuerung (Minuspreis → Nulleinspeisung) per Mail an Patrick.
 Daten: /api/steuerung. Einmalig am Ende der Testphase (homi-steuerung-bericht.timer).
 Aufruf: steuerung-bericht.py [--nur-anzeigen]"""
 import json
@@ -19,17 +19,20 @@ kosten, nutzen = su["verlust_fix_chf"], -su["boerse_chf"]
 if su["minuspreis_h"] == 0:
     fazit = ("In den zwei Wochen gab es keine Stunde mit negativem Börsenpreis – homi hätte nie gedrosselt. "
              "Im Herbst und Winter ist das normal; Minuspreise kommen vor allem an sonnigen Wochenenden im "
-             "Frühling und Sommer. Vorschlag: Testmodus weiterlaufen lassen und im Mai erneut auswerten.")
+             "Frühling und Sommer. Die Regel bleibt aktiv; spannend wird es im Frühling.")
 elif kosten > nutzen:
     fazit = (f"Mit deinem heutigen fixen Tarif hätte das Drosseln CHF {kosten:.2f} gekostet (entgangene Vergütung). "
              f"Bei Vergütung zum Börsenpreis hätte es CHF {nutzen:.2f} gebracht. Solange die GWS fix vergütet, "
-             "lohnt sich das Scharfschalten nicht – der Testmodus läuft weiter.")
+             "kostet dich die Regel Geld. Du kannst sie in der App, auf home.biber.solar oder in Home Assistant "
+             "ausschalten (Schalter «Automatik bei Minuspreis»).")
 else:
     fazit = (f"Das Drosseln hätte mehr gebracht (CHF {nutzen:.2f}) als gekostet (CHF {kosten:.2f}). "
-             "Wenn du willst, schalte ich die Regel scharf – sag einfach Bescheid.")
+             "Die Regel lohnt sich.")
 
 z = ["Hallo Patrick", "",
-     f"Seit {d(s['seit'])} rechnet homi im TESTMODUS mit, was die Fronius-Steuerung getan hätte.",
+     (f"Seit {d(s['seit'])} rechnet homi mit, seit {d(s['scharf_seit'])} steuert homi den Fronius SCHARF "
+      "(Einspeisung bei Minuspreis geschätzt aus der Solarprognose)." if s["modus"] == "scharf" else
+      f"Seit {d(s['seit'])} rechnet homi im TESTMODUS mit, was die Fronius-Steuerung getan hätte."),
      f"Regel: {s['regel']}", "",
      "ERGEBNIS",
      f"  Stunden mit negativem Börsenpreis:  {su['minuspreis_h']:.1f} h",
@@ -43,13 +46,14 @@ if s["ereignisse"]:
         z.append(f"  {d(e['von'])} {e['von'][11:16]}–{e['bis'][11:16]}  bis {e['min_rp']:.1f} Rp./kWh, "
                  f"{e['kwh']:.2f} kWh, hätte auf {e['min_pct']:g} % gedrosselt")
     z.append("")
-z += [f"Modbus: {'verbunden' if m.get('verbunden') else 'NICHT verbunden'}"
+z += [f"Letzte Aktionen: " + "; ".join(f"{d(a['zeit'])} {a['zeit'][11:16]} {a['text']}" for a in s.get("aktionen", [])[:5]), "",
+      f"Modbus: {'verbunden' if m.get('verbunden') else 'NICHT verbunden'}"
       + (f", Begrenzung {m['begrenzung_pct']} % ({'aktiv' if m['begrenzung_aktiv'] else 'aus'})" if m.get("verbunden") else ""),
       "", "Dein homi"]
 text = "\n".join(z)
 if "--nur-anzeigen" in sys.argv:
     print(text)
 else:
-    senden("root", f"homi: Fronius-Steuerung – Testergebnis nach {(date.today() - date.fromisoformat(s['seit'])).days} Tagen",
+    senden("root", f"homi: Fronius-Steuerung – Ergebnis nach {(date.today() - date.fromisoformat(s['seit'])).days} Tagen",
            text, absender=ABSENDER["homi"])
     print("Bericht gesendet")

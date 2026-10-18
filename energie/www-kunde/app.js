@@ -518,23 +518,59 @@ function beraterZeichnen() {
 }
 
 /* ======================= Strompreis: Wechselrichter-Steuerung ======================= */
+let wrBestaetigen = null;
 function steuerungZeichnen() {
   const s = D.steuerung;
   $("steuerung").hidden = !s || !s.modus || s.modus === "aus";
   if ($("steuerung").hidden) return;
-  const m = s.modbus || {}, su = s.summe || {}, test = s.modus === "test";
+  const m = s.modbus || {}, su = s.summe || {}, test = s.modus !== "scharf", aus = s.schalter.wr === "aus";
   const tag = d => new Date(d).toLocaleDateString("de-CH", { day: "numeric", month: "numeric" });
-  $("st-modus").textContent = test ? `Testmodus bis ${tag(s.auswertung_am)}` : "aktiv";
-  $("st-verb").textContent = !m.verbunden ? "keine Antwort" : m.begrenzung_aktiv ? `verbunden · begrenzt auf ${zahl(m.begrenzung_pct, 0)} %` : `verbunden · ${m.zustand}`;
-  $("st-jetzt").textContent = s.jetzt.wuerde;
-  $("st-jetzt").title = s.jetzt.grund;
+  $("st-modus").textContent = test ? "Testmodus" : "Steuerung aktiv";
+  $("st-modus").className = "wr-modus" + (test ? "" : " scharf");
+  const [farbe, text] = !m.verbunden ? ["grau", "Keine Verbindung"] : aus ? ["rot", m.eingeschaltet ? "Fährt herunter …" : "Ausgeschaltet (Standby)"]
+    : !m.eingeschaltet ? ["gelb", "Startet – Netzprüfung, ca. 2 Minuten"] : m.begrenzung_aktiv ? ["gelb", `Gedrosselt auf ${zahl(m.begrenzung_pct, 0)} %`]
+    : ["", `Am Netz · ${zahl(m.leistung_w / 1000, 2)} kW`];
+  $("st-punkt").className = "wr-punkt " + farbe;
+  $("st-zustand").textContent = text;
+  $("st-jetzt").textContent = s.jetzt.grund;
+  if (!wrBestaetigen) {
+    $("st-knopf").className = "wr-knopf" + (aus ? " ein" : "");
+    $("st-knopf-text").textContent = aus ? "Einschalten" : "Ausschalten";
+    $("st-knopf-klein").textContent = aus ? "wieder ans Netz" : "Standby, speist nicht mehr ein";
+  }
+  $("st-knopf").hidden = test;
+  $("st-regel").checked = !!s.schalter.regel;
   $("st-h").textContent = `${zahl(su.minuspreis_h, 1)} h`;
   $("st-kwh").textContent = `${zahl(su.abregeln_kwh, 1)} kWh`;
   $("st-fix").textContent = chf(-su.verlust_fix_chf);
   $("st-dyn").textContent = chf(-su.boerse_chf);
-  $("st-regel").textContent = s.regel;
-  $("st-hinweis").textContent = test ? `Seit ${tag(s.seit)} rechnet homi nur nach, was es getan hätte – am Wechselrichter wird nichts geschaltet.` : "";
+  $("st-regeltext").textContent = s.regel + ` Zahlen seit ${tag(s.seit)}.`;
+  $("st-log").innerHTML = (s.aktionen || []).slice(0, 5).map(a => `<li>${new Date(a.zeit).toLocaleString("de-CH", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" })} · ${a.text}${a.von ? ` (${a.von})` : ""}</li>`).join("");
 }
+async function steuerungSenden(daten) {
+  const m = $("st-meldung"); m.hidden = false; m.className = "wr-meldung"; m.textContent = "Sende …"; $("st-knopf").disabled = true;
+  try {
+    const r = await fetch("api/steuerung", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten) });
+    if (!r.ok) throw new Error(r.status === 401 ? "Bitte neu anmelden." : r.status === 403 ? "Schalten ist hier nicht erlaubt." : `Fehler ${r.status}`);
+    D.steuerung = await r.json(); steuerungZeichnen();
+    m.textContent = daten.wr === "aus" ? "Ausgeschaltet. homi hält den Standby, bis du wieder einschaltest." : daten.wr === "ein" ? "Eingeschaltet. Der Wechselrichter prüft das Netz und speist in ca. 2 Minuten wieder ein." : "Gespeichert.";
+    for (const t of [4000, 15000, 60000, 150000]) setTimeout(async () => { try { D.steuerung = await holen("steuerung"); steuerungZeichnen(); } catch {} }, t);
+  } catch (e) { m.className = "wr-meldung fehler"; m.textContent = e.message; }
+  $("st-knopf").disabled = false;
+}
+$("st-knopf").addEventListener("click", () => {
+  const s = D.steuerung; if (!s) return;
+  const ziel = s.schalter.wr === "aus" ? "ein" : "aus";
+  if (ziel === "aus" && !wrBestaetigen) {      // Ausschalten braucht einen zweiten Tipp innert 5 s
+    wrBestaetigen = setTimeout(() => { wrBestaetigen = null; steuerungZeichnen(); }, 5000);
+    $("st-knopf").className = "wr-knopf bestaetigen";
+    $("st-knopf-text").textContent = "Wirklich ausschalten?"; $("st-knopf-klein").textContent = "nochmals tippen";
+    return;
+  }
+  clearTimeout(wrBestaetigen); wrBestaetigen = null;
+  steuerungSenden({ wr: ziel });
+});
+$("st-regel").addEventListener("change", e => steuerungSenden({ regel: e.target.checked }));
 
 /* ======================= Mehr: Speicher, Anlage ======================= */
 function speicherZeichnen() {
@@ -560,7 +596,8 @@ async function status() {
 async function minute() {
   try { D.hist = await holen("history"); } catch {}
   try { const r = await holen(`archiv?aufloesung=tag&von=${iso(new Date())}&bis=${iso(new Date())}`); D.heute = r.zeilen[0] || null; } catch {}
-  kpisZeichnen(); verlauf24Zeichnen(); amortZeichnen();
+  try { D.steuerung = await holen("steuerung"); } catch {}
+  kpisZeichnen(); verlauf24Zeichnen(); amortZeichnen(); steuerungZeichnen();
 }
 async function selten() {
   for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"], ["berater", "berater"], ["steuerung", "steuerung"]]) {

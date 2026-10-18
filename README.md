@@ -422,15 +422,22 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   ```bash
   cd ~/.config/systemd/user && ln -sf ~/domus/energie/homi-wochenbericht.{service,timer} . && systemctl --user daemon-reload && systemctl --user enable --now homi-wochenbericht.timer
   ```
-- **Fronius-Steuerung über Modbus** (`energie/homi/steuerung.py`, `/api/steuerung`, seit 16.10.2026): Modbus TCP am
-  Fronius aktiv («Wechselrichter-Steuerung über Modbus» EIN, eingeschränkt auf 192.168.1.23). homi liest alle 30 s
-  SunSpec-Modelle 113 (Leistung, Zustand), 120 (Nennleistung 8.2 kW) und 123 (Conn, WMaxLimPct, WMaxLim_Ena).
-  Regel: bei negativem Börsenpreis auf Nulleinspeisung drosseln (WMaxLimPct = Hausverbrauch, mit Rückfallzeit).
-  **Modus in `energie/anlage.json` → `steuerung.modus`: `test`** = nur nachrechnen, nichts schreiben (Stand in
-  `data/steuerung.json`): Minuspreis-Stunden, abgeregelte kWh, Kosten zum fixen Tarif vs. Nutzen zum Börsenpreis.
-  Auswertung per Mail am 30.10.2026 (`steuerung-bericht.py`, Timer `homi-steuerung-bericht`). Scharf schalten erst
-  auf Patricks Wunsch. Überall: Kunden-UI Karte im Tab «Strompreis», Retro-Kachel «Fronius-Steuerung», HA
-  `sensor.fronius_steuerung` (+ `_modbus`, `_begrenzung`, `sensor.steuerungstest_*`).
+- **Fronius-Steuerung über Modbus** (`energie/homi/steuerung.py`, `/api/steuerung`): Modbus TCP am Fronius aktiv
+  («Wechselrichter-Steuerung über Modbus» EIN, eingeschränkt auf 192.168.1.23). **Seit 16.10.2026 SCHARF** (Patricks
+  Wunsch; `energie/anlage.json` → `steuerung.modus`: `aus` | `test` | `scharf`). Regler alle 10 s, SunSpec-Modelle
+  113/120/123:
+  - **Automatik:** bei negativem Börsenpreis WMaxLimPct = Hausverbrauch + 50 W (Nulleinspeisung), sonst frei.
+  - **Schalter Ein/Aus:** Standby über Conn = 0; Zustand in `data/steuerung.json`, übersteht Neustarts.
+  - **Sicherheitsnetz:** jeder Befehl mit Ablaufzeit 5 min, homi erneuert ihn jede Minute. Fällt homi aus, gibt der
+    Fronius selbst frei. Getestet: Drosseln wirkt sofort; nach dem Einschalten aus Standby speist er nach ~2 min ein.
+  - **Schalten nur mit Anmeldung:** POST `/api/steuerung` `{"wr":"ein|aus"}` / `{"regel":true|false}` nur über nginx
+    (home.biber.solar mit Passwort, biber.homi.solar mit Login; Absender 172.18.x) oder von HA (127.0.0.1). Direkt aus
+    dem LAN → 403.
+  - **Oberflächen:** Retro grosser roter Knopf (zweimal drücken), App-Karte im Tab «Strompreis» (Ausschalten mit
+    Bestätigung), HA `switch.wechselrichter`, `switch.automatik_minuspreis`, `sensor.fronius_steuerung` (+ `_modbus`,
+    `_begrenzung`, `sensor.steuerungstest_*`). Protokoll der Aktionen (wer, wann) in allen drei.
+  - **Abrechnung:** Minuspreis-Stunden, abgeregelte kWh (scharf: geschätzt aus der Solarprognose), Kosten zum fixen
+    Tarif vs. Nutzen zum Börsenpreis. Mail am 30.10.2026 (`steuerung-bericht.py`, Timer `homi-steuerung-bericht`).
 - **Grundsatz:** Jede Funktion in allen Oberflächen (Retro, Kunden-UI, Home Assistant), ausser gerätespezifische
   (z. B. Verbrauch des NUC). Stand 10.10.2026 zusätzlich angeglichen: Batterie-Simulation in der Retro-Seite,
   Verlauf «Tag» und «Gesamt» in der Kunden-UI, HA-Sensoren `sensor.einspeisung_dynamisch_heute`,

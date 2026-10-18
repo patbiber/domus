@@ -94,6 +94,32 @@
   .balken8 i { display: block; height: 100%; background: var(--green-dim); }
   .boerse .v { color: var(--cyan); } .boerse.neg { border-color: var(--red); } .boerse.neg .v { color: var(--red); animation: blink 1s steps(2) infinite; }
   @keyframes blink { 50% { opacity: .35; } }
+  /* Wechselrichter-Steuerung: der grosse rote Knopf */
+  .wr { border: 0; padding: 4px; background: repeating-linear-gradient(-45deg, var(--yellow) 0 14px, #000 14px 28px); }
+  .wr > .wr-innen { background: #000; padding: 10px 12px; }
+  .wr h2 { color: var(--yellow); }
+  .wr-box { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
+  .wr-knopf { flex: none; width: 168px; height: 168px; border-radius: 50%; border: 6px solid #400; cursor: pointer;
+    background: radial-gradient(circle at 35% 30%, #ff8a8a, #e00 45%, #800 100%); color: #fff;
+    font: bold 15px "Courier New", Courier, monospace; text-shadow: 2px 2px 0 #000; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 2px; box-shadow: 0 10px 0 #500, 0 14px 22px rgba(255, 0, 0, .45);
+    transform: translateY(0); transition: transform .08s, box-shadow .08s; margin: 4px 0 14px; }
+  .wr-knopf .wr-k2 { font-size: 38px; letter-spacing: 2px; }
+  .wr-knopf:active { transform: translateY(8px); box-shadow: 0 2px 0 #500, 0 4px 10px rgba(255, 0, 0, .45); }
+  .wr-knopf.scharf { animation: wrscharf .35s steps(2) infinite; }
+  .wr-knopf.scharf .wr-k1 { color: var(--yellow); }
+  .wr-knopf.scharf .wr-k2 { font-size: 27px; letter-spacing: 0; }
+  @keyframes wrscharf { 50% { box-shadow: 0 10px 0 #500, 0 0 40px 12px var(--yellow); } }
+  .wr-knopf.ein { border-color: #040; background: radial-gradient(circle at 35% 30%, #9f9, #0c0 45%, #050 100%);
+    box-shadow: 0 10px 0 #030, 0 14px 22px rgba(0, 255, 0, .4); }
+  .wr-knopf:disabled { filter: grayscale(1); cursor: wait; }
+  .wr-info { flex: 1 1 260px; min-width: 0; display: grid; gap: 6px; }
+  .wr-status { font-size: clamp(18px, 3vw, 26px); color: var(--green); }
+  .wr-status.aus { color: var(--red); animation: blink 1s steps(2) infinite; }
+  .wr-status.drossel { color: var(--yellow); }
+  .wr-regel { color: var(--cyan); cursor: pointer; }
+  .wr-log { margin: 0; padding-left: 18px; color: var(--grey); font-size: 12px; }
+  .wr-fehler { color: var(--red); }
   .charts { margin-top: 10px; display: grid; gap: 8px; }
   .legend { font-size: 12px; color: var(--grey); display: flex; flex-wrap: wrap; gap: 4px 14px; }
   .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: -1px; }
@@ -122,6 +148,21 @@
     </div>
   </div>
 
+  <section class="panel wr" id="wr-panel" hidden><div class="wr-innen">
+    <h2>⚠ Wechselrichter-Steuerung · <span id="wr-modus">–</span></h2>
+    <div class="wr-box">
+      <button type="button" id="wr-knopf" class="wr-knopf" title="Zweimal drücken: Fronius in Standby bzw. wieder ans Netz"><span class="wr-k1" id="wr-k1">WECHSELRICHTER</span><span class="wr-k2" id="wr-k2">AUS</span></button>
+      <div class="wr-info">
+        <div class="wr-status" id="wr-status">–</div>
+        <div id="wr-jetzt" class="s">&nbsp;</div>
+        <label class="wr-regel"><input type="checkbox" id="wr-regel"> Automatik: bei Minuspreis auf Nulleinspeisung drosseln</label>
+        <div id="wr-summe" class="s">&nbsp;</div>
+        <div id="wr-meldung" class="s">&nbsp;</div>
+        <ol id="wr-log" class="wr-log"></ol>
+      </div>
+    </div>
+  </div></section>
+
   <section class="panel">
     <h2>Kassenbuch – live · <a href="logbuch.html" style="color:var(--green-dim)">Logbuch (Archiv) →</a></h2>
     <div class="stats">
@@ -137,7 +178,6 @@
       <div class="stat boerse" id="t-boerse"><div class="k">Strombörse Day-Ahead CH</div><div class="v" id="s-boerse">–</div><div class="s" id="s-boerse2">&nbsp;</div></div>
       <div class="stat woche" title="Wochenbericht: kommt jeden Montag um 08:00 auch als Mail und Push"><div class="k" id="s-woche0">Letzte Woche</div><div class="v" id="s-woche">–</div><div class="s" id="s-woche2">&nbsp;</div></div>
       <div class="stat rat" title="Energieberater: drei Tipps aus den Messwerten der letzten 14 Tage"><div class="k">Energieberater · Tipp antippen = Warum</div><div class="v" id="s-rat">–</div><ol id="s-rat2"></ol><div class="s" id="s-rat3">&nbsp;</div></div>
-      <div class="stat steu" id="t-steu" title="Wechselrichter-Steuerung über Modbus: bei negativem Börsenpreis auf Nulleinspeisung drosseln. Testmodus: homi rechnet nur nach und schaltet nichts."><div class="k" id="s-steu0">Fronius-Steuerung · Test</div><div class="v" id="s-steu">–</div><div class="s" id="s-steu2">&nbsp;</div></div>
       <div class="stat batt"><div class="k">Batterie-Simulation</div><div class="v" id="s-batt">–</div><div class="s" id="s-batt2">&nbsp;</div></div>
       <div class="stat amort" title="Investition minus bisheriger Ertrag (selbst verbraucht × Bezugstarif + eingespeist × Rücklieferung), heutige Tarife"><div class="k">Anlage abbezahlt</div><div class="v" id="s-amort">–</div><div class="s" id="s-amort2">&nbsp;</div><span class="balken8"><i id="s-amort3" style="width:0"></i></span></div>
     </div>
@@ -404,17 +444,56 @@ async function pollBerater() {
   $("s-rat3").textContent = b ? (b.modus === "kaufen" ? `Batterie: ${b.urteil}${b.beste_kwh ? ` (beste: ${b.beste_kwh} kWh, ${Math.round((b.optionen.find(o => o.kwh === b.beste_kwh) || {}).amortisation_jahre || 0)} J.)` : ""}` : b.titel) : "\u00a0";
 }
 
-// Wechselrichter-Steuerung über Modbus (wie in der Kunden-Oberfläche), jede Minute
-async function pollSteuerung() {
-  let s;
-  try { s = await (await fetch("api/steuerung", { cache: "no-store" })).json(); } catch { return; }
-  if (!s || s.modus === "aus") { $("t-steu").hidden = true; return; }
-  const m = s.modbus || {}, su = s.summe || {}, bis = new Date(s.auswertung_am);
-  $("s-steu0").textContent = `Fronius-Steuerung · ${s.modus === "test" ? "Test" : "aktiv"}`;
-  $("s-steu").textContent = !m.verbunden ? "Modbus offline" : m.begrenzung_aktiv ? `gedrosselt ${m.begrenzung_pct} %` : `Modbus ok · ${m.zustand}`;
-  $("s-steu2").textContent = `Jetzt: ${s.jetzt.wuerde} · bis ${bis.getDate()}.${bis.getMonth() + 1}.: ${su.minuspreis_h.toFixed(1)} h Minuspreis, ` +
-    `${su.abregeln_kwh.toFixed(1)} kWh abgeregelt → fix −${su.verlust_fix_chf.toFixed(2)} / Börse +${(-su.boerse_chf).toFixed(2)} CHF`;
+// Wechselrichter-Steuerung über Modbus (wie in der Kunden-Oberfläche): grosser Knopf, zweimal drücken
+let steu = null, wrScharf = null;
+function steuZeigen(s) {
+  steu = s;
+  $("wr-panel").hidden = !s || s.modus === "aus";
+  if (!s || s.modus === "aus") return;
+  const m = s.modbus || {}, su = s.summe || {}, aus = s.schalter.wr === "aus", test = s.modus !== "scharf";
+  $("wr-modus").textContent = test ? "TESTMODUS (schaltet nicht)" : "SCHARF";
+  const st = $("wr-status");
+  st.className = "wr-status" + (aus ? " aus" : m.begrenzung_aktiv ? " drossel" : "");
+  st.textContent = !m.verbunden ? "Modbus: keine Antwort" : aus ? (m.eingeschaltet ? "▼ FÄHRT HERUNTER …" : "■ STANDBY – speist nicht ein")
+    : !m.eingeschaltet ? "▲ STARTET (Netzprüfung ~2 min)" : m.begrenzung_aktiv ? `▼ GEDROSSELT auf ${m.begrenzung_pct} %` : `● AM NETZ · ${m.leistung_w} W`;
+  $("wr-jetzt").textContent = `Jetzt: ${s.jetzt.wuerde} – ${s.jetzt.grund}`;
+  $("wr-regel").checked = !!s.schalter.regel;
+  $("wr-summe").textContent = `Seit ${s.seit.slice(8, 10)}.${s.seit.slice(5, 7)}.: ${su.minuspreis_h.toFixed(1)} h Minuspreis · ${su.abregeln_kwh.toFixed(1)} kWh abgeregelt · ` +
+    `fixer Tarif −${su.verlust_fix_chf.toFixed(2)} CHF · Börsenpreis +${(-su.boerse_chf).toFixed(2)} CHF`;
+  if (!wrScharf) {
+    const k = $("wr-knopf");
+    k.className = "wr-knopf" + (aus ? " ein" : "");
+    $("wr-k1").textContent = "WECHSELRICHTER"; $("wr-k2").textContent = aus ? "EIN" : "AUS";
+  }
+  $("wr-log").innerHTML = (s.aktionen || []).slice(0, 4).map(a => `<li>${a.zeit.slice(8, 10)}.${a.zeit.slice(5, 7)}. ${a.zeit.slice(11, 16)} ${a.text}${a.von ? ` (${a.von})` : ""}</li>`).join("");
 }
+async function pollSteuerung() {
+  try { steuZeigen(await (await fetch("api/steuerung", { cache: "no-store" })).json()); } catch {}
+}
+async function steuSenden(daten) {
+  $("wr-meldung").className = "s"; $("wr-meldung").textContent = "sende …"; $("wr-knopf").disabled = true;
+  try {
+    const r = await fetch("api/steuerung", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten) });
+    if (r.status === 403) throw new Error("Schalten geht nur über https://home.biber.solar (mit Passwort)");
+    if (!r.ok) throw new Error(`Fehler ${r.status}`);
+    steuZeigen(await r.json());
+    $("wr-meldung").textContent = daten.wr === "aus" ? "Befehl gesendet: Standby. homi erneuert ihn jede Minute." : daten.wr === "ein" ? "Befehl gesendet: wieder ans Netz (Netzprüfung ~2 min)." : "Gespeichert.";
+    setTimeout(pollSteuerung, 4000); setTimeout(pollSteuerung, 12000);
+  } catch (e) { $("wr-meldung").className = "s wr-fehler"; $("wr-meldung").textContent = e.message; pollSteuerung(); }
+  $("wr-knopf").disabled = false;
+}
+$("wr-knopf").addEventListener("click", () => {
+  if (!steu) return;
+  const ziel = steu.schalter.wr === "aus" ? "ein" : "aus";
+  if (!wrScharf) {                     // erster Druck: scharf machen, zweiter Druck innert 5 s: auslösen
+    wrScharf = setTimeout(() => { wrScharf = null; steuZeigen(steu); }, 5000);
+    $("wr-knopf").classList.add("scharf"); $("wr-k1").textContent = "WIRKLICH?"; $("wr-k2").textContent = "NOCHMAL";
+    return;
+  }
+  clearTimeout(wrScharf); wrScharf = null;
+  steuSenden({ wr: ziel });
+});
+$("wr-regel").addEventListener("change", e => steuSenden({ regel: e.target.checked }));
 
 // Amortisation und Batterie-Simulation (wie in der Kunden-Oberfläche), alle 10 Minuten
 const MONATE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
@@ -1124,7 +1203,7 @@ pollBoerse(); setInterval(pollBoerse, 15 * 60000);
 pollEinspeisung(); setInterval(pollEinspeisung, 10 * 60000);
 pollAmort(); setInterval(pollAmort, 10 * 60000);
 pollBerater(); setInterval(pollBerater, 60 * 60000);
-pollSteuerung(); setInterval(pollSteuerung, 60000);
+pollSteuerung(); setInterval(pollSteuerung, 15000);
 pollWoche(); setInterval(pollWoche, 60 * 60000);
 // Klick auf einen Tipp: die Figur erklärt, warum (Rechenweg im Tooltip)
 $("s-rat2").addEventListener("click", e => {

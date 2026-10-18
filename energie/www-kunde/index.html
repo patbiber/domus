@@ -170,16 +170,19 @@
         <div class="zeile"><span>Batterie 5 kWh, clever gesteuert</span><b id="e-batt">–</b></div>
         <p class="leise">So viel wäre deine Einspeisung heute wert. Ab 2027 dürfen Netzbetreiber nach Börsenpreis vergüten.</p>
       </article>
-      <article class="karte" id="steuerung" hidden>
-        <div class="karte-kopf"><h2>Wechselrichter-Steuerung</h2><span class="leise" id="st-modus"></span></div>
-        <div class="zeile"><span>Verbindung (Modbus)</span><b id="st-verb">–</b></div>
-        <div class="zeile"><span>Jetzt würde homi</span><b id="st-jetzt">–</b></div>
+      <article class="karte breit wr" id="steuerung" hidden>
+        <div class="karte-kopf"><h2>Wechselrichter</h2><span class="wr-modus" id="st-modus"></span></div>
+        <div class="wr-oben">
+          <div class="wr-anzeige"><span class="wr-punkt" id="st-punkt"></span><div><b id="st-zustand">–</b><small id="st-jetzt">&nbsp;</small></div></div>
+          <button type="button" class="wr-knopf" id="st-knopf"><span id="st-knopf-text">Ausschalten</span><small id="st-knopf-klein">Standby, speist nicht mehr ein</small></button>
+        </div>
+        <p class="wr-meldung" id="st-meldung" hidden></p>
+        <label class="schalter"><input type="checkbox" id="st-regel"><span></span><div><b>Automatik bei Minuspreis</b><small>Leistung auf den Hausverbrauch drosseln, solange der Börsenpreis negativ ist</small></div></label>
         <div class="zeile"><span>Stunden mit Minuspreis</span><b id="st-h">–</b></div>
         <div class="zeile"><span>Einspeisung abgeregelt</span><b id="st-kwh">–</b></div>
         <div class="zeile"><span>Kosten mit deinem fixen Tarif</span><b id="st-fix">–</b></div>
         <div class="zeile"><span>Nutzen mit Börsenpreis</span><b id="st-dyn">–</b></div>
-        <details class="erkl"><summary>So funktioniert die Regel</summary><p id="st-regel"></p></details>
-        <p class="leise" id="st-hinweis"></p>
+        <details class="erkl"><summary>So funktioniert die Steuerung</summary><p id="st-regeltext"></p><ol id="st-log" class="wr-log"></ol></details>
       </article>
       <article class="karte breit">
         <div class="karte-kopf"><h2>Fahrplan</h2>

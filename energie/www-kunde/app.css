@@ -278,3 +278,28 @@ main { max-width: 1160px; margin: 0 auto; padding: 16px; }
 .speicher .balken i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--gruen), #5ee0a0); }
 .speicher small { grid-column: 1 / -1; color: var(--leise); font-size: .8rem; }
 @media (max-width: 480px) { .seg button { padding: 8px 11px; font-size: .84rem; } }
+
+/* Wechselrichter-Steuerung */
+.wr .wr-modus { font-size: .78rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 4px 10px; border-radius: 99px; background: var(--flaeche-2); color: var(--leise); }
+.wr .wr-modus.scharf { background: color-mix(in srgb, var(--gruen) 14%, transparent); color: var(--gruen); }
+.wr-oben { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; margin: 4px 0 10px; }
+.wr-anzeige { display: flex; gap: 12px; align-items: center; min-width: 0; flex: 1 1 220px; }
+.wr-anzeige b { display: block; font-size: 1.15rem; }
+.wr-anzeige small { display: block; color: var(--leise); font-size: .85rem; }
+.wr-punkt { flex: none; width: 14px; height: 14px; border-radius: 50%; background: var(--gruen); box-shadow: 0 0 0 5px color-mix(in srgb, var(--gruen) 20%, transparent); }
+.wr-punkt.gelb { background: var(--sonne); box-shadow: 0 0 0 5px color-mix(in srgb, var(--sonne) 22%, transparent); }
+.wr-punkt.rot { background: var(--rot); box-shadow: 0 0 0 5px color-mix(in srgb, var(--rot) 22%, transparent); animation: wrpuls 1.2s ease-in-out infinite; }
+.wr-punkt.grau { background: var(--leise); box-shadow: none; }
+@keyframes wrpuls { 50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--rot) 0%, transparent); } }
+.wr-knopf { flex: 0 1 auto; display: grid; gap: 2px; text-align: center; border: 0; border-radius: 16px; padding: 12px 22px; cursor: pointer; font: inherit; color: #fff;
+  background: linear-gradient(135deg, #ff5a4e, #d92d20); box-shadow: 0 6px 18px rgba(217,45,32,.3); transition: transform .1s; }
+.wr-knopf span { font-weight: 800; font-size: 1.02rem; }
+.wr-knopf small { opacity: .85; font-size: .76rem; }
+.wr-knopf:active { transform: scale(.97); }
+.wr-knopf.ein { background: linear-gradient(135deg, #32d583, #039855); box-shadow: 0 6px 18px rgba(3,152,85,.3); }
+.wr-knopf.bestaetigen { background: #1b0705; color: #fff; outline: 3px solid #ff5a4e; animation: wrwackeln .4s ease-in-out 2; }
+.wr-knopf:disabled { opacity: .55; cursor: wait; }
+@keyframes wrwackeln { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+.wr-meldung { margin: 0 0 8px; font-size: .88rem; color: var(--text-2); }
+.wr-meldung.fehler { color: var(--rot); }
+.wr-log { margin: 8px 0 0; padding-left: 18px; color: var(--leise); font-size: .85rem; }

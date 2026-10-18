@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#0b1730">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css?v=20261015d">
+<link rel="stylesheet" href="style.css?v=20261018a">
 </head>
 <body>
 
@@ -35,7 +35,7 @@
     <div>
       <a class="neu-pill" href="#einspeisung"><b>Neu</b> Gratis-Warnung bei negativen Strompreisen →</a>
       <span class="eyebrow">Energie-Management für Haus & Betrieb</span>
-      <h1>Deine Energie. Live, in Franken – <span class="gold">und bald clever gesteuert.</span></h1>
+      <h1>Deine Energie. Live, in Franken – <span class="gold">und clever gesteuert.</span></h1>
       <p class="lead">homi verbindet Solaranlage, Batterie, Wärmepumpe, E-Auto und Stromnetz zu einem Bild – mit deinem echten Tarif, Börsenpreisen und Solarprognose. Ein Energieberater sagt dir, was sich lohnt. Und ab 2027 schützt homi dich vor negativen Strompreisen.</p>
       <div class="ctas">
         <a class="btn btn-sun" href="#anmelden">Jetzt anmelden</a>
@@ -150,10 +150,11 @@
       </div>
       <div class="f-gruppe blau rein">
         <div class="f-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="5"/><circle cx="16" cy="12" r="3"/></svg></div>
-        <h3>Steuern <span class="bald-tag">Bald</span></h3>
-        <p>homi schaltet für dich – nach Sonne und Börsenpreis.</p>
+        <h3>Steuern</h3>
+        <p>homi schaltet für dich – nach Sonne und Börsenpreis. <span class="leise-uhr">Mit Uhr: bald.</span></p>
         <ul class="f-liste">
-          <li class="bald"><b>Einspeisestopp</b> bei negativen Preisen</li>
+          <li><b>Einspeisestopp</b> bei negativen Preisen – automatisch</li>
+          <li><b>Wechselrichter ein/aus</b> per Knopf in App und Home Assistant</li>
           <li class="bald"><b>Batterie</b> lädt in den günstigsten Stunden</li>
           <li class="bald"><b>Wallbox und Wärmepumpe</b> mit Sonnenstrom</li>
           <li class="bald"><b>Lastspitzen</b> im Betrieb vermeiden</li>
@@ -207,7 +208,7 @@
         <div class="card angebot gratis rein">
           <span class="badge-gratis">Gratis</span>
           <h3>Minuspreis-Warnung per Mail</h3>
-          <p class="s">An Tagen mit negativen Börsenpreisen bekommst du um <b>6:45 Uhr</b> eine Mail: wann es so weit ist und was du tun kannst. Den Wechselrichter drosselst du dann selbst oder lässt Waschmaschine & Co. laufen.</p>
+          <p class="s">An Tagen mit negativen Börsenpreisen bekommst du um <b>6:45 Uhr</b> eine Mail: wann es so weit ist und was du tun kannst. Den Wechselrichter drosselst du dann selbst (oder homi macht es automatisch) oder lässt Waschmaschine & Co. laufen.</p>
           <form id="warnung-form" class="warnung-form" novalidate>
             <input name="email" type="email" autocomplete="email" placeholder="deine@email.ch" aria-label="E-Mail-Adresse" required maxlength="150">
             <div class="honig" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
@@ -217,12 +218,13 @@
           </form>
         </div>
         <div class="card angebot auto rein">
-          <span class="badge-auto">homi Steuerung · in Entwicklung</span>
+          <span class="badge-auto">homi Steuerung · Einspeisestopp live</span>
           <h3>Vollautomatisch</h3>
           <ul>
-            <li>Einspeisung stoppt bei Minuspreisen von selbst</li>
-            <li>Batterie lädt in den günstigsten Stunden – nicht einfach bei Sonnenaufgang</li>
-            <li>Boiler, Wärmepumpe oder E-Auto springen bei Minuspreisen ein</li>
+            <li>Einspeisung stoppt bei Minuspreisen von selbst – <b>läuft bereits</b>: homi drosselt Fronius-Wechselrichter auf den Eigenverbrauch</li>
+            <li>Sicher: jeder Befehl läuft nach 5 Minuten ab – fällt homi aus, produziert die Anlage normal weiter</li>
+            <li>Batterie lädt in den günstigsten Stunden – nicht einfach bei Sonnenaufgang <i>(bald)</i></li>
+            <li>Boiler, Wärmepumpe oder E-Auto springen bei Minuspreisen ein <i>(bald)</i></li>
             <li>Zuerst im Testmodus – mit Nachweis, was es bringt</li>
           </ul>
           <a class="btn btn-dark" href="#anmelden" data-rolle="Privat">Für die Steuerung vormerken</a>
@@ -362,7 +364,7 @@
       <details><summary>Welche Geräte werden unterstützt?</summary><p>Heute live: Fronius-Wechselrichter mit Smart Meter. Weitere Wechselrichter, Batterien, Wallboxen und Wärmepumpen binde ich über offene Standards an – nenn deine Geräte im Formular, dann prüfe ich sie.</p></details>
       <details><summary>Wie erreiche ich mein homi?</summary><p>Unter deiner eigenen Adresse wie <b>sonnenhof.homi.solar</b>, im Browser oder als App auf dem Handy. Anmeldung mit Code per Mail oder mit Face ID / Fingerabdruck. <a href="https://beispiel.homi.solar" target="_blank" rel="noopener">Beispiel ansehen</a></p></details>
       <details><summary>Wo liegen meine Daten?</summary><p>Bei dir zu Hause oder auf Servern in der Schweiz – nicht bei einem internationalen Cloud-Anbieter. Kein Tracking, keine Weitergabe an Dritte.</p></details>
-      <details><summary>Steuert homi meine Geräte?</summary><p>Die Steuerung ist in Entwicklung: zuerst der Einspeisestopp bei negativen Preisen, dann Batterie, Wallbox und Wärmepumpe. Jede Steuerung startet im Testmodus, und du entscheidest.</p></details>
+      <details><summary>Steuert homi meine Geräte?</summary><p>Ja, Schritt für Schritt. Der Einspeisestopp bei negativen Preisen läuft bereits mit Fronius-Wechselrichtern (über Modbus, lokal im Haus), dazu ein Ein/Aus-Knopf in der App und in Home Assistant. Als Nächstes folgen Batterie, Wallbox und Wärmepumpe. Jede Steuerung startet im Testmodus, du entscheidest über das Scharfschalten – und jeder Befehl läuft von selbst ab, falls homi einmal ausfällt.</p></details>
       <details><summary>Wer steckt dahinter?</summary><p>Patrick Biber aus Uerikon am Zürichsee – Solarberater und IT-Profi. homi ist aus dem eigenen Haus entstanden. Mehr auf <a href="https://biber.solar" target="_blank" rel="noopener">biber.solar</a>.</p></details>
     </div>
   </div>
@@ -376,6 +378,6 @@
   </div>
 </footer>
 
-<script src="app.js?v=20261015d" defer></script>
+<script src="app.js?v=20261018a" defer></script>
 </body>
 </html>
