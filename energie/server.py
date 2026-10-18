@@ -238,7 +238,7 @@ class Handler(SimpleHTTPRequestHandler):
         return json.loads(self.rfile.read(laenge))
 
     def post_geraete(self):
-        """Steckdose schalten: {"id": "heizung-dach", "modus": "auto"|"ein"|"aus"}."""
+        """Steckdose schalten: {"id": "laden-mobil", "modus": "auto"|"ein"|"aus"}."""
         von = self.schalt_von()
         if not von:
             return self.send_error(403)
