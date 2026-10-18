@@ -120,6 +120,12 @@
   .wr-regel { color: var(--cyan); cursor: pointer; }
   .wr-log { margin: 0; padding-left: 18px; color: var(--grey); font-size: 12px; }
   .wr-fehler { color: var(--red); }
+  /* Steckdosen (myStrom): Kachel mit AUTO / EIN / AUS */
+  #geraete { display: contents; }
+  .gerat .v { color: var(--yellow); } .gerat.an { border-color: var(--yellow); } .gerat.an .v { animation: blink 1.4s steps(2) infinite; }
+  .g-knoepfe { display: flex; gap: 4px; margin-top: 6px; }
+  .g-knoepfe button { flex: 1; font: bold 12px "Courier New", Courier, monospace; padding: 4px 0; background: #000; color: var(--grey); border: 2px solid #333; cursor: pointer; }
+  .g-knoepfe button.an { color: #000; background: var(--yellow); border-color: var(--yellow); }
   .charts { margin-top: 10px; display: grid; gap: 8px; }
   .legend { font-size: 12px; color: var(--grey); display: flex; flex-wrap: wrap; gap: 4px 14px; }
   .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: -1px; }
@@ -178,6 +184,7 @@
       <div class="stat boerse" id="t-boerse"><div class="k">Strombörse Day-Ahead CH</div><div class="v" id="s-boerse">–</div><div class="s" id="s-boerse2">&nbsp;</div></div>
       <div class="stat woche" title="Wochenbericht: kommt jeden Montag um 08:00 auch als Mail und Push"><div class="k" id="s-woche0">Letzte Woche</div><div class="v" id="s-woche">–</div><div class="s" id="s-woche2">&nbsp;</div></div>
       <div class="stat rat" title="Energieberater: drei Tipps aus den Messwerten der letzten 14 Tage"><div class="k">Energieberater · Tipp antippen = Warum</div><div class="v" id="s-rat">–</div><ol id="s-rat2"></ol><div class="s" id="s-rat3">&nbsp;</div></div>
+      <div id="geraete"></div>
       <div class="stat batt"><div class="k">Batterie-Simulation</div><div class="v" id="s-batt">–</div><div class="s" id="s-batt2">&nbsp;</div></div>
       <div class="stat amort" title="Investition minus bisheriger Ertrag (selbst verbraucht × Bezugstarif + eingespeist × Rücklieferung), heutige Tarife"><div class="k">Anlage abbezahlt</div><div class="v" id="s-amort">–</div><div class="s" id="s-amort2">&nbsp;</div><span class="balken8"><i id="s-amort3" style="width:0"></i></span></div>
     </div>
@@ -494,6 +501,28 @@ $("wr-knopf").addEventListener("click", () => {
   steuSenden({ wr: ziel });
 });
 $("wr-regel").addEventListener("change", e => steuSenden({ regel: e.target.checked }));
+
+// Steckdosen (myStrom), z. B. Solarladestation – wie in der Kunden-Oberfläche
+async function pollGeraete() {
+  let d;
+  try { d = await (await fetch("api/geraete", { cache: "no-store" })).json(); } catch { return; }
+  $("geraete").innerHTML = (d.geraete || []).map(g => {
+    const l = g.live || {}, h = g.heute || {};
+    const v = l.erreichbar === false ? "nicht erreichbar" : l.an ? `LÄDT · ${Math.round(l.leistung_w)} W` : l.erreichbar === undefined ? "–" : "aus";
+    return `<div class="stat gerat${l.an ? " an" : ""}" title="${g.regel.replace(/"/g, "&quot;")}"><div class="k">${g.name} · an ab ${g.ein_ab_w} W Überschuss</div>
+      <div class="v">${v}</div><div class="s">${l.grund ? l.grund + " · " : ""}heute ${h.kwh.toFixed(2)} kWh (${h.kwh ? Math.round(100 * h.solar_kwh / h.kwh) : 0} % Solar)</div>
+      <div class="g-knoepfe">${["auto", "ein", "aus"].map(m => `<button type="button" data-id="${g.id}" data-modus="${m}" class="${g.modus === m ? "an" : ""}">${m.toUpperCase()}</button>`).join("")}</div></div>`;
+  }).join("");
+}
+$("geraete").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-modus]"); if (!b) return;
+  b.textContent = "…";
+  try {
+    const r = await fetch("api/geraete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: b.dataset.id, modus: b.dataset.modus }) });
+    if (!r.ok) throw new Error();
+  } catch { b.textContent = "nur mit Passwort"; setTimeout(pollGeraete, 2500); return; }
+  pollGeraete(); setTimeout(pollGeraete, 3000);
+});
 
 // Amortisation und Batterie-Simulation (wie in der Kunden-Oberfläche), alle 10 Minuten
 const MONATE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
@@ -1204,6 +1233,7 @@ pollEinspeisung(); setInterval(pollEinspeisung, 10 * 60000);
 pollAmort(); setInterval(pollAmort, 10 * 60000);
 pollBerater(); setInterval(pollBerater, 60 * 60000);
 pollSteuerung(); setInterval(pollSteuerung, 15000);
+pollGeraete(); setInterval(pollGeraete, 15000);
 pollWoche(); setInterval(pollWoche, 60 * 60000);
 // Klick auf einen Tipp: die Figur erklärt, warum (Rechenweg im Tooltip)
 $("s-rat2").addEventListener("click", e => {

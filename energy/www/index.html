@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#0b1730">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css?v=20261018a">
+<link rel="stylesheet" href="style.css?v=20261018c">
 </head>
 <body>
 
@@ -155,6 +155,7 @@
         <ul class="f-liste">
           <li><b>Einspeisestopp</b> bei negativen Preisen – automatisch</li>
           <li><b>Wechselrichter ein/aus</b> per Knopf in App und Home Assistant</li>
+          <li><b>Geräte mit Sonnenüberschuss</b> – smarte Steckdose (z. B. myStrom) schaltet ein, sobald Strom übrig ist</li>
           <li class="bald"><b>Batterie</b> lädt in den günstigsten Stunden</li>
           <li class="bald"><b>Wallbox und Wärmepumpe</b> mit Sonnenstrom</li>
           <li class="bald"><b>Lastspitzen</b> im Betrieb vermeiden</li>
@@ -364,7 +365,7 @@
       <details><summary>Welche Geräte werden unterstützt?</summary><p>Heute live: Fronius-Wechselrichter mit Smart Meter. Weitere Wechselrichter, Batterien, Wallboxen und Wärmepumpen binde ich über offene Standards an – nenn deine Geräte im Formular, dann prüfe ich sie.</p></details>
       <details><summary>Wie erreiche ich mein homi?</summary><p>Unter deiner eigenen Adresse wie <b>sonnenhof.homi.solar</b>, im Browser oder als App auf dem Handy. Anmeldung mit Code per Mail oder mit Face ID / Fingerabdruck. <a href="https://beispiel.homi.solar" target="_blank" rel="noopener">Beispiel ansehen</a></p></details>
       <details><summary>Wo liegen meine Daten?</summary><p>Bei dir zu Hause oder auf Servern in der Schweiz – nicht bei einem internationalen Cloud-Anbieter. Kein Tracking, keine Weitergabe an Dritte.</p></details>
-      <details><summary>Steuert homi meine Geräte?</summary><p>Ja, Schritt für Schritt. Der Einspeisestopp bei negativen Preisen läuft bereits mit Fronius-Wechselrichtern (über Modbus, lokal im Haus), dazu ein Ein/Aus-Knopf in der App und in Home Assistant. Als Nächstes folgen Batterie, Wallbox und Wärmepumpe. Jede Steuerung startet im Testmodus, du entscheidest über das Scharfschalten – und jeder Befehl läuft von selbst ab, falls homi einmal ausfällt.</p></details>
+      <details><summary>Steuert homi meine Geräte?</summary><p>Ja, Schritt für Schritt. Der Einspeisestopp bei negativen Preisen läuft bereits mit Fronius-Wechselrichtern (über Modbus, lokal im Haus), dazu ein Ein/Aus-Knopf in der App und in Home Assistant. Geräte an smarten Steckdosen (z. B. myStrom) schaltet homi ein, sobald Solarstrom übrig ist – etwa die Ladestation für Handy und Tablet. Als Nächstes folgen Batterie, Wallbox und Wärmepumpe. Jede Steuerung startet im Testmodus, du entscheidest über das Scharfschalten – und jeder Befehl läuft von selbst ab, falls homi einmal ausfällt.</p></details>
       <details><summary>Wer steckt dahinter?</summary><p>Patrick Biber aus Uerikon am Zürichsee – Solarberater und IT-Profi. homi ist aus dem eigenen Haus entstanden. Mehr auf <a href="https://biber.solar" target="_blank" rel="noopener">biber.solar</a>.</p></details>
     </div>
   </div>
@@ -378,6 +379,6 @@
   </div>
 </footer>
 
-<script src="app.js?v=20261018a" defer></script>
+<script src="app.js?v=20261018c" defer></script>
 </body>
 </html>

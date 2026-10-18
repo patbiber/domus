@@ -253,6 +253,25 @@ rest:
         value_template: "{{ (0 - value_json.summe.boerse_chf) | round(2) }}"
         unit_of_measurement: CHF
         icon: mdi:cash-plus
+  - resource: http://127.0.0.1:8099/api/geraete
+    scan_interval: 30
+    sensor:
+      - name: Solarladestation
+        unique_id: homi_geraet_laden_mobil
+        value_template: "{{ 'lädt' if value_json.geraete[0].live.an else ('nicht erreichbar' if value_json.geraete[0].live.erreichbar == false else 'aus') }}"
+        icon: mdi:cellphone-charging
+        json_attributes_path: "$.geraete[0]"
+        json_attributes: [id, name, modus, regel, ein_ab_w, aus_unter_w, live, heute, woche]
+      - name: Solarladestation Leistung
+        unique_id: homi_geraet_laden_mobil_w
+        value_template: "{{ value_json.geraete[0].live.leistung_w | default(0) }}"
+        unit_of_measurement: W
+        device_class: power
+      - name: Solarladestation heute
+        unique_id: homi_geraet_laden_mobil_kwh
+        value_template: "{{ value_json.geraete[0].heute.kwh }}"
+        unit_of_measurement: kWh
+        icon: mdi:counter
   - resource: http://127.0.0.1:8099/api/berater
     scan_interval: 3600
     sensor:
@@ -320,6 +339,11 @@ rest_command:
     method: POST
     content_type: application/json
     payload: '{"wr": "{{ wr }}"}'
+  homi_geraet:
+    url: http://127.0.0.1:8099/api/geraete
+    method: POST
+    content_type: application/json
+    payload: '{"id": "{{ id }}", "modus": "{{ modus }}"}'
   homi_regel:
     url: http://127.0.0.1:8099/api/steuerung
     method: POST
@@ -327,6 +351,20 @@ rest_command:
     payload: '{"regel": {{ "true" if an else "false" }}}'
 
 template:
+  - select:
+      - name: Solarladestation Modus
+        unique_id: homi_geraet_laden_mobil_modus
+        icon: mdi:power-plug-battery
+        options: "{{ ['auto', 'ein', 'aus'] }}"
+        state: "{{ state_attr('sensor.ladestation_handy', 'modus') | default('auto') }}"
+        availability: "{{ state_attr('sensor.ladestation_handy', 'modus') is not none }}"
+        select_option:
+          - action: rest_command.homi_geraet
+            data:
+              id: laden-mobil
+              modus: "{{ option }}"
+          - action: homeassistant.update_entity
+            target: {entity_id: sensor.ladestation_handy}
   - switch:
       - name: Wechselrichter
         unique_id: homi_wechselrichter_schalter

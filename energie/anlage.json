@@ -11,6 +11,11 @@
   "azimut": 30,
   "faktor_start": 5.98,
   "max_kw": 8.2,
+  "geraete": [
+    {"id": "laden-mobil", "name": "Solarladestation", "typ": "mystrom", "mac": "FCF5C419ED7C", "ip": "192.168.1.211",
+     "ein_ab_w": 200, "aus_unter_w": 100, "bei_minuspreis": true, "max_w": 2300,
+     "_kommentar": "myStrom WiFi Switch v2 (max. 2300 W) mit den Ladegeräten für Handy & Co. Patrick 18.10.2026: an, sobald mehr als 200 W Solarüberschuss ins Netz gehen."}
+  ],
   "steuerung": {"modus": "scharf", "seit": "2026-10-16", "scharf_seit": "2026-10-16", "_kommentar": "Modbus-Steuerung des Fronius: aus | test (nur nachrechnen) | scharf (homi schreibt; auf Patricks Wunsch seit 16.10.2026)"},
   "geraet_stunden": 2
 }

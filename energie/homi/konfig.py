@@ -36,6 +36,8 @@ RAPL_DIR = os.environ.get("RAPL_DIR", "/host/rapl/intel-rapl:0")   # Energiezäh
 
 NUC_REST_W = float(os.environ.get("NUC_REST_W", "4.0"))          # geschätzt: Platine, SSD, Netzteilverluste
 
+GERAETE_FILE = os.environ.get("GERAETE_FILE", "/data/geraete.json")
+
 STEUERUNG_FILE = os.environ.get("STEUERUNG_FILE", "/data/steuerung.json")
 
 ANLAGE_CFG = os.environ.get("ANLAGE_CFG", "/app/anlage.json")

@@ -303,3 +303,14 @@ main { max-width: 1160px; margin: 0 auto; padding: 16px; }
 .wr-meldung { margin: 0 0 8px; font-size: .88rem; color: var(--text-2); }
 .wr-meldung.fehler { color: var(--rot); }
 .wr-log { margin: 8px 0 0; padding-left: 18px; color: var(--leise); font-size: .85rem; }
+
+/* Steckdosen (myStrom) */
+.geraete-karten { display: contents; }
+.geraet .g-oben { display: flex; align-items: center; gap: 12px; margin: 2px 0 12px; }
+.geraet .g-icon { flex: none; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: var(--flaeche-2); color: var(--leise); transition: background .3s, color .3s; }
+.geraet .g-icon svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.geraet.an .g-icon { background: linear-gradient(135deg, #ffb020, #12b76a); color: #fff; box-shadow: 0 6px 16px rgba(240,68,56,.3); }
+.geraet .g-oben b { display: block; font-size: 1.1rem; }
+.geraet .g-oben small { display: block; color: var(--leise); font-size: .84rem; }
+.geraet .seg { margin: 0 0 6px; }
+.geraet .seg button.an { background: var(--navy); color: #fff; }

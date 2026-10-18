@@ -438,6 +438,17 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
     `_begrenzung`, `sensor.steuerungstest_*`). Protokoll der Aktionen (wer, wann) in allen drei.
   - **Abrechnung:** Minuspreis-Stunden, abgeregelte kWh (scharf: geschätzt aus der Solarprognose), Kosten zum fixen
     Tarif vs. Nutzen zum Börsenpreis. Mail am 30.10.2026 (`steuerung-bericht.py`, Timer `homi-steuerung-bericht`).
+- **Smarte Steckdosen** (`energie/homi/geraete.py`, `/api/geraete`, seit 18.10.2026): myStrom WiFi Switch v2
+  (MAC FCF5C419ED7C, zuletzt 192.168.1.211 per DHCP – homi sucht sie bei Adresswechsel über die MAC; WLAN-Aussetzer
+  werden erst nach 30 s als «nicht erreichbar» gemeldet). Konfiguration in `energie/anlage.json` → `geraete`,
+  Zustand/Verbrauch in `data/geraete.json`. Zurzeit die **Solarladestation** (Ladegeräte für Handy & Co.):
+  Automatik nach **Solarüberschuss** (Einspeisung + eigener Verbrauch der Steckdose, 2-Minuten-Mittel): EIN ab 200 W,
+  AUS unter 100 W, mind. 5 min zwischen Schaltungen der Automatik, zusätzlich EIN bei negativem Börsenpreis; ohne
+  Messwerte (Neustart) bleibt alles, wie es ist. Modus auto/ein/aus von Hand (POST nur angemeldet oder von HA).
+  **Sicherheitsnetz:** homi schaltet nur über den Timer der Steckdose ein (`/timer?mode=on&time=300`, jede Minute
+  erneuert) → fällt homi aus, ist sie nach 5 min aus. Zählt Verbrauch, Solaranteil und Laufzeit. Überall: App-Karte in
+  der Übersicht, Retro-Kachel mit AUTO/EIN/AUS, HA `sensor.ladestation_handy` (Name «Solarladestation», + `_leistung`,
+  `_heute`) und `select.ladestation_handy_modus`. (Zuerst war «Heizung Dachstock ab 3 kW» geplant – verworfen.)
 - **Grundsatz:** Jede Funktion in allen Oberflächen (Retro, Kunden-UI, Home Assistant), ausser gerätespezifische
   (z. B. Verbrauch des NUC). Stand 10.10.2026 zusätzlich angeglichen: Batterie-Simulation in der Retro-Seite,
   Verlauf «Tag» und «Gesamt» in der Kunden-UI, HA-Sensoren `sensor.einspeisung_dynamisch_heute`,

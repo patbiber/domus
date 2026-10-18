@@ -572,6 +572,35 @@ $("st-knopf").addEventListener("click", () => {
 });
 $("st-regel").addEventListener("change", e => steuerungSenden({ regel: e.target.checked }));
 
+/* ======================= Übersicht: Steckdosen (myStrom) ======================= */
+const LADEN = '<svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M12.5 7 10 12h4l-2.5 5"/></svg>';
+const watt = w => w >= 1000 ? `${zahl(w / 1000, w % 1000 ? 1 : 0)} kW` : `${zahl(w, 0)} W`;
+function geraeteZeichnen() {
+  const d = D.geraete;
+  $("geraete-karten").innerHTML = (d && d.geraete || []).map(g => {
+    const l = g.live || {}, h = g.heute || {}, w = g.woche || {};
+    const zustand = l.erreichbar === false ? "Steckdose nicht erreichbar" : l.an ? `Lädt · ${zahl(l.leistung_w, 0)} W` : "Aus";
+    return `<article class="karte geraet${l.an ? " an" : ""}">
+      <div class="karte-kopf"><h2>${g.name}</h2><span class="leise">an ab ${watt(g.ein_ab_w)} Überschuss</span></div>
+      <div class="g-oben"><span class="g-icon">${LADEN}</span><div><b>${zustand}</b><small>${l.grund || "&nbsp;"}</small></div></div>
+      <div class="seg klein" role="group" aria-label="Modus">${[["auto", "Automatik"], ["ein", "Ein"], ["aus", "Aus"]].map(([m, t]) =>
+        `<button type="button" data-id="${g.id}" data-modus="${m}" class="${g.modus === m ? "an" : ""}" aria-pressed="${g.modus === m}">${t}</button>`).join("")}</div>
+      <div class="zeile"><span>Heute</span><b>${zahl(h.kwh, 2)} kWh · ${h.kwh ? Math.round(100 * h.solar_kwh / h.kwh) : 0} % Solar</b></div>
+      <div class="zeile"><span>Letzte 7 Tage</span><b>${zahl(w.kwh, 1)} kWh · ${zahl(w.laufzeit_h, 1)} h</b></div>
+      <details class="erkl"><summary>So schaltet homi</summary><p>${g.regel}</p></details>
+    </article>`;
+  }).join("");
+}
+$("geraete-karten").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-modus]"); if (!b) return;
+  try {
+    const r = await fetch("api/geraete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: b.dataset.id, modus: b.dataset.modus }) });
+    if (!r.ok) throw new Error();
+    D.geraete = await r.json(); geraeteZeichnen();
+    setTimeout(async () => { try { D.geraete = await holen("geraete"); geraeteZeichnen(); } catch {} }, 4000);
+  } catch { b.textContent = "Fehler"; }
+});
+
 /* ======================= Mehr: Speicher, Anlage ======================= */
 function speicherZeichnen() {
   const s = D.speicher;
@@ -587,7 +616,7 @@ function speicherZeichnen() {
 /* ======================= Laden ======================= */
 function zeichnen() {
   flussZeichnen(); kpisZeichnen(); prognoseZeichnen(); preisZeichnen(); warnungZeichnen();
-  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen(); steuerungZeichnen();
+  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen(); steuerungZeichnen(); geraeteZeichnen();
 }
 async function status() {
   try { D.status = await holen("status"); flussZeichnen(); kpisZeichnen(); preisZeichnen(); }
@@ -597,7 +626,8 @@ async function minute() {
   try { D.hist = await holen("history"); } catch {}
   try { const r = await holen(`archiv?aufloesung=tag&von=${iso(new Date())}&bis=${iso(new Date())}`); D.heute = r.zeilen[0] || null; } catch {}
   try { D.steuerung = await holen("steuerung"); } catch {}
-  kpisZeichnen(); verlauf24Zeichnen(); amortZeichnen(); steuerungZeichnen();
+  try { D.geraete = await holen("geraete"); } catch {}
+  kpisZeichnen(); verlauf24Zeichnen(); amortZeichnen(); steuerungZeichnen(); geraeteZeichnen();
 }
 async function selten() {
   for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"], ["berater", "berater"], ["steuerung", "steuerung"]]) {

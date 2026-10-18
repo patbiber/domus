@@ -13,6 +13,7 @@ Endpunkte:
   /api/berater  Energieberater: drei Tipps mit Begründung und Rechenweg, Batterie-Empfehlung
   /api/steuerung  Wechselrichter-Steuerung über Modbus: Verbindung, Begrenzung, Testmodus-Auswertung (Minuspreis →
                 Nulleinspeisung: was homi getan hätte und was es gekostet/gebracht hätte)
+  /api/geraete  smarte Steckdosen (myStrom): Zustand, Regel, Verbrauch heute/7 Tage; POST {"id", "modus": auto|ein|aus}
   /api/info     Anzeigename und Leistung der Anlage
   /api/wochenbericht  letzte ganze Woche (Mo–So) mit Vorwochen-Vergleich, ?woche=2026-W41
   /api/push     GET: öffentlicher VAPID-Schlüssel; POST: App-Push an-/abmelden, Testnachricht
@@ -39,10 +40,11 @@ from homi.berater import berater, berater_cache
 from homi.boerse import boerse_now, poll_boerse
 from homi.einspeisung import einspeise_plan
 from homi.erfassung import poll
-from homi.konfig import ANLAGE_CFG, ARCHIV_DIR, ARCHIV_TAGE, KUNDE_HOST, PORT, PUSH_DIR, PUSH_HOSTS, PUSH_THEMEN, SPEICHER_FILE, STEUERUNG_FILE, WWW, WWW_KUNDE
+from homi.konfig import ANLAGE_CFG, ARCHIV_DIR, ARCHIV_TAGE, KUNDE_HOST, PORT, PUSH_DIR, PUSH_HOSTS, PUSH_THEMEN, SPEICHER_FILE, STEUERUNG_FILE, GERAETE_FILE, WWW, WWW_KUNDE
 from homi.prognose import poll_prognose
 from homi.push_abo import push_lesen, push_schluessel, push_schreiben
 from homi.speicher import SpeicherSimulation
+from homi.geraete import starten as geraete_starten
 from homi.steuerung import Steuerung, regeln
 from homi.wochenbericht import wochenbericht
 from homi.zustand import history, lock, state
@@ -120,6 +122,9 @@ class Handler(SimpleHTTPRequestHandler):
             except (OSError, ValueError, KeyError) as e:      # Fronius nachts aus o. Ä.: letzte Berechnung zeigen
                 print("Amortisation:", e, flush=True)
                 return self.send_json(amort_cache["daten"] or {"aktiv": False, "fehler": "Zähler nicht erreichbar"})
+        if path == "/api/geraete":
+            with lock:
+                return self.send_json(zustand.geraete.report())
         if path == "/api/steuerung":
             with lock:
                 return self.send_json(zustand.steuerung.report(state["status"], state["modbus"]))
@@ -154,6 +159,8 @@ class Handler(SimpleHTTPRequestHandler):
         """App-Push: {"aktion": "anmelden"|"abmelden"|"lesen"|"test", "abo": PushSubscription, "themen": [...]}"""
         if self.path == "/api/steuerung":
             return self.post_steuerung()
+        if self.path == "/api/geraete":
+            return self.post_geraete()
         if self.path != "/api/push":
             return self.send_error(405)
         try:
@@ -213,24 +220,45 @@ class Handler(SimpleHTTPRequestHandler):
         return self.send_json({"von": von.isoformat(), "bis": bis.isoformat(), "aufloesung": aufl,
                                "erste_daten": erste, **archiv_aggregat(rows, aufl)})
 
-    def post_steuerung(self):
-        """Wechselrichter-Schalter: {"wr": "ein"|"aus"} und/oder {"regel": true|false}.
-        Nur über nginx mit Anmeldung (home.biber.solar: Passwort, biber.homi.solar: Login) oder von Home Assistant
-        auf dem NUC (127.0.0.1) – nicht direkt aus dem LAN (Port 8099 ist dort offen, z. B. für Gäste-Geräte)."""
+    def schalt_von(self):
+        """Wer darf schalten? Nur über nginx mit Anmeldung (home.biber.solar: Passwort, biber.homi.solar: Login) oder
+        von Home Assistant auf dem NUC (127.0.0.1) – nicht direkt aus dem LAN (Port 8099 ist dort offen, z. B. für
+        Gäste-Geräte). Gibt die Quelle zurück oder None."""
         host = (self.headers.get("Host") or "").split(":")[0].lower()
         ip = self.client_address[0]
         von = {"home.biber.solar": "Retro", "biber.homi.solar": "App"}.get(host)
         if ip.startswith("127.") and host in ("127.0.0.1", "localhost"):
-            von = "Home Assistant"
-        elif not ip.startswith("172.18."):
-            von = None
+            return "Home Assistant"
+        return von if ip.startswith("172.18.") else None
+
+    def json_body(self):
+        laenge = int(self.headers.get("Content-Length", "0"))
+        if not 0 < laenge <= 256:
+            raise ValueError
+        return json.loads(self.rfile.read(laenge))
+
+    def post_geraete(self):
+        """Steckdose schalten: {"id": "heizung-dach", "modus": "auto"|"ein"|"aus"}."""
+        von = self.schalt_von()
         if not von:
             return self.send_error(403)
         try:
-            laenge = int(self.headers.get("Content-Length", "0"))
-            if not 0 < laenge <= 256:
-                raise ValueError
-            d = json.loads(self.rfile.read(laenge))
+            d = self.json_body()
+            with lock:
+                zustand.geraete.setzen(str(d["id"]), d["modus"], von)
+                antwort = zustand.geraete.report()
+        except (ValueError, KeyError, TypeError, AttributeError):
+            return self.send_error(400)
+        print(f"Gerät: {d} von {von}", flush=True)
+        return self.send_json(antwort)
+
+    def post_steuerung(self):
+        """Wechselrichter-Schalter: {"wr": "ein"|"aus"} und/oder {"regel": true|false} (Berechtigung: schalt_von)."""
+        von = self.schalt_von()
+        if not von:
+            return self.send_error(403)
+        try:
+            d = self.json_body()
             wr, regel = d.get("wr"), d.get("regel")
             if wr not in (None, "ein", "aus") or regel not in (None, True, False) or (wr is None and regel is None):
                 raise ValueError
@@ -253,6 +281,7 @@ if __name__ == "__main__":
     zustand.archiv = Archiv(ARCHIV_DIR)
     zustand.steuerung = Steuerung(STEUERUNG_FILE)
     threading.Thread(target=regeln, daemon=True).start()
+    zustand.geraete = geraete_starten(GERAETE_FILE)
     threading.Thread(target=poll_boerse, daemon=True).start()
     threading.Thread(target=poll_prognose, daemon=True).start()
     threading.Thread(target=poll, daemon=True).start()

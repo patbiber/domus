@@ -13,4 +13,6 @@ speicher_sim = None
 
 archiv = None
 
+geraete = None                     # smarte Steckdosen (geraete.py)
+
 steuerung = None                   # Wechselrichter-Steuerung (Testmodus), siehe steuerung.py
