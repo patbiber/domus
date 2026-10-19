@@ -14,6 +14,8 @@ Endpunkte:
   /api/steuerung  Wechselrichter-Steuerung über Modbus: Verbindung, Begrenzung, Testmodus-Auswertung (Minuspreis →
                 Nulleinspeisung: was homi getan hätte und was es gekostet/gebracht hätte)
   /api/geraete  smarte Steckdosen (myStrom): Zustand, Regel, Verbrauch heute/7 Tage; POST {"id", "modus": auto|ein|aus}
+  /api/verguetung  Abnahmevergütung ab 2027: Vergütungsmodelle je Quartal, Referenz-Marktpreis, Ausgleich der
+                Minimalvergütung, Abregelschwelle
   /api/info     Anzeigename und Leistung der Anlage
   /api/wochenbericht  letzte ganze Woche (Mo–So) mit Vorwochen-Vergleich, ?woche=2026-W41
   /api/push     GET: öffentlicher VAPID-Schlüssel; POST: App-Push an-/abmelden, Testnachricht
@@ -46,6 +48,7 @@ from homi.push_abo import push_lesen, push_schluessel, push_schreiben
 from homi.speicher import SpeicherSimulation
 from homi.geraete import starten as geraete_starten
 from homi.steuerung import Steuerung, regeln
+from homi.verguetung import poll_verguetung, verguetung
 from homi.wochenbericht import wochenbericht
 from homi.zustand import history, lock, state
 
@@ -122,6 +125,12 @@ class Handler(SimpleHTTPRequestHandler):
             except (OSError, ValueError, KeyError) as e:      # Fronius nachts aus o. Ä.: letzte Berechnung zeigen
                 print("Amortisation:", e, flush=True)
                 return self.send_json(amort_cache["daten"] or {"aktiv": False, "fehler": "Zähler nicht erreichbar"})
+        if path == "/api/verguetung":
+            try:
+                return self.send_json(verguetung())
+            except (OSError, ValueError, KeyError, ZeroDivisionError) as e:
+                print("Vergütung:", e, flush=True)
+                return self.send_json({"aktiv": False, "grund": "Berechnung gerade nicht möglich"})
         if path == "/api/geraete":
             with lock:
                 return self.send_json(zustand.geraete.report())
@@ -280,6 +289,7 @@ if __name__ == "__main__":
     zustand.speicher_sim = SpeicherSimulation(SPEICHER_FILE)
     zustand.archiv = Archiv(ARCHIV_DIR)
     zustand.steuerung = Steuerung(STEUERUNG_FILE)
+    threading.Thread(target=poll_verguetung, daemon=True).start()
     threading.Thread(target=regeln, daemon=True).start()
     zustand.geraete = geraete_starten(GERAETE_FILE)
     threading.Thread(target=poll_boerse, daemon=True).start()

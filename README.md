@@ -426,7 +426,8 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   («Wechselrichter-Steuerung über Modbus» EIN, eingeschränkt auf 192.168.1.23). **Seit 16.10.2026 SCHARF** (Patricks
   Wunsch; `energie/anlage.json` → `steuerung.modus`: `aus` | `test` | `scharf`). Regler alle 10 s, SunSpec-Modelle
   113/120/123:
-  - **Automatik:** bei negativem Börsenpreis WMaxLimPct = Hausverbrauch + 50 W (Nulleinspeisung), sonst frei.
+  - **Automatik:** Börsenpreis unter der Abregelschwelle (Vergütungsmodell, siehe «Vergütung ab 2027») → WMaxLimPct =
+    Hausverbrauch + 50 W (Nulleinspeisung), sonst frei. Beim festen Tarif drosselt homi deshalb nie.
   - **Schalter Ein/Aus:** Standby über Conn = 0; Zustand in `data/steuerung.json`, übersteht Neustarts.
   - **Sicherheitsnetz:** jeder Befehl mit Ablaufzeit 5 min, homi erneuert ihn jede Minute. Fällt homi aus, gibt der
     Fronius selbst frei. Getestet: Drosseln wirkt sofort; nach dem Einschalten aus Standby speist er nach ~2 min ein.
@@ -438,6 +439,20 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
     `_begrenzung`, `sensor.steuerungstest_*`). Protokoll der Aktionen (wer, wann) in allen drei.
   - **Abrechnung:** Minuspreis-Stunden, abgeregelte kWh (scharf: geschätzt aus der Solarprognose), Kosten zum fixen
     Tarif vs. Nutzen zum Börsenpreis. Mail am 30.10.2026 (`steuerung-bericht.py`, Timer `homi-steuerung-bericht`).
+- **Vergütung ab 2027** (`energie/homi/verguetung.py`, `/api/verguetung`, seit 19.10.2026; Grundlage: EnV-Revision
+  Mai 2026, Art. 12/12a, in Kraft 1.1.2027): ohne andere Abmachung Spotpreis Day-Ahead CH pro Stunde (später
+  Viertelstunde) zum **SNB-Tageskurs** (RSS `snb.ch/public/de/rss/exchangeRates`, Wochenende = letzter Werktag,
+  Rückfall EZB); Minimalvergütung < 150 kW (bis 30 kW 6 Rp., darüber 180/kW) als **Quartalsausgleich** auf jede kWh,
+  wenn der Referenz-Marktpreis darunter lag. homi schätzt den Referenz-Marktpreis aus dem Archiv (Spotpreis gewichtet
+  mit der eigenen PV-Produktion; offizielle Werte in `anlage.json` → `verguetung.rmp_offiziell` gehen vor).
+  **Abregelschwelle** = −Ausgleich (bzw. 0, falls `ausgleich_bei_minuspreis: false` – politisch noch offen).
+  `verguetung.modell`: `fix` (GWS 15 Rp., heute) und `referenzmarkt` (ohne intelligenten Zähler bis Ende 2027) →
+  Abregeln lohnt sich nie, die Fronius-Steuerung drosselt dann nicht; `boerse` → drosseln unter der Schwelle. Die
+  Abrechnung der Steuerung rechnet immer mit dem Modell ab 2027 nach. Vergleich je Quartal (fix, Quartalsdurchschnitt,
+  Börse + Ausgleich, mit/ohne Abregeln) auf derselben Basis (kWh mit gespeichertem Börsenpreis). Fahrplan mittelt
+  Viertelstundenpreise pro Stunde. Überall: App-Karte «Vergütung ab 2027» (Tab Strompreis), Retro-Kachel, HA
+  `sensor.vergutung_abregelschwelle_2027` und `sensor.vergutung_referenz_marktpreis_quartal`.
+  Offen bei der GWS: intelligenter Zähler (Lastgang)? Rückliefertarif 2027?
 - **Smarte Steckdosen** (`energie/homi/geraete.py`, `/api/geraete`, seit 18.10.2026): myStrom WiFi Switch v2
   (MAC FCF5C419ED7C, zuletzt 192.168.1.211 per DHCP – homi sucht sie bei Adresswechsel über die MAC; WLAN-Aussetzer
   werden erst nach 30 s als «nicht erreichbar» gemeldet). Konfiguration in `energie/anlage.json` → `geraete`,

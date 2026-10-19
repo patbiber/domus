@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#0b1730">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="style.css?v=20261018c">
+<link rel="stylesheet" href="style.css?v=20261019a">
 </head>
 <body>
 
@@ -153,7 +153,8 @@
         <h3>Steuern</h3>
         <p>homi schaltet für dich – nach Sonne und Börsenpreis. <span class="leise-uhr">Mit Uhr: bald.</span></p>
         <ul class="f-liste">
-          <li><b>Einspeisestopp</b> bei negativen Preisen – automatisch</li>
+          <li><b>Einspeisestopp</b>, sobald Einspeisen Geld kostet – mit Minimalvergütung gerechnet</li>
+          <li><b>Vergütung 2027 vorgerechnet</b> – fester Tarif, Quartalsdurchschnitt oder Börsenpreis</li>
           <li><b>Wechselrichter ein/aus</b> per Knopf in App und Home Assistant</li>
           <li><b>Geräte mit Sonnenüberschuss</b> – smarte Steckdose (z. B. myStrom) schaltet ein, sobald Strom übrig ist</li>
           <li class="bald"><b>Batterie</b> lädt in den günstigsten Stunden</li>
@@ -192,7 +193,7 @@
     <div class="section-head rein">
       <span class="kicker">Einspeisung ab 2027</span>
       <h2>Wenn Einspeisen plötzlich Geld kostet</h2>
-      <p class="sub">Seit 2026 hängt die Rückliefervergütung vom Strommarkt ab, und ab 2027 setzen Energieversorger vermehrt auf <b>dynamische Einspeisetarife</b>: Du bekommst, was der Strom an der Börse gerade wert ist. An sonnigen Tagen fällt dieser Preis mittags unter null – wer dann einspeist, <b>bezahlt drauf</b>. Und eine Batterie, die einfach lädt, sobald die Sonne scheint, ist längst voll, wenn es sich am meisten lohnen würde.</p>
+      <p class="sub">Ab 2027 wird Solarstrom ohne andere Abmachung mit dem Netzbetreiber <b>Stunde für Stunde zum Börsenpreis</b> vergütet. Die Minimalvergütung bleibt – aber nur als Ausgleich, der nach dem Quartal auf jede eingespeiste kWh kommt. An sonnigen Tagen fällt der Börsenpreis mittags unter null, und sobald er tiefer liegt als dieser Ausgleich, <b>bezahlst du fürs Einspeisen drauf</b>. homi rechnet die Schwelle für deine Anlage laufend nach. Und eine Batterie, die einfach lädt, sobald die Sonne scheint, ist längst voll, wenn es sich am meisten lohnen würde.</p>
     </div>
     <div class="ein-grid">
       <div class="card tile rein">
@@ -222,7 +223,8 @@
           <span class="badge-auto">homi Steuerung · Einspeisestopp live</span>
           <h3>Vollautomatisch</h3>
           <ul>
-            <li>Einspeisung stoppt bei Minuspreisen von selbst – <b>läuft bereits</b>: homi drosselt Fronius-Wechselrichter auf den Eigenverbrauch</li>
+            <li>Einspeisung stoppt von selbst, sobald sie Geld kostet – <b>läuft bereits</b>: homi drosselt Fronius-Wechselrichter auf den Eigenverbrauch und rechnet dabei mit Minimalvergütung und Quartalsausgleich</li>
+            <li>Welches Vergütungsmodell lohnt sich? homi rechnet fester Tarif, Quartalsdurchschnitt und Börsenpreis mit deinen echten Daten vor</li>
             <li>Sicher: jeder Befehl läuft nach 5 Minuten ab – fällt homi aus, produziert die Anlage normal weiter</li>
             <li>Batterie lädt in den günstigsten Stunden – nicht einfach bei Sonnenaufgang <i>(bald)</i></li>
             <li>Boiler, Wärmepumpe oder E-Auto springen bei Minuspreisen ein <i>(bald)</i></li>
@@ -365,7 +367,7 @@
       <details><summary>Welche Geräte werden unterstützt?</summary><p>Heute live: Fronius-Wechselrichter mit Smart Meter. Weitere Wechselrichter, Batterien, Wallboxen und Wärmepumpen binde ich über offene Standards an – nenn deine Geräte im Formular, dann prüfe ich sie.</p></details>
       <details><summary>Wie erreiche ich mein homi?</summary><p>Unter deiner eigenen Adresse wie <b>sonnenhof.homi.solar</b>, im Browser oder als App auf dem Handy. Anmeldung mit Code per Mail oder mit Face ID / Fingerabdruck. <a href="https://beispiel.homi.solar" target="_blank" rel="noopener">Beispiel ansehen</a></p></details>
       <details><summary>Wo liegen meine Daten?</summary><p>Bei dir zu Hause oder auf Servern in der Schweiz – nicht bei einem internationalen Cloud-Anbieter. Kein Tracking, keine Weitergabe an Dritte.</p></details>
-      <details><summary>Steuert homi meine Geräte?</summary><p>Ja, Schritt für Schritt. Der Einspeisestopp bei negativen Preisen läuft bereits mit Fronius-Wechselrichtern (über Modbus, lokal im Haus), dazu ein Ein/Aus-Knopf in der App und in Home Assistant. Geräte an smarten Steckdosen (z. B. myStrom) schaltet homi ein, sobald Solarstrom übrig ist – etwa die Ladestation für Handy und Tablet. Als Nächstes folgen Batterie, Wallbox und Wärmepumpe. Jede Steuerung startet im Testmodus, du entscheidest über das Scharfschalten – und jeder Befehl läuft von selbst ab, falls homi einmal ausfällt.</p></details>
+      <details><summary>Steuert homi meine Geräte?</summary><p>Ja, Schritt für Schritt. Der Einspeisestopp, sobald Einspeisen Geld kostet (ab 2027 mit Minimalvergütung und Quartalsausgleich gerechnet), läuft bereits mit Fronius-Wechselrichtern (über Modbus, lokal im Haus), dazu ein Ein/Aus-Knopf in der App und in Home Assistant. Geräte an smarten Steckdosen (z. B. myStrom) schaltet homi ein, sobald Solarstrom übrig ist – etwa die Ladestation für Handy und Tablet. Als Nächstes folgen Batterie, Wallbox und Wärmepumpe. Jede Steuerung startet im Testmodus, du entscheidest über das Scharfschalten – und jeder Befehl läuft von selbst ab, falls homi einmal ausfällt.</p></details>
       <details><summary>Wer steckt dahinter?</summary><p>Patrick Biber aus Uerikon am Zürichsee – Solarberater und IT-Profi. homi ist aus dem eigenen Haus entstanden. Mehr auf <a href="https://biber.solar" target="_blank" rel="noopener">biber.solar</a>.</p></details>
     </div>
   </div>
@@ -379,6 +381,6 @@
   </div>
 </footer>
 
-<script src="app.js?v=20261018c" defer></script>
+<script src="app.js?v=20261019a" defer></script>
 </body>
 </html>

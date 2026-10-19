@@ -156,7 +156,7 @@
         <div class="karte-kopf"><h2>Börsenpreis heute und morgen</h2>
           <div class="legende"><span class="blau">Rp/kWh</span><span class="rot">negativ</span><span class="sonne">jetzt</span></div></div>
         <div id="chart-boerse" class="chart" data-hoehe="220"></div>
-        <p class="leise">EPEX Spot Day-Ahead Schweiz via Energy-Charts (CC BY 4.0), umgerechnet zum EZB-Kurs. Die Preise für morgen erscheinen am frühen Nachmittag.</p>
+        <p class="leise">EPEX Spot Day-Ahead Schweiz via Energy-Charts (CC BY 4.0), umgerechnet zum Tageskurs der SNB (11 Uhr), wie ihn die Netzbetreiber ab 2027 verwenden müssen. Die Preise für morgen erscheinen am frühen Nachmittag.</p>
       </article>
       <article class="karte">
         <div class="karte-kopf"><h2>Dein Tarif</h2><span id="t-stand" class="leise"></span></div>
@@ -179,12 +179,19 @@
           <button type="button" class="wr-knopf" id="st-knopf"><span id="st-knopf-text">Ausschalten</span><small id="st-knopf-klein">Standby, speist nicht mehr ein</small></button>
         </div>
         <p class="wr-meldung" id="st-meldung" hidden></p>
-        <label class="schalter"><input type="checkbox" id="st-regel"><span></span><div><b>Automatik bei Minuspreis</b><small>Leistung auf den Hausverbrauch drosseln, solange der Börsenpreis negativ ist</small></div></label>
-        <div class="zeile"><span>Stunden mit Minuspreis</span><b id="st-h">–</b></div>
+        <label class="schalter"><input type="checkbox" id="st-regel"><span></span><div><b>Automatik bei tiefem Börsenpreis</b><small id="st-regel-klein">Leistung auf den Hausverbrauch drosseln, sobald Einspeisen weniger als nichts bringt</small></div></label>
+        <div class="zeile"><span>Abregeln lohnt sich</span><b id="st-schwelle">–</b></div>
+        <div class="zeile"><span>Stunden unter der Schwelle (ab 2027)</span><b id="st-h">–</b></div>
         <div class="zeile"><span>Einspeisung abgeregelt</span><b id="st-kwh">–</b></div>
         <div class="zeile"><span>Kosten mit deinem fixen Tarif</span><b id="st-fix">–</b></div>
-        <div class="zeile"><span>Nutzen mit Börsenpreis</span><b id="st-dyn">–</b></div>
+        <div class="zeile"><span>Nutzen mit Börsenpreis ab 2027</span><b id="st-dyn">–</b></div>
         <details class="erkl"><summary>So funktioniert die Steuerung</summary><p id="st-regeltext"></p><ol id="st-log" class="wr-log"></ol></details>
+      </article>
+      <article class="karte breit" id="verguetung" hidden>
+        <div class="karte-kopf"><h2>Vergütung ab 2027</h2><span class="leise" id="vg-modell"></span></div>
+        <p id="vg-satz" class="vg-satz"></p>
+        <div class="tabelle-rahmen"><table class="vg-tabelle" id="vg-tabelle"></table></div>
+        <details class="erkl"><summary>Was ändert sich 2027?</summary><p id="vg-erkl"></p><p class="leise" id="vg-basis"></p></details>
       </article>
       <article class="karte breit">
         <div class="karte-kopf"><h2>Fahrplan</h2>

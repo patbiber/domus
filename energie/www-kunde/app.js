@@ -540,6 +540,9 @@ function steuerungZeichnen() {
   }
   $("st-knopf").hidden = test;
   $("st-regel").checked = !!s.schalter.regel;
+  const vg = s.verguetung || {};
+  $("st-schwelle").textContent = vg.schwelle_rp == null ? `nie · 2027: unter ${zahl(vg.schwelle_2027_rp, 1)} Rp.`
+    : `unter ${zahl(vg.schwelle_rp, 1)} Rp.`;
   $("st-h").textContent = `${zahl(su.minuspreis_h, 1)} h`;
   $("st-kwh").textContent = `${zahl(su.abregeln_kwh, 1)} kWh`;
   $("st-fix").textContent = chf(-su.verlust_fix_chf);
@@ -601,6 +604,27 @@ $("geraete-karten").addEventListener("click", async e => {
   } catch { b.textContent = "Fehler"; }
 });
 
+/* ======================= Strompreis: Vergütung ab 2027 ======================= */
+function verguetungZeichnen() {
+  const v = D.verguetung;
+  $("verguetung").hidden = !v || !v.quartale || !v.quartale.length;
+  if ($("verguetung").hidden) return;
+  const MOD = [["fix", "Fester Tarif (heute)"], ["referenzmarkt", "Quartalsdurchschnitt"], ["boerse", "Börsenpreis + Ausgleich"], ["boerse_abgeregelt", "… mit Abregeln"]];
+  const qs = v.quartale.slice(-2);
+  $("vg-modell").textContent = `dein Modell: ${v.modell_name}`;
+  const q = qs[qs.length - 1], w = q.wert_chf, best = MOD.reduce((a, m) => w[m[0]] > w[a[0]] ? m : a);
+  $("vg-satz").innerHTML = `Im ${q.laufend ? "laufenden " : ""}Quartal ${q.quartal.replace("-", " ")} hätte dir <b>${best[1]}</b> am meisten gebracht. `
+    + `Minimalvergütung ${zahl(v.minimal_rp, 1)} Rp., Quartalsdurchschnitt bisher ${zahl(q.rmp_rp, 1)} Rp. → Ausgleich <b>${zahl(q.ausgleich_rp, 2)} Rp./kWh</b>, `
+    + `abregeln lohnt sich ab 2027 erst unter <b>${zahl(q.schwelle_rp, 1)} Rp.</b>`;
+  $("vg-tabelle").innerHTML = `<thead><tr><th>CHF</th>${qs.map(x => `<th>${x.quartal.slice(5)}${x.laufend ? "*" : ""}</th>`).join("")}</tr></thead><tbody>`
+    + MOD.map(([k, t]) => `<tr${k === best[0] ? ' class="best"' : ""}><td>${t}</td>${qs.map(x => `<td>${zahl(x.wert_chf[k], 2)}</td>`).join("")}</tr>`).join("")
+    + `<tr class="klein"><td>Eingespeist</td>${qs.map(x => `<td>${zahl(x.einspeisung_mit_preis_kwh, 0)} kWh</td>`).join("")}</tr>`
+    + `<tr class="klein"><td>Quartalsdurchschnitt</td>${qs.map(x => `<td>${zahl(x.rmp_rp, 1)} Rp.</td>`).join("")}</tr></tbody>`;
+  $("vg-erkl").textContent = v.erklaerung;
+  $("vg-basis").textContent = `* laufendes Quartal (${qs.map(x => x.quartal).join(", ")}). Verglichen werden die eingespeisten kWh, für die homi den Börsenpreis kennt. Quartalsdurchschnitt: ${q.rmp_quelle}.`
+    + (v.ausgleich_bei_minuspreis ? "" : " Annahme: bei negativen Preisen kein Ausgleich.");
+}
+
 /* ======================= Mehr: Speicher, Anlage ======================= */
 function speicherZeichnen() {
   const s = D.speicher;
@@ -616,7 +640,7 @@ function speicherZeichnen() {
 /* ======================= Laden ======================= */
 function zeichnen() {
   flussZeichnen(); kpisZeichnen(); prognoseZeichnen(); preisZeichnen(); warnungZeichnen();
-  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen(); steuerungZeichnen(); geraeteZeichnen();
+  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen(); steuerungZeichnen(); geraeteZeichnen(); verguetungZeichnen();
 }
 async function status() {
   try { D.status = await holen("status"); flussZeichnen(); kpisZeichnen(); preisZeichnen(); }
@@ -630,7 +654,7 @@ async function minute() {
   kpisZeichnen(); verlauf24Zeichnen(); amortZeichnen(); steuerungZeichnen(); geraeteZeichnen();
 }
 async function selten() {
-  for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"], ["berater", "berater"], ["steuerung", "steuerung"]]) {
+  for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"], ["berater", "berater"], ["steuerung", "steuerung"], ["verguetung", "verguetung"]]) {
     try { D[k] = await holen(p); } catch {}
   }
   zeichnen();

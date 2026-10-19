@@ -24,7 +24,10 @@ POLL_S = 5
 
 BOERSE_URL = "https://api.energy-charts.info/price?bzn=CH&start={start}&end={end}"
 
-EZB_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"
+EZB_URL = "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml"      # Rückfall, falls die SNB nicht antwortet
+
+# Tageskurse der SNB (11 Uhr) – massgebend für die Abnahmevergütung ab 2027 (Art. 12 Abs. 1 EnV)
+SNB_RSS = "https://www.snb.ch/public/de/rss/exchangeRates"
 
 BOERSE_REFRESH_S = 30 * 60
 

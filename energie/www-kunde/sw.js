@@ -1,7 +1,7 @@
 // Service Worker von homi: macht die Seite installierbar, zeigt Push-Nachrichten
 // und eine Offline-Seite, wenn der NUC nicht erreichbar ist. Live-Daten werden nie zwischengespeichert.
 "use strict";
-const CACHE = "homi-kunde-v6";
+const CACHE = "homi-kunde-v8";
 const OFFLINE = ["/offline.html", "/icons/homi-192.png"];
 
 self.addEventListener("install", e => {

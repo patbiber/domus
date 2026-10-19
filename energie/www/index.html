@@ -87,7 +87,7 @@
   .srv .v { color: var(--cyan); }
   .prog .v { color: var(--yellow); }
   .woche .v { color: var(--cyan); }
-  .amort .v { color: var(--green); } .steu .v { color: var(--cyan); } .batt .v { color: var(--purple); } .rat .v { color: var(--yellow); }
+  .amort .v { color: var(--green); } .steu .v { color: var(--cyan); } .verg .v { color: var(--green); } .batt .v { color: var(--purple); } .rat .v { color: var(--yellow); }
   .rat ol { margin: 4px 0 0; padding-left: 18px; font-size: 12px; color: var(--white); }
   .rat ol li { margin: 2px 0; cursor: help; } .rat ol li:hover { color: var(--yellow); } .rat ol li span { color: var(--green); }
   .balken8 { display: block; height: 6px; margin-top: 4px; background: #222; }
@@ -161,7 +161,7 @@
       <div class="wr-info">
         <div class="wr-status" id="wr-status">–</div>
         <div id="wr-jetzt" class="s">&nbsp;</div>
-        <label class="wr-regel"><input type="checkbox" id="wr-regel"> Automatik: bei Minuspreis auf Nulleinspeisung drosseln</label>
+        <label class="wr-regel"><input type="checkbox" id="wr-regel"> Automatik: auf Nulleinspeisung drosseln, wenn Einspeisen weniger als nichts bringt</label>
         <div id="wr-summe" class="s">&nbsp;</div>
         <div id="wr-meldung" class="s">&nbsp;</div>
         <ol id="wr-log" class="wr-log"></ol>
@@ -184,6 +184,7 @@
       <div class="stat boerse" id="t-boerse"><div class="k">Strombörse Day-Ahead CH</div><div class="v" id="s-boerse">–</div><div class="s" id="s-boerse2">&nbsp;</div></div>
       <div class="stat woche" title="Wochenbericht: kommt jeden Montag um 08:00 auch als Mail und Push"><div class="k" id="s-woche0">Letzte Woche</div><div class="v" id="s-woche">–</div><div class="s" id="s-woche2">&nbsp;</div></div>
       <div class="stat rat" title="Energieberater: drei Tipps aus den Messwerten der letzten 14 Tage"><div class="k">Energieberater · Tipp antippen = Warum</div><div class="v" id="s-rat">–</div><ol id="s-rat2"></ol><div class="s" id="s-rat3">&nbsp;</div></div>
+      <div class="stat verg" id="t-verg" title="Abnahmevergütung ab 2027: Wert deiner Einspeisung je Modell im laufenden Quartal"><div class="k">Vergütung ab 2027 · Quartal</div><div class="v" id="s-verg">–</div><div class="s" id="s-verg2">&nbsp;</div></div>
       <div id="geraete"></div>
       <div class="stat batt"><div class="k">Batterie-Simulation</div><div class="v" id="s-batt">–</div><div class="s" id="s-batt2">&nbsp;</div></div>
       <div class="stat amort" title="Investition minus bisheriger Ertrag (selbst verbraucht × Bezugstarif + eingespeist × Rücklieferung), heutige Tarife"><div class="k">Anlage abbezahlt</div><div class="v" id="s-amort">–</div><div class="s" id="s-amort2">&nbsp;</div><span class="balken8"><i id="s-amort3" style="width:0"></i></span></div>
@@ -215,7 +216,7 @@
     </div>
     <div id="app-meldung" aria-live="polite"></div>
   </section>
-  <footer>Daten: Fronius Solar API (live) · Tarife: Gemeindewerke Stäfa · Preise inkl. MWST · Börsenpreise: EPEX Spot Day-Ahead CH via <a href="https://energy-charts.info">Energy-Charts</a> (CC BY 4.0), EUR→CHF zum EZB-Kurs · <span id="stand"></span></footer>
+  <footer>Daten: Fronius Solar API (live) · Tarife: Gemeindewerke Stäfa · Preise inkl. MWST · Börsenpreise: EPEX Spot Day-Ahead CH via <a href="https://energy-charts.info">Energy-Charts</a> (CC BY 4.0), EUR→CHF zum SNB-Tageskurs (11 Uhr) · <span id="stand"></span></footer>
 </main>
 
 <script>
@@ -465,8 +466,10 @@ function steuZeigen(s) {
     : !m.eingeschaltet ? "▲ STARTET (Netzprüfung ~2 min)" : m.begrenzung_aktiv ? `▼ GEDROSSELT auf ${m.begrenzung_pct} %` : `● AM NETZ · ${m.leistung_w} W`;
   $("wr-jetzt").textContent = `Jetzt: ${s.jetzt.wuerde} – ${s.jetzt.grund}`;
   $("wr-regel").checked = !!s.schalter.regel;
-  $("wr-summe").textContent = `Seit ${s.seit.slice(8, 10)}.${s.seit.slice(5, 7)}.: ${su.minuspreis_h.toFixed(1)} h Minuspreis · ${su.abregeln_kwh.toFixed(1)} kWh abgeregelt · ` +
-    `fixer Tarif −${su.verlust_fix_chf.toFixed(2)} CHF · Börsenpreis +${(-su.boerse_chf).toFixed(2)} CHF`;
+  const vg = s.verguetung || {};
+  $("wr-summe").textContent = `Abregeln ab: ${vg.schwelle_rp == null ? "nie (fester Tarif)" : vg.schwelle_rp + " Rp."} · ab 2027 unter ${vg.schwelle_2027_rp} Rp. · `
+    + `seit ${s.seit.slice(8, 10)}.${s.seit.slice(5, 7)}.: ${su.minuspreis_h.toFixed(1)} h darunter, ${su.abregeln_kwh.toFixed(1)} kWh · `
+    + `fixer Tarif −${su.verlust_fix_chf.toFixed(2)} CHF · 2027 +${(-su.boerse_chf).toFixed(2)} CHF`;
   if (!wrScharf) {
     const k = $("wr-knopf");
     k.className = "wr-knopf" + (aus ? " ein" : "");
@@ -501,6 +504,19 @@ $("wr-knopf").addEventListener("click", () => {
   steuSenden({ wr: ziel });
 });
 $("wr-regel").addEventListener("change", e => steuSenden({ regel: e.target.checked }));
+
+// Vergütung ab 2027 (wie in der Kunden-Oberfläche), alle 10 Minuten
+async function pollVerguetung() {
+  let v;
+  try { v = await (await fetch("api/verguetung", { cache: "no-store" })).json(); } catch { return; }
+  const q = (v.quartale || []).slice(-1)[0];
+  if (!q) { $("t-verg").hidden = true; return; }
+  const w = q.wert_chf, namen = { fix: "fix", referenzmarkt: "Quartal", boerse: "Börse", boerse_abgeregelt: "Börse+Abregeln" };
+  const best = Object.keys(namen).reduce((a, k) => w[k] > w[a] ? k : a, "fix");
+  $("s-verg").textContent = `${namen[best]} gewinnt`;
+  $("s-verg2").textContent = `${q.quartal}: ` + Object.keys(namen).map(k => `${namen[k]} ${w[k].toFixed(2)}`).join(" · ")
+    + ` CHF · Ø ${q.rmp_rp} Rp., Ausgleich ${q.ausgleich_rp} Rp., abregeln unter ${q.schwelle_rp} Rp.`;
+}
 
 // Steckdosen (myStrom), z. B. Solarladestation – wie in der Kunden-Oberfläche
 async function pollGeraete() {
@@ -1234,6 +1250,7 @@ pollAmort(); setInterval(pollAmort, 10 * 60000);
 pollBerater(); setInterval(pollBerater, 60 * 60000);
 pollSteuerung(); setInterval(pollSteuerung, 15000);
 pollGeraete(); setInterval(pollGeraete, 15000);
+pollVerguetung(); setInterval(pollVerguetung, 10 * 60000);
 pollWoche(); setInterval(pollWoche, 60 * 60000);
 // Klick auf einen Tipp: die Figur erklärt, warum (Rechenweg im Tooltip)
 $("s-rat2").addEventListener("click", e => {

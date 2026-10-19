@@ -314,3 +314,12 @@ main { max-width: 1160px; margin: 0 auto; padding: 16px; }
 .geraet .g-oben small { display: block; color: var(--leise); font-size: .84rem; }
 .geraet .seg { margin: 0 0 6px; }
 .geraet .seg button.an { background: var(--navy); color: #fff; }
+
+/* Vergütung ab 2027 */
+.vg-satz { margin: 0 0 10px; color: var(--text-2); }
+.vg-tabelle { width: 100%; border-collapse: collapse; font-size: .9rem; font-variant-numeric: tabular-nums; }
+.vg-tabelle th, .vg-tabelle td { padding: 8px 6px; text-align: right; border-top: 1px solid var(--linie); white-space: nowrap; }
+.vg-tabelle th:first-child, .vg-tabelle td:first-child { text-align: left; white-space: normal; }
+.vg-tabelle th { color: var(--leise); font-weight: 600; border-top: 0; }
+.vg-tabelle tr.best td { font-weight: 700; color: var(--gruen); }
+.vg-tabelle tr.klein td { color: var(--leise); font-size: .82rem; }

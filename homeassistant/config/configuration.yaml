@@ -253,6 +253,24 @@ rest:
         value_template: "{{ (0 - value_json.summe.boerse_chf) | round(2) }}"
         unit_of_measurement: CHF
         icon: mdi:cash-plus
+  - resource: http://127.0.0.1:8099/api/verguetung
+    scan_interval: 1800
+    sensor:
+      - name: Vergütung Abregelschwelle 2027
+        unique_id: homi_verguetung_schwelle
+        value_template: "{{ (value_json.quartale | last).schwelle_rp }}"
+        availability: "{{ value_json.quartale is defined and value_json.quartale | length > 0 }}"
+        unit_of_measurement: Rp./kWh
+        icon: mdi:transmission-tower-off
+        json_attributes: [modell, modell_name, minimal_rp, ausgleich_bei_minuspreis, erklaerung]
+      - name: Vergütung Referenz-Marktpreis Quartal
+        unique_id: homi_verguetung_rmp
+        value_template: "{{ (value_json.quartale | last).rmp_rp }}"
+        availability: "{{ value_json.quartale is defined and value_json.quartale | length > 0 }}"
+        unit_of_measurement: Rp./kWh
+        icon: mdi:chart-bell-curve
+        json_attributes_path: "$.quartale[-1:]"
+        json_attributes: [quartal, ausgleich_rp, einspeisung_mit_preis_kwh, wert_chf, rmp_quelle]
   - resource: http://127.0.0.1:8099/api/geraete
     scan_interval: 30
     sensor:

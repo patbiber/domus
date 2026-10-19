@@ -7,7 +7,9 @@ Modus in anlage.json → steuerung.modus:
 
 Im Modus «scharf» prüft regeln() alle 10 s:
   - Schalter «aus» (manuell, App/Retro/HA): Standby (Conn = 0) mit Ablaufzeit, alle 60 s erneuert.
-  - Regel an und Börsenpreis negativ: Leistung auf den Hausverbrauch begrenzen (WMaxLimPct, Ena = 1) mit Ablaufzeit.
+  - Regel an und Börsenpreis unter der Abregelschwelle des Vergütungsmodells (verguetung.py): Leistung auf den
+    Hausverbrauch begrenzen (WMaxLimPct, Ena = 1) mit Ablaufzeit. Beim festen Tarif und beim Quartalsdurchschnitt
+    lohnt sich Abregeln nie (Schwelle None); ab 2027 mit Börsenpreis erst unter −Ausgleich der Minimalvergütung.
   - sonst: Begrenzung aufheben, Standby beenden.
 SICHERHEITSNETZ: Jeder Befehl hat eine Ablaufzeit (RUECKFALL_S). Meldet sich homi nicht mehr (Absturz, NUC aus,
 Netzwerk weg), hebt der Fronius Begrenzung und Standby von selbst auf und produziert normal weiter. Getestet am
@@ -29,6 +31,7 @@ import time
 from datetime import date, datetime, timedelta
 
 from .konfig import ANLAGE_CFG, FRONIUS, MAX_DT_S, load_json
+from .verguetung import ausgleich_eff, konfig as verg_konfig, schwelle_jetzt
 from . import zustand
 from .zustand import lock, state
 
@@ -174,12 +177,15 @@ def regeln():
                             mb.standby(s, False)
                             protokoll("Wechselrichter wieder EIN", sw.get("von"))
                             letzte.update(was=None, zeit=jetzt, pct=None)
-                        if sw["regel"] and b.get("negativ") and status.get("fronius_ok"):
+                        aktiv_schwelle = schwelle_jetzt()[0]
+                        if sw["regel"] and aktiv_schwelle is not None and b.get("rp_kwh") is not None \
+                                and b["rp_kwh"] < aktiv_schwelle and status.get("fronius_ok"):
                             pct = soll_pct(status["verbrauch_w"], nenn)
                             if not st["begrenzung_aktiv"] or alt or letzte["pct"] is None or abs(pct - letzte["pct"]) >= 2:
                                 mb.begrenzen(s, pct)
                                 if letzte["was"] != "drosseln":
-                                    protokoll(f"Minuspreis {b.get('rp_kwh')} Rp./kWh: gedrosselt auf {pct:g} %", "Regel")
+                                    protokoll(f"Börsenpreis {b.get('rp_kwh')} Rp./kWh unter Schwelle "
+                                              f"{aktiv_schwelle:g}: gedrosselt auf {pct:g} %", "Regel")
                                 letzte.update(was="drosseln", zeit=jetzt, pct=pct)
                         elif st["begrenzung_aktiv"]:
                             mb.begrenzen(s, None)
@@ -234,17 +240,19 @@ class Steuerung:
         if modus not in ("test", "scharf") or not status.get("fronius_ok") or not b or not t \
                 or dt is None or dt <= 0 or dt > MAX_DT_S:
             return
-        if not b.get("negativ") or not self.data["schalter"]["regel"]:
+        _, schwelle, ausgleich = schwelle_jetzt()                # gerechnet wird immer mit dem Modell ab 2027
+        if b.get("rp_kwh") is None or b["rp_kwh"] >= schwelle or not self.data["schalter"]["regel"]:
             self.offen = None
             return
         h = dt / 3600
-        if modus == "scharf":                                    # gedrosselt: was wäre ohne Drosselung eingespeist worden?
+        if (state.get("modbus") or {}).get("begrenzung_aktiv"):  # gedrosselt: was wäre ohne Drosselung eingespeist worden?
             moeglich_w = max(status["pv_w"], prognose_w(now))
             kwh = max(0.0, moeglich_w - status["pv_w"]) * h / 1000 + status["einspeisung_w"] * h / 1000
         else:
             kwh = status["einspeisung_w"] * h / 1000             # fiele bei Nulleinspeisung weg
         verlust = kwh * (t["rueckliefer_chf_kwh"] or 0)          # feste Vergütung: entgangen
-        boerse = kwh * b["rp_kwh"] / 100                         # dynamisch: negativ = Einspeisen kostet
+        p = b["rp_kwh"]                                          # ab 2027: Spotpreis + Ausgleich; < 0 = Einspeisen kostet
+        boerse = kwh * (p + ausgleich_eff(p, ausgleich, verg_konfig())) / 100
         nenn = (state.get("modbus") or {}).get("nennleistung_w") or 8200
         pct = soll_pct(status["verbrauch_w"], nenn)
         d = self.data["tage"].setdefault(now.date().isoformat(),
@@ -280,24 +288,34 @@ class Steuerung:
         summe = {f: round(sum(d[f] for d in self.data["tage"].values()), 4)
                  for f in ("minuspreis_h", "abregeln_kwh", "verlust_fix_chf", "boerse_chf")}
         status, b = status or {}, (status or {}).get("boerse")
+        aktiv, schwelle_2027, ausgleich = schwelle_jetzt()
+        vk = verg_konfig()
         if sw["wr"] == "aus":
             jetzt = {"wuerde": "AUS (Standby)", "grund": f"manuell ausgeschaltet ({sw.get('von') or 'unbekannt'})"}
         elif not sw["regel"]:
             jetzt = {"wuerde": "volle Leistung", "grund": "Regel ausgeschaltet"}
         elif not status.get("fronius_ok"):
             jetzt = {"wuerde": "nichts tun", "grund": "Wechselrichter liefert gerade keine Werte"}
-        elif b and b.get("negativ"):
+        elif b and b.get("rp_kwh") is not None and aktiv is not None and b["rp_kwh"] < aktiv:
             pct = soll_pct(status["verbrauch_w"], (modbus or {}).get("nennleistung_w") or 8200)
             jetzt = {"wuerde": f"{'drosselt' if scharf else 'würde drosseln'} auf {pct:g} %", "grund":
-                     f"Börsenpreis {b['rp_kwh']:.1f} Rp./kWh – Leistung auf den Hausverbrauch "
-                     f"({status['verbrauch_w']} W) begrenzen"}
+                     f"Börsenpreis {b['rp_kwh']:.1f} Rp./kWh unter der Schwelle von {aktiv:g} Rp. – Leistung auf den "
+                     f"Hausverbrauch ({status['verbrauch_w']} W) begrenzen"}
+        elif aktiv is None:
+            jetzt = {"wuerde": "volle Leistung", "grund": f"Mit deinem Vergütungsmodell lohnt sich Abregeln nie "
+                     f"(ab 2027 mit Börsenpreis: unter {schwelle_2027:g} Rp./kWh)"}
         else:
-            jetzt = {"wuerde": "volle Leistung" if scharf else "nichts tun", "grund": "Börsenpreis nicht negativ"}
+            jetzt = {"wuerde": "volle Leistung" if scharf else "nichts tun",
+                     "grund": f"Börsenpreis über der Schwelle von {aktiv:g} Rp./kWh"}
         return {
             "modus": k["modus"],
             "scharf_seit": k["scharf_seit"],
             "schalter": sw,
-            "regel": "Bei negativem Börsenpreis die Leistung auf den Hausverbrauch begrenzen (Nulleinspeisung). "
+            "verguetung": {"modell": vk["modell"], "schwelle_rp": aktiv, "schwelle_2027_rp": schwelle_2027,
+                           "ausgleich_rp": ausgleich, "minimal_rp": vk["minimal_rp"]},
+            "regel": "Fällt der Börsenpreis unter die Abregelschwelle, begrenzt homi die Leistung auf den Hausverbrauch "
+                     "(Nulleinspeisung). Die Schwelle hängt vom Vergütungsmodell ab: beim festen Tarif lohnt sich "
+                     "Abregeln nie, ab 2027 mit Börsenpreis erst unter minus dem Ausgleich der Minimalvergütung. "
                      f"Jeder Befehl hat eine Ablaufzeit von {RUECKFALL_S // 60} Minuten: meldet sich homi nicht mehr, "
                      "hebt der Wechselrichter Begrenzung und Standby selbst auf. Die Rundsteuerung des "
                      "Netzbetreibers hat immer Vorrang.",

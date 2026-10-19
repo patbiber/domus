@@ -112,10 +112,14 @@ def einspeise_plan():
         return {"startet": True}
     tarif = ((st or {}).get("tarif") or {})
     stunden = {x["zeit"][:13]: x["kwh"] for x in p["stunden"]}
-    preise = {x["zeit"][:13]: x["rp_kwh"] for x in b["preise"]}
+    pro_h = {}                                     # Stunden- oder Viertelstundenpreise → Stundenmittel
+    for x in b["preise"]:
+        pro_h.setdefault(x["zeit"][:13], []).append(x["rp_kwh"])
+    preise = {k: round(sum(v) / len(v), 2) for k, v in pro_h.items()}
     last = typische_last()
     heute = date.today()
-    out = {"annahme": "Dynamische Einspeisevergütung = Day-Ahead-Börsenpreis Schweiz (stündlich, auch negativ); "
+    out = {"annahme": "Dynamische Einspeisevergütung = Day-Ahead-Börsenpreis Schweiz zum SNB-Tageskurs (Stundenmittel, "
+                      "auch negativ); "
                       "Verbrauch = Mittel der letzten 7 Tage; Batterie virtuell (wie Speicher-Simulation).",
            "fix_verguetung_rp": round((tarif.get("rueckliefer_chf_kwh") or 0) * 100, 2),
            "bezug_rp": round((tarif.get("bezug_chf_kwh") or 0) * 100, 2)}
