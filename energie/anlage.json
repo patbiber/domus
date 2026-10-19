@@ -16,8 +16,8 @@
      "ein_ab_w": 200, "aus_unter_w": 100, "bei_minuspreis": true, "max_w": 2300,
      "_kommentar": "myStrom WiFi Switch v2 (max. 2300 W) mit den Ladegeräten für Handy & Co. Patrick 18.10.2026: an, sobald mehr als 200 W Solarüberschuss ins Netz gehen."}
   ],
-  "verguetung": {"modell": "fix", "minimal_rp": null, "ausgleich_bei_minuspreis": true, "rmp_offiziell": {},
-    "_kommentar": "Abnahmevergütung (homi/verguetung.py). modell: fix (GWS heute 15 Rp.) | referenzmarkt (Quartalsdurchschnitt, ohne intelligenten Zähler bis Ende 2027) | boerse (ab 2027: Spotpreis + Ausgleich der Minimalvergütung). minimal_rp null = automatisch aus max_kw (bis 30 kW: 6 Rp.). rmp_offiziell: veröffentlichte Referenz-Marktpreise PV, z. B. {\"2026-Q4\": 4.2}. Offen bei der GWS (Stand 19.10.2026): intelligenter Zähler? Tarif 2027?"},
+  "verguetung": {"modell": "fix", "minimal_rp": null, "ausgleich_bei_minuspreis": true, "rmp_offiziell": {}, "hkn_rp": 0, "eigenverbrauch": true,
+    "_kommentar": "Abnahmevergütung (homi/verguetung.py). modell: fix (GWS heute 15 Rp.) | referenzmarkt (Quartalsdurchschnitt, ohne intelligenten Zähler bis Ende 2027) | boerse (ab 2027: Spotpreis + Ausgleich der Minimalvergütung). minimal_rp null = automatisch aus max_kw (bis 30 kW: 6 Rp.). rmp_offiziell: nur zum Übersteuern (BFE-Werte lädt homi selbst), z. B. {\"2026-Q4\": 4.2}. hkn_rp: Herkunftsnachweis-Vergütung des Netzbetreibers in Rp./kWh (GWS: unbekannt, in den 15 Rp. vermutlich enthalten). eigenverbrauch: false = Minimalvergütung 6.2 Rp. für 30–150 kW. Offen bei der GWS (Stand 19.10.2026): intelligenter Zähler? Tarif 2027?"},
   "steuerung": {"modus": "scharf", "seit": "2026-10-16", "scharf_seit": "2026-10-16", "_kommentar": "Modbus-Steuerung des Fronius: aus | test (nur nachrechnen) | scharf (homi schreibt; auf Patricks Wunsch seit 16.10.2026)"},
   "geraet_stunden": 2
 }

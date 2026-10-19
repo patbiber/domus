@@ -443,9 +443,13 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   Mai 2026, Art. 12/12a, in Kraft 1.1.2027): ohne andere Abmachung Spotpreis Day-Ahead CH pro Stunde (später
   Viertelstunde) zum **SNB-Tageskurs** (RSS `snb.ch/public/de/rss/exchangeRates`, Wochenende = letzter Werktag,
   Rückfall EZB); Minimalvergütung < 150 kW (bis 30 kW 6 Rp., darüber 180/kW) als **Quartalsausgleich** auf jede kWh,
-  wenn der Referenz-Marktpreis darunter lag. homi schätzt den Referenz-Marktpreis aus dem Archiv (Spotpreis gewichtet
-  mit der eigenen PV-Produktion; offizielle Werte in `anlage.json` → `verguetung.rmp_offiziell` gehen vor).
-  **Abregelschwelle** = −Ausgleich (bzw. 0, falls `ausgleich_bei_minuspreis: false` – politisch noch offen).
+  wenn der Referenz-Marktpreis darunter lag. Referenz-Marktpreise PV **offiziell vom BFE**
+  (`https://www.bfe-ogd.ch/ogd60_rmp_quartalspreise.csv` und `…_monatspreise.csv`, Datensatz BFE-DS-0020, alle 12 h,
+  Kopie in `data/rmp_bfe.json`); im laufenden Quartal BFE-Monate + eigene Schätzung (Spotpreis × eigene PV) für den
+  Rest; `verguetung.rmp_offiziell` übersteuert. Geprüft an Swissolars Beispielen 2025 (Q2: 2.76 Rp. → Prämie 3.24).
+  **Abregelschwelle** = −(Ausgleich + Herkunftsnachweise `hkn_rp`) (Swissolar «Abnahmevergütung»); Ausgleich bei
+  negativen Preisen gilt (Quartalsabrechnung), abschaltbar mit `ausgleich_bei_minuspreis: false`. 30–150 kW:
+  Minimalvergütung 180/kW Rp. bzw. 6.2 Rp. ohne Eigenverbrauch (`eigenverbrauch: false`).
   `verguetung.modell`: `fix` (GWS 15 Rp., heute) und `referenzmarkt` (ohne intelligenten Zähler bis Ende 2027) →
   Abregeln lohnt sich nie, die Fronius-Steuerung drosselt dann nicht; `boerse` → drosseln unter der Schwelle. Die
   Abrechnung der Steuerung rechnet immer mit dem Modell ab 2027 nach. Vergleich je Quartal (fix, Quartalsdurchschnitt,

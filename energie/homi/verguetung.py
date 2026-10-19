@@ -15,10 +15,18 @@ Modelle in anlage.json → verguetung.modell:
   fix            fester Rückliefertarif des Netzbetreibers (heute GWS) – Abregeln lohnt sich nie
   referenzmarkt  Quartalsdurchschnitt bzw. Minimalvergütung (ohne intelligenten Zähler) – Abregeln lohnt sich nie
   boerse         Spotpreis + Ausgleich (ab 2027 mit intelligentem Zähler) – abregeln unter der Schwelle
-Den Referenz-Marktpreis schätzt homi aus dem eigenen Archiv (Spotpreis gewichtet mit der eigenen Solarproduktion,
-wie der Referenz-Marktpreis Photovoltaik mit der Schweizer PV-Produktion gewichtet ist). Veröffentlichte offizielle
-Werte gehen vor (verguetung.rmp_offiziell, z. B. {"2026-Q3": 4.1}).
+Referenz-Marktpreis Photovoltaik: offiziell vom BFE (www.bfe-ogd.ch, Quartale und Monate, CSV; Datensatz BFE-DS-0020
+auf I14Y), täglich geladen. Für Monate ohne offiziellen Wert schätzt homi aus dem eigenen Archiv (Spotpreis gewichtet
+mit der eigenen Solarproduktion). Manuelle Werte in verguetung.rmp_offiziell gehen allem vor.
+Herkunftsnachweise (HKN): viele Netzbetreiber zahlen sie zusätzlich (einige Rp./kWh) → verguetung.hkn_rp.
+Abregeln sinnvoll, wenn Spotpreis < −(Ausgleich + HKN) (Swissolar, «Abnahmevergütung», Stand 2026).
+Minimalvergütung 30–150 kW: 180 / kW Rp. mit Eigenverbrauch, 6.2 Rp. ohne Eigenverbrauch (verguetung.eigenverbrauch).
 """
+import csv
+import io
+import json
+import os
+import urllib.request
 import time
 from datetime import date
 
@@ -32,6 +40,45 @@ MODELLE = {
 }
 CACHE_S = 600
 _cache = {"zeit": 0.0, "daten": None}
+RMP_URLS = {"quartal": "https://www.bfe-ogd.ch/ogd60_rmp_quartalspreise.csv",
+            "monat": "https://www.bfe-ogd.ch/ogd60_rmp_monatspreise.csv"}
+RMP_DATEI = os.environ.get("RMP_FILE", "/data/rmp_bfe.json")
+RMP_REFRESH_S = 12 * 3600
+_rmp = {"zeit": 0.0, "daten": None}
+
+
+def rmp_bfe():
+    """Offizielle Referenz-Marktpreise PV in Rp./kWh: {"quartal": {"2026-Q3": 8.54}, "monat": {"2026-09": [11.2, MWh]}}."""
+    if _rmp["daten"] and time.time() - _rmp["zeit"] < RMP_REFRESH_S:
+        return _rmp["daten"]
+    try:
+        aus = {"quartal": {}, "monat": {}}
+        for art, url in RMP_URLS.items():
+            req = urllib.request.Request(url, headers={"User-Agent": "homi"})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                for z in csv.DictReader(io.StringIO(r.read().decode("utf-8-sig"))):
+                    if not z.get("Price_pv_CHF_MWh"):
+                        continue
+                    rp = float(z["Price_pv_CHF_MWh"]) / 10
+                    if art == "quartal":
+                        aus["quartal"][f"{z['Year']}-{z['Period']}"] = round(rp, 3)
+                    else:
+                        aus["monat"][f"{z['Year']}-{int(z['Month']):02d}"] = [round(rp, 3), float(z["Volume_pv_MWh"] or 0)]
+        try:
+            with open(RMP_DATEI + ".tmp", "w", encoding="utf-8") as f:
+                json.dump(aus, f)
+            os.replace(RMP_DATEI + ".tmp", RMP_DATEI)
+        except OSError:
+            pass
+    except (OSError, ValueError, KeyError) as e:                 # BFE nicht erreichbar: letzter Stand von der Platte
+        print("Referenz-Marktpreise BFE nicht ladbar:", e, flush=True)
+        try:
+            with open(RMP_DATEI, encoding="utf-8") as f:
+                aus = json.load(f)
+        except (OSError, ValueError):
+            aus = {"quartal": {}, "monat": {}}
+    _rmp.update(zeit=time.time(), daten=aus)
+    return aus
 
 
 def konfig():
@@ -41,11 +88,17 @@ def konfig():
         a = {}
     v = a.get("verguetung") or {}
     kw = a.get("max_kw") or 0
-    auto = 6.0 if kw <= 30 else (round(180 / kw, 2) if kw < 150 else 0.0)
+    if kw <= 30:
+        auto = 6.0
+    elif kw < 150:
+        auto = round(180 / kw, 2) if v.get("eigenverbrauch", True) else 6.2
+    else:
+        auto = 0.0
     return {"modell": v.get("modell", "fix") if v.get("modell") in MODELLE else "fix",
             "minimal_rp": v.get("minimal_rp") if v.get("minimal_rp") is not None else auto,
             "ausgleich_bei_minuspreis": v.get("ausgleich_bei_minuspreis", True),
-            "rmp_offiziell": v.get("rmp_offiziell") or {}, "kw": kw}
+            "rmp_offiziell": v.get("rmp_offiziell") or {}, "kw": kw,
+            "hkn_rp": float(v.get("hkn_rp") or 0.0), "eigenverbrauch": v.get("eigenverbrauch", True)}
 
 
 def quartal(tag):
@@ -58,13 +111,35 @@ def quartal_start(q):
 
 
 def ausgleich_eff(p_rp, ausgleich, k):
-    """Ausgleich, der auf eine kWh zum Spotpreis p tatsächlich anfällt."""
-    return ausgleich if (p_rp >= 0 or k["ausgleich_bei_minuspreis"]) else 0.0
+    """Zuschlag, der auf eine kWh zum Spotpreis p zusätzlich anfällt: Ausgleich der Minimalvergütung + HKN."""
+    return (ausgleich if (p_rp >= 0 or k["ausgleich_bei_minuspreis"]) else 0.0) + k.get("hkn_rp", 0.0)
 
 
 def schwelle_rp(ausgleich, k):
-    """Unter diesem Spotpreis bringt Einspeisen weniger als nichts (Modell «boerse»)."""
-    return round(0.0 - ausgleich, 2) if k["ausgleich_bei_minuspreis"] and ausgleich > 0 else 0.0
+    """Unter diesem Spotpreis bringt Einspeisen weniger als nichts (Modell «boerse»): −(Ausgleich + HKN)."""
+    s = (ausgleich if k["ausgleich_bei_minuspreis"] else 0.0) + k.get("hkn_rp", 0.0)
+    return round(0.0 - s, 2) if s > 0 else 0.0
+
+
+def rmp_quartal(q, schaetz_monat, k, bfe):
+    """Referenz-Marktpreis eines Quartals und Quelle: manuell > BFE-Quartal > BFE-Monate + eigene Schätzung."""
+    if q in k["rmp_offiziell"]:
+        return k["rmp_offiziell"][q], "manuell eingetragen"
+    if q in bfe["quartal"]:
+        return bfe["quartal"][q], "offiziell (BFE)"
+    s = quartal_start(q)
+    monate = [f"{s.year}-{s.month + i:02d}" for i in range(3)]
+    offiz = [bfe["monat"][m] for m in monate if m in bfe["monat"]]
+    eigen = [schaetz_monat[m] for m in monate if m not in bfe["monat"] and m in schaetz_monat]
+    if not offiz and not eigen:
+        return None, "keine Daten"
+    if not offiz:
+        return sum(e for e, _ in eigen) / len(eigen), "Schätzung homi (eigene Solarproduktion)"
+    vol = sum(v for _, v in offiz) / len(offiz)              # Monate ohne BFE-Wert mit mittlerem Volumen gewichtet
+    teile = [(p, v) for p, v in offiz] + [(e, vol * anteil) for e, anteil in eigen]
+    gew = sum(v for _, v in teile)
+    quelle = "BFE-Monate" + (" + Schätzung homi" if eigen else " (offiziell)")
+    return sum(p * v for p, v in teile) / gew, quelle
 
 
 def berechnen():
@@ -77,22 +152,30 @@ def berechnen():
         s = quartal_start(qs[-1])
         qs.append(quartal(date(s.year - 1, 12, 1) if s.month == 1 else date(s.year, s.month - 3, 1)))
     rows = zustand.archiv.lesen(quartal_start(qs[-1]), heute)
+    bfe = rmp_bfe()
+    schaetz_monat = {}                                           # eigene Schätzung je Monat: (Rp., Anteil des Monats gemessen)
+    for m in sorted({z["zeit"][:7] for z in rows}):
+        mr = [z for z in rows if z["zeit"][:7] == m and z["boerse_rp"] is not None]
+        pv = sum(z["pv_kwh"] or 0 for z in mr)
+        if pv > 0:
+            jahr, mon = int(m[:4]), int(m[5:])
+            tage_monat = ((date(jahr + mon // 12, mon % 12 + 1, 1) - date(jahr, mon, 1)).days)
+            schaetz_monat[m] = (sum((z["pv_kwh"] or 0) * z["boerse_rp"] for z in mr) / pv,
+                                len({z["zeit"][:10] for z in mr}) / tage_monat)
     aus = []
     for q in reversed(qs):
         r = [z for z in rows if quartal(date.fromisoformat(z["zeit"][:10])) == q]
         if not r:
             continue
         mit_preis = [z for z in r if z["boerse_rp"] is not None]
-        pv = sum(z["pv_kwh"] or 0 for z in mit_preis)
-        rmp_schaetz = sum((z["pv_kwh"] or 0) * z["boerse_rp"] for z in mit_preis) / pv if pv > 0 else None
-        rmp = k["rmp_offiziell"].get(q, rmp_schaetz)
+        rmp, rmp_quelle = rmp_quartal(q, schaetz_monat, k, bfe)
         ausgleich = max(0.0, k["minimal_rp"] - rmp) if rmp is not None else 0.0
         schwelle = schwelle_rp(ausgleich, k)
         e_alle = sum(z["einspeisung_kwh"] or 0 for z in r)
         e_preis = sum(z["einspeisung_kwh"] or 0 for z in mit_preis)
         # alle Modelle auf derselben Basis: nur Zeiten, für die ein Börsenpreis gespeichert ist
         fix = sum(z["erloes_chf"] or 0 for z in mit_preis)
-        ref = e_preis * max(rmp or 0, k["minimal_rp"]) / 100
+        ref = e_preis * (max(rmp or 0, k["minimal_rp"]) + k["hkn_rp"]) / 100
         ohne = mit = minus_kwh = minus_h = 0.0
         for z in mit_preis:
             e, p = z["einspeisung_kwh"] or 0, z["boerse_rp"]
@@ -109,7 +192,7 @@ def berechnen():
             "quartal": q, "laufend": q == q_jetzt, "tage": tage, "tage_mit_boersenpreis": tage_preis,
             "einspeisung_kwh": round(e_alle, 2), "einspeisung_mit_preis_kwh": round(e_preis, 2),
             "rmp_rp": round(rmp, 2) if rmp is not None else None,
-            "rmp_quelle": "offiziell" if q in k["rmp_offiziell"] else "Schätzung homi (eigene Solarproduktion)",
+            "rmp_quelle": rmp_quelle,
             "ausgleich_rp": round(ausgleich, 2), "schwelle_rp": round(schwelle, 2),
             "abregeln_h": round(minus_h, 2), "abregeln_kwh": round(minus_kwh, 2),
             "wert_chf": {"fix": round(fix, 2), "referenzmarkt": round(ref, 2),
@@ -119,14 +202,18 @@ def berechnen():
     return {
         "modell": k["modell"], "modell_name": MODELLE[k["modell"]], "modelle": MODELLE,
         "minimal_rp": k["minimal_rp"], "anlage_kw": k["kw"],
-        "ausgleich_bei_minuspreis": k["ausgleich_bei_minuspreis"],
+        "ausgleich_bei_minuspreis": k["ausgleich_bei_minuspreis"], "hkn_rp": k["hkn_rp"],
+        "rmp_bfe_letzte": {"quartal": max(bfe["quartal"]) if bfe["quartal"] else None,
+                           "monat": max(bfe["monat"]) if bfe["monat"] else None},
         "quartale": aus,
         "erklaerung": (
             f"Ab 2027 wird Solarstrom ohne andere Abmachung zum Börsenpreis der Stunde vergütet (SNB-Tageskurs). "
             f"Für Anlagen unter 150 kW gilt eine Minimalvergütung, für deine Anlage ({k['kw']:g} kW) "
             f"{k['minimal_rp']:g} Rp./kWh: Lag der Quartalsdurchschnitt (Referenz-Marktpreis) darunter, gibt es die "
             "Differenz nachträglich auf jede eingespeiste kWh. Abregeln lohnt sich deshalb erst, wenn der Börsenpreis "
-            "unter minus diesem Ausgleich fällt. Ohne intelligenten Zähler gilt bis Ende 2027 der Quartalsdurchschnitt."),
+            "unter minus diesem Ausgleich fällt (plus allfällige Herkunftsnachweise). Ohne intelligenten Zähler gilt bis Ende "
+            "2027 der Quartalsdurchschnitt. Referenz-Marktpreise: offizielle Werte des BFE, für den laufenden Monat "
+            "schätzt homi aus deinen Daten."),
     }
 
 
