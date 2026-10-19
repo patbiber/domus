@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0b1730">
+<title>homi · gleich wieder da</title>
+<!-- Eine Seite für drei Fälle: nginx-Fehler (homi oder Login antwortet kurz nicht), Serverfehler und kein Netz
+     (Service Worker). Keine externen Dateien – sie muss auch dann laden, wenn homi selbst nicht antwortet.
+     Ziehen nach unten oder Antippen lädt neu; von selbst nach einigen Sekunden, mit wachsender Wartezeit. -->
+<style>
+  :root { --bg: #0b1730; --bg2: #13254a; --text: #f4f6fb; --leise: #9fb0cc; --sonne: #ffb020; --sonne2: #ff7a1a; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: radial-gradient(120% 80% at 50% 0%, var(--bg2), var(--bg) 70%); color: var(--text);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    display: flex; align-items: center; justify-content: center; padding: env(safe-area-inset-top, 0px) 24px env(safe-area-inset-bottom, 0px);
+    overscroll-behavior-y: contain; -webkit-user-select: none; user-select: none; touch-action: pan-x; }
+  main { text-align: center; max-width: 340px; display: grid; justify-items: center; gap: 14px; transition: transform .25s; }
+  .logo { width: 64px; height: 64px; }
+  h1 { margin: 6px 0 0; font-size: 1.45rem; line-height: 1.25; text-wrap: balance; }
+  p { margin: 0; color: var(--leise); text-wrap: balance; }
+  .knopf { margin-top: 18px; width: 108px; height: 108px; border-radius: 50%; border: 0; cursor: pointer; color: #1d1300;
+    background: linear-gradient(140deg, var(--sonne), var(--sonne2)); box-shadow: 0 14px 36px rgba(255, 140, 30, .35), inset 0 -4px 0 rgba(0,0,0,.12);
+    display: grid; place-items: center; transition: transform .2s; -webkit-tap-highlight-color: transparent; }
+  .knopf svg { width: 50px; height: 50px; animation: wippen 1.6s ease-in-out infinite; transition: transform .2s; }
+  .knopf:active { transform: scale(.94); }
+  @keyframes wippen { 0%, 100% { transform: translateY(-4px); } 50% { transform: translateY(6px); } }
+  .bereit .knopf svg { animation: none; transform: rotate(180deg); }
+  .laedt .knopf svg { animation: drehen .8s linear infinite; }
+  @keyframes drehen { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+  .hinweis { font-size: .9rem; min-height: 1.5em; }
+  .zaehler { font-size: .82rem; color: var(--leise); opacity: .8; font-variant-numeric: tabular-nums; }
+  @media (prefers-reduced-motion: reduce) { .knopf svg { animation: none !important; } }
+</style>
+</head>
+<body>
+<main id="m">
+  <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+    <rect width="64" height="64" rx="16" fill="#13254a"/>
+    <path d="M14 33 32 17l18 16v15a3 3 0 0 1-3 3H17a3 3 0 0 1-3-3z" fill="#fff"/>
+    <rect x="27" y="37" width="10" height="14" rx="2" fill="#ffb020"/>
+    <circle cx="47" cy="17" r="7" fill="#ffb020"/>
+  </svg>
+  <h1 id="titel">Einen Moment – homi wacht auf</h1>
+  <p id="text">Die Verbindung hat kurz gehakt. Deine Daten sind sicher, gleich geht’s weiter.</p>
+  <button class="knopf" id="knopf" type="button" aria-label="Neu laden">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 4v15"/><path d="m5.5 12.5 6.5 6.5 6.5-6.5"/>
+    </svg>
+  </button>
+  <div class="hinweis" id="hinweis">Nach unten ziehen oder antippen</div>
+  <div class="zaehler" id="zaehler"></div>
+</main>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+if (!navigator.onLine) {
+  $("titel").textContent = "Kein Internet";
+  $("text").textContent = "Sobald dein Gerät wieder online ist, holt homi die neuesten Werte.";
+}
+// Von selbst neu laden: 4, 8, 15, 30, dann alle 60 Sekunden (Zähler über Neuladen hinweg im sessionStorage)
+let versuch = 0;
+try { versuch = +sessionStorage.getItem("homi-neuladen") || 0; sessionStorage.setItem("homi-neuladen", versuch + 1); } catch (_) {}
+let rest = [4, 8, 15, 30][versuch] || 60;
+function laden() {
+  document.body.classList.add("laedt");
+  $("hinweis").textContent = "Lädt …";
+  location.reload();
+}
+const uhr = setInterval(() => {
+  rest -= 1;
+  if (rest <= 0) { clearInterval(uhr); laden(); return; }
+  $("zaehler").textContent = `Neuer Versuch in ${rest} s`;
+}, 1000);
+$("zaehler").textContent = `Neuer Versuch in ${rest} s`;
+$("knopf").addEventListener("click", laden);
+addEventListener("online", laden);
+
+// Ziehen nach unten
+let start = null, weg = 0;
+const SCHWELLE = 90;
+addEventListener("touchstart", e => { start = e.touches[0].clientY; weg = 0; }, { passive: true });
+addEventListener("touchmove", e => {
+  if (start === null) return;
+  weg = Math.max(0, e.touches[0].clientY - start);
+  const zug = Math.min(weg * 0.5, 70);
+  $("m").style.transition = "none";
+  $("m").style.transform = `translateY(${zug}px)`;
+  const bereit = weg > SCHWELLE;
+  document.body.classList.toggle("bereit", bereit);
+  $("hinweis").textContent = bereit ? "Loslassen zum Aktualisieren" : "Weiter nach unten ziehen";
+}, { passive: true });
+addEventListener("touchend", () => {
+  $("m").style.transition = ""; $("m").style.transform = "";
+  if (start !== null && weg > SCHWELLE) { document.body.classList.remove("bereit"); laden(); }
+  else $("hinweis").textContent = "Nach unten ziehen oder antippen";
+  start = null;
+});
+</script>
+</body>
+</html>

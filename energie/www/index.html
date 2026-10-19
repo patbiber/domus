@@ -1248,6 +1248,7 @@ pollBoerse(); setInterval(pollBoerse, 15 * 60000);
 pollEinspeisung(); setInterval(pollEinspeisung, 10 * 60000);
 pollAmort(); setInterval(pollAmort, 10 * 60000);
 pollBerater(); setInterval(pollBerater, 60 * 60000);
+try { sessionStorage.removeItem("homi-neuladen"); } catch {}   // Neuladen-Seite: Wartezeit wieder von vorne
 pollSteuerung(); setInterval(pollSteuerung, 15000);
 pollGeraete(); setInterval(pollGeraete, 15000);
 pollVerguetung(); setInterval(pollVerguetung, 10 * 60000);

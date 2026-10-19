@@ -62,6 +62,7 @@ BIND_BETRIEB = "172.18.0.1:8098"
 BIND = os.environ.get("LOGIN_BIND", BIND_BETRIEB)
 COOKIE = "__Host-homi"
 SITZUNG_S = 180 * 86400
+VERLAENGERN = threading.Lock()                     # nur ein Thread verlängert eine Sitzung
 CODE_S, CODE_VERSUCHE = 15 * 60, 5
 INSTANZ_RE = re.compile(r"^[a-z0-9-]{2,30}$")
 EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,190}\.[a-z]{2,24}$", re.I)
@@ -94,7 +95,7 @@ def lesen(pfad, standard):
 
 def schreiben(pfad, inhalt):
     os.makedirs(os.path.dirname(pfad), exist_ok=True)
-    tmp = pfad + ".tmp"
+    tmp = f"{pfad}.{os.getpid()}.{threading.get_ident()}.tmp"   # eigene Zwischendatei pro Thread (gleichzeitige Anfragen)
     fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         json.dump(inhalt, f, ensure_ascii=False)
@@ -127,8 +128,13 @@ def sitzung(instanz, cookie_kopf):
     if s["email"] not in benutzer(instanz):          # Zugang entzogen
         return None, None
     if time.time() - s["zuletzt"] > 3600:            # gleitend verlängern, höchstens stündlich schreiben
-        s["zuletzt"] = time.time()
-        schreiben(pfad, s)
+        with VERLAENGERN:                              # wacht die App auf, kommen viele Prüfungen gleichzeitig
+            if time.time() - (lesen(pfad, s).get("zuletzt") or 0) > 3600:
+                s["zuletzt"] = time.time()
+                try:
+                    schreiben(pfad, s)
+                except OSError as e:                   # Verlängern ist Nebensache: die Anmeldung gilt trotzdem
+                    print("Sitzung nicht verlängert:", e, flush=True)
     return pfad, s
 
 

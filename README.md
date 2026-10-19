@@ -149,8 +149,8 @@ Laufzeit-Zustand), `erfassung` (5-s-Schleife), `fronius`, `tarif`, `boerse`, `ar
 - **App (PWA) mit Push-Nachrichten**: homi ist installierbar (Android: Menü → «App installieren», iPhone: Teilen →
   «Zum Home-Bildschirm», Push ab iOS 16.4). Seite, JS, CSS und Manifest kommen mit `Cache-Control: no-cache` (sonst
   zeigen installierte Apps tagelang alte Versionen); der Service Worker holt sie zusätzlich immer frisch (bei 401 geht
-  die Original-Anfrage durch, damit der Login-Dialog erscheint). `www/manifest.webmanifest`, `www/sw.js` (Push anzeigen, Offline-Seite
-  `www/offline.html`, keine Live-Daten im Cache), Icons `www/icons/` (erzeugt mit `energie/icons.py`, Pixel-Art).
+  die Original-Anfrage durch, damit der Login-Dialog erscheint). `www/manifest.webmanifest`, `www/sw.js` (Push anzeigen, Neuladen-Seite
+  `www/neuladen.html` bei offline und Serverfehlern, keine Live-Daten im Cache), Icons `www/icons/` (erzeugt mit `energie/icons.py`, Pixel-Art).
   Abschnitt «homi als App» unten auf der Seite: Push ein/aus, Themen (Minuspreise, Prognose, Störungen), Testnachricht.
   - Anmelden: `POST /api/push` (`anmelden`/`abmelden`/`lesen`/`test`; nur Endpunkte der bekannten Push-Dienste
     Google, Mozilla, Apple, Microsoft) → `energie/data/push/abos/<hash>.json` (nicht im Repo).
@@ -175,7 +175,7 @@ Laufzeit-Zustand), `erfassung` (5-s-Schleife), `fronius`, `tarif`, `boerse`, `ar
 https://home.biber.solar – nginx (`proxy/conf.d/home.biber.solar.conf`) leitet an `host.docker.internal:8099`,
 nur GET/HEAD (Ausnahme: `POST /api/push`, max. 4 kB, eigenes Rate-Limit `home_push`), API mit Rate-Limit
 (2 Anfragen/s, Spitzen bis 60 – die Kunden-App lädt beim Start ~20 Dinge auf einmal und wiederholt Fehlschläge).
-Manifest, Service Worker, Icons und Offline-Seite sind ohne Passwort abrufbar (keine Daten, nötig für Installation/Push). Zertifikat einmalig geholt mit
+Manifest, Service Worker, Icons und Neuladen-Seite sind ohne Passwort abrufbar (keine Daten, nötig für Installation/Push). Zertifikat einmalig geholt mit
 `docker exec certbot certbot certonly --webroot -w /var/www/certbot -d home.biber.solar --email … --agree-tos -n`
 (Erneuerung automatisch).
 
@@ -468,6 +468,14 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   erneuert) → fällt homi aus, ist sie nach 5 min aus. Zählt Verbrauch, Solaranteil und Laufzeit. Überall: App-Karte in
   der Übersicht, Retro-Kachel mit AUTO/EIN/AUS, HA `sensor.ladestation_handy` (Name «Solarladestation», + `_leistung`,
   `_heute`) und `select.ladestation_handy_modus`. (Zuerst war «Heizung Dachstock ab 3 kW» geplant – verworfen.)
+- **Neuladen-Seite statt Fehlermeldung** (`energie/www-kunde/neuladen.html`, `www/neuladen.html` ist ein Verweis darauf,
+  seit 19.10.2026): eine Seite ohne externe Dateien mit grossem Pfeil nach unten – nach unten ziehen oder antippen lädt
+  neu, von selbst nach 4/8/15/30/60 s (Zähler im sessionStorage, die App setzt ihn beim Start zurück). nginx liefert sie
+  bei 500/502/503/504 aus (`error_page` in `home.biber.solar.conf` und über `kunden/kunde.py` in jeder Kunden-Instanz,
+  dort zusätzlich im Anmelde-Block, weil eine eigene `error_page` die des Servers ersetzt; Mount
+  `../energie/www-kunde:/usr/share/nginx/homi:ro`). Die Service Worker zeigen sie offline und bei Serverfehlern.
+  Ursache der Fehler damals: homi-login schrieb beim stündlichen Verlängern der Sitzung alle gleichzeitigen Anfragen
+  in dieselbe Zwischendatei → Absturz (behoben: eigene Zwischendatei pro Thread, Sperre, Verlängern darf scheitern).
 - **Grundsatz:** Jede Funktion in allen Oberflächen (Retro, Kunden-UI, Home Assistant), ausser gerätespezifische
   (z. B. Verbrauch des NUC). Stand 10.10.2026 zusätzlich angeglichen: Batterie-Simulation in der Retro-Seite,
   Verlauf «Tag» und «Gesamt» in der Kunden-UI, HA-Sensoren `sensor.einspeisung_dynamisch_heute`,

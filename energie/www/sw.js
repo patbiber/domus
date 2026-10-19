@@ -1,8 +1,8 @@
 // Service Worker von homi: macht die Seite installierbar, zeigt Push-Nachrichten
 // und eine Offline-Seite, wenn der NUC nicht erreichbar ist. Live-Daten werden nie zwischengespeichert.
 "use strict";
-const CACHE = "homi-v3";
-const OFFLINE = ["/offline.html", "/icons/homi-192.png"];
+const CACHE = "homi-v4";
+const OFFLINE = ["/neuladen.html", "/icons/homi-192.png"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE)).then(() => self.skipWaiting()));
@@ -24,8 +24,10 @@ self.addEventListener("fetch", e => {
     e.respondWith(fetch(e.request.url, { cache: "no-cache", credentials: "same-origin" })
       // 401: Original-Anfrage (Login-Dialog); Weiterleitung (z. B. zur Anmeldung): als echte Weiterleitung zurückgeben,
       // denn eine bereits gefolgte Antwort nimmt der Browser für Seitenaufrufe nicht an
-      .then(r => r.status === 401 ? fetch(e.request) : r.redirected ? Response.redirect(r.url, 302) : r)
-      .catch(() => caches.match("/offline.html")));
+      // Serverfehler (homi oder Login antwortet kurz nicht) und offline: die Neuladen-Seite statt einer Fehlermeldung
+      .then(r => r.status === 401 ? fetch(e.request) : r.redirected ? Response.redirect(r.url, 302)
+        : r.status >= 500 ? caches.match("/neuladen.html").then(c => c || r) : r)
+      .catch(() => caches.match("/neuladen.html")));
   } else if (url.origin === self.location.origin && /\.(js|css|webmanifest)$/.test(url.pathname)) {
     e.respondWith(fetch(e.request, { cache: "no-cache" }));
   }

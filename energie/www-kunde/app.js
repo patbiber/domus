@@ -660,6 +660,7 @@ async function selten() {
   zeichnen();
 }
 async function start() {
+  try { sessionStorage.removeItem("homi-neuladen"); } catch {}   // Neuladen-Seite: Wartezeit wieder von vorne
   try {
     D.info = await holen("info");
     $("titel").textContent = D.info.titel; $("a-titel").textContent = D.info.titel;
