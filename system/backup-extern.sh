@@ -6,7 +6,7 @@
 #
 # Inhalt: .env, homi-Daten (Archiv, Push-Schlüssel, Speicher), Login-Daten (Anmelde-Adressen, Sitzungen, Passkeys),
 #         Verkaufsseite (Abos, Anfragen), nginx-Konfiguration inkl. Kunden-Instanzen, Zertifikate, Tarifarchiv,
-#         Mail-Konfiguration, neuestes Home-Assistant-Backup, Liste der systemd-Units.
+#         Mail-Konfiguration, neuestes Home-Assistant-Backup, Webstatistik (Umami-Datenbank), Liste der systemd-Units.
 # Schlüssel: ~/.config/domus/backup-schluessel (nicht im Repo; Patrick hat eine Kopie im Passwortmanager).
 # Wiederherstellen: gpg --decrypt homi-backup-….tar.gz.gpg | tar xzf -
 set -euo pipefail
@@ -36,10 +36,15 @@ ARBEIT=$(mktemp -d); trap 'rm -rf "$ARBEIT"' EXIT
   echo; echo "Wiederherstellen: Repo klonen, dieses Archiv darüber auspacken (Pfade relativ zu ~/domus bzw. /etc),"
   echo "Units verlinken (README), Container starten. HA: backups/homeassistant-*.tar.gz nach homeassistant/config entpacken."
 } > "$ARBEIT/LIESMICH.txt"
+# Webstatistik (Umami): Datenbank-Auszug, falls der Dienst läuft
+UMAMI_TEIL=()
+if docker exec umami-db pg_dump -U umami umami 2>/dev/null | gzip > "$ARBEIT/umami.sql.gz" && [ -s "$ARBEIT/umami.sql.gz" ]; then
+  UMAMI_TEIL=(umami.sql.gz)
+fi
 HA=$(ls -t "$DOMUS"/backups/homeassistant-*.tar.gz 2>/dev/null | head -1 || true)
 TEILE=(.env energie/data login/data energy/abos energy/anfragen proxy/conf.d proxy/certbot/conf strompreise/data)
 [ -n "$HA" ] && TEILE+=("${HA#$DOMUS/}")
-sudo tar -czf "$ARBEIT/inhalt.tar.gz" -C "$DOMUS" "${TEILE[@]}" -C / etc/msmtprc etc/aliases -C "$ARBEIT" LIESMICH.txt \
+sudo tar -czf "$ARBEIT/inhalt.tar.gz" -C "$DOMUS" "${TEILE[@]}" -C / etc/msmtprc etc/aliases -C "$ARBEIT" LIESMICH.txt "${UMAMI_TEIL[@]}" \
   || fehler "tar ist fehlgeschlagen"
 sudo chown "$(id -u):$(id -g)" "$ARBEIT/inhalt.tar.gz"
 

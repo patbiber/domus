@@ -54,3 +54,6 @@ energy/abos/
 
 # homi-login: Anmelde-Adressen, Sitzungen, Passkeys der Kunden (Personendaten)
 login/data/
+
+# Webstatistik Umami: Datenbank
+umami/data/

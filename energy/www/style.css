@@ -449,3 +449,14 @@ img { max-width: 100%; height: auto; }
 .bald-tag { display: inline-block; margin-left: 6px; font-size: .68rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; padding: 2px 7px;
   border-radius: 999px; background: var(--blue-soft); color: #175cd3; vertical-align: 1px; }
 .leise-uhr { color: var(--f2, #2e90fa); font-weight: 600; white-space: nowrap; }
+
+/* Rechtliches (datenschutz.html): ruhige Leseseite */
+.recht { max-width: 760px; padding-block: 40px 64px; color: var(--ink-2); line-height: 1.65; }
+.recht h1 { color: var(--ink); font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 0 0 6px; }
+.recht h2 { color: var(--ink); font-size: 1.25rem; margin: 36px 0 8px; scroll-margin-top: 80px; }
+.recht h3 { color: var(--ink); font-size: 1rem; margin: 20px 0 4px; }
+.recht ul { padding-left: 20px; display: grid; gap: 6px; }
+.recht-stand { color: var(--muted); font-size: .9rem; margin: 0 0 18px; }
+.recht-kurz { background: var(--green-soft); border-radius: 14px; padding: 14px 18px; color: var(--ink); }
+.recht-inhalt { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: .9rem; margin: 18px 0 8px; }
+.recht a { color: #1f6feb; }

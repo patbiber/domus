@@ -1,0 +1,57 @@
+# Webstatistik Umami (https://umami.is): ohne Cookies, ohne gespeicherte IP-Adressen, Daten nur auf dem NUC.
+# Dashboard: https://stats.biber.solar (eigener Login). Zählt biber.solar und homi.solar – bewusst NICHT die
+# privaten Seiten mit Anmeldung (home.biber.solar, <name>.homi.solar).
+# Zählskript: https://stats.biber.solar/s.js (eigener Name, wird von Werbeblockern seltener blockiert).
+# Geheimnisse in ../.env: UMAMI_DB_PASSWORT, UMAMI_APP_SECRET. Daten: ./data/postgres (nicht im Repo).
+# Backup: system/backup-extern.sh legt jede Nacht einen Datenbank-Auszug ins Gesamt-Backup.
+services:
+  umami:
+    container_name: umami
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    restart: unless-stopped
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORT}@umami-db:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET}
+      TRACKER_SCRIPT_NAME: s.js
+      DISABLE_TELEMETRY: "1"
+      DISABLE_UPDATES: "1"
+    depends_on:
+      umami-db:
+        condition: service_healthy
+    networks:
+      - proxy_default
+      - intern
+    logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  umami-db:
+    container_name: umami-db
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORT}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami -d umami"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - intern
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  proxy_default:
+    external: true
+  intern: {}

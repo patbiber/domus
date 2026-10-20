@@ -468,6 +468,18 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   erneuert) → fällt homi aus, ist sie nach 5 min aus. Zählt Verbrauch, Solaranteil und Laufzeit. Überall: App-Karte in
   der Übersicht, Retro-Kachel mit AUTO/EIN/AUS, HA `sensor.ladestation_handy` (Name «Solarladestation», + `_leistung`,
   `_heute`) und `select.ladestation_handy_modus`. (Zuerst war «Heizung Dachstock ab 3 kW» geplant – verworfen.)
+- **Webstatistik Umami** (`umami/`, https://stats.biber.solar, seit 20.10.2026): Container `umami` + `umami-db`
+  (Postgres 16) im Netz proxy_default/intern, Geheimnisse `UMAMI_DB_PASSWORT`/`UMAMI_APP_SECRET` in `.env` (`umami/.env`
+  ist ein Verweis darauf, für die Variablen-Ersetzung von Compose). Login: Benutzer `patrick`, Passwort in
+  `~/.config/domus/umami-login` (600; Standard-Login admin/umami ist ersetzt). Zählskript `/s.js`, keine Cookies, keine
+  IP gespeichert, «Do Not Track» respektiert, `access_log off` für stats. Websites: biber.solar und homi.solar
+  (IDs in `~/.config/domus/umami-websites.json`, im HTML öffentlich). Ereignisse auf homi.solar: «Anmeldung abgeschickt»
+  (mit Rolle), «Minuspreis-Warnung abonniert», Klicks auf «Jetzt anmelden» und «Investoren-Gespräch». CSP von
+  homi.solar erlaubt stats.biber.solar. Löschen nach 25 Monaten: `umami/aufraeumen.sh` (Timer `umami-aufraeumen`,
+  monatlich). Backup: Datenbank-Auszug im Gesamt-Backup. Wöchentliches Image-Update inkl. Prüfung `/api/heartbeat`.
+- **Datenschutzerklärung homi** (`energy/www/datenschutz.html`, https://homi.solar/datenschutz.html): gilt für
+  homi.solar, biber.solar und alle Seiten mit Anmeldung; verlinkt aus Formularen, Fuss von homi.solar, Login-Seite,
+  App (Tab «Mehr») und Retro-Seite. biber.solar hat eine eigene, verweist für homi hierher.
 - **Neuladen-Seite statt Fehlermeldung** (`energie/www-kunde/neuladen.html`, `www/neuladen.html` ist ein Verweis darauf,
   seit 19.10.2026): eine Seite ohne externe Dateien mit grossem Pfeil nach unten – nach unten ziehen oder antippen lädt
   neu, von selbst nach 4/8/15/30/60 s (Zähler im sessionStorage, die App setzt ihn beim Start zurück). nginx liefert sie

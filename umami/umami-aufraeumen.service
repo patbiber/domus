@@ -1,0 +1,7 @@
+# Statistikdaten älter als 25 Monate löschen (Datenschutzerklärung)
+[Unit]
+Description=Umami: Statistikdaten älter als 25 Monate löschen
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/umami/aufraeumen.sh

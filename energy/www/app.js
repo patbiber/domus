@@ -1,3 +1,6 @@
+// Webstatistik (Umami auf stats.biber.solar, ohne Cookies): Ereignisse zählen, falls das Zählskript geladen ist
+function zaehlen(name, daten) { try { if (window.umami) window.umami.track(name, daten); } catch (_) {} }
+
 /* homi – Demo mit simulierten Daten (homi.solar)
    Tageszeit und Sonnenstand sind echt (Stäfa, Zürcher Zeit), Wetter und Verbrauch werden pro Tag
    reproduzierbar simuliert (gleicher Tag = gleiche Kurve). Keine externen Dienste. */
@@ -408,6 +411,7 @@
       const r = await fetch("api/anfrage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.ok) throw new Error(j.fehler || "Fehler " + r.status);
+      zaehlen("Anmeldung abgeschickt", { rolle: daten.rolle });
       f.outerHTML = `<div class="card danke"><div class="gross">☀️</div><h3>Danke, ${daten.name.split(" ")[0].replace(/[<>&]/g, "")}!</h3><p class="sub">Deine Anmeldung ist angekommen. Ich melde mich in den nächsten Tagen persönlich bei dir.</p></div>`;
     } catch (err) {
       f.querySelector("button[type=submit]").disabled = false;
@@ -455,6 +459,7 @@
       const r = await fetch("api/warnung", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.ok) throw new Error(j.fehler || "Fehler " + r.status);
+      zaehlen("Minuspreis-Warnung abonniert");
       f.innerHTML = `<div class="warnung-meldung ok" style="grid-column:1/-1;margin:0">📬 Fast geschafft! Bitte bestätige den Link in der Mail, die wir dir gerade geschickt haben.</div>`;
     } catch (err) { st.className = "form-status fehler"; st.textContent = "Das hat nicht geklappt: " + String(err.message).replace(/[<>&]/g, "") + ". Versuch es bitte später nochmals."; }
   });
