@@ -486,7 +486,8 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   (Postgres 16) im Netz proxy_default/intern, Geheimnisse `UMAMI_DB_PASSWORT`/`UMAMI_APP_SECRET` in `.env` (`umami/.env`
   ist ein Verweis darauf, für die Variablen-Ersetzung von Compose). Login: Benutzer `patrick`, Passwort in
   `~/.config/domus/umami-login` (600; Standard-Login admin/umami ist ersetzt). Zählskript `/s.js`, keine Cookies, keine
-  IP gespeichert, «Do Not Track» respektiert, `access_log off` für stats. Websites: biber.solar und homi.solar
+  IP gespeichert, «Do Not Track» respektiert, `access_log off` für stats. Login-Bremse: `/api/auth/login` höchstens
+  10 Versuche/Minute pro Adresse (Puffer 5, sonst 429). Websites: biber.solar und homi.solar
   (IDs in `~/.config/domus/umami-websites.json`, im HTML öffentlich). Ereignisse auf homi.solar: «Anmeldung abgeschickt»
   (mit Rolle), «Minuspreis-Warnung abonniert», Klicks auf «Jetzt anmelden» und «Investoren-Gespräch». CSP von
   homi.solar erlaubt stats.biber.solar. Löschen nach 25 Monaten: `umami/aufraeumen.sh` (Timer `umami-aufraeumen`,

@@ -1,0 +1,26 @@
+#!/usr/sbin/nft -f
+# Firewall des NUC (21.10.2026, Wunsch Patrick): eigene Tabelle «inet domus», lässt Dockers Tabellen unberührt.
+# Von aussen (Internet) leitet der Router ohnehin nur 80/443 weiter; diese Regeln schützen zusätzlich im Heimnetz.
+# Erlaubt über eno1: SSH (22), Webseiten (80/443), Home Assistant (8123), Geräte-Suche von HA (mDNS 5353, SSDP 1900
+# samt Antworten), DHCP, ICMP. Alles andere von eno1 wird verworfen – z. B. homi direkt (8099) und go2rtc (18555).
+# Container (Docker-Brücken) und der NUC selbst (lo) dürfen alles: nginx erreicht homi, Login und HA weiterhin.
+# Geladen von domus-firewall.service; entfernen: sudo nft delete table inet domus
+table inet domus
+delete table inet domus
+
+table inet domus {
+    chain eingang {
+        type filter hook input priority filter; policy accept;
+        ct state established,related accept
+        ct state invalid drop
+        iif "lo" accept
+        iifname != "eno1" accept                                  # Docker-Brücken, veth
+        meta l4proto { icmp, ipv6-icmp } accept                   # Ping, IPv6-Nachbarsuche
+        tcp dport { 22, 80, 443, 8123 } accept
+        udp dport { 5353, 1900 } accept                           # mDNS/SSDP (Home Assistant: Cast, UPnP)
+        udp sport { 5353, 1900 } accept                           # Antworten auf Geräte-Suchen
+        udp dport { 67, 68, 546, 547 } accept                     # DHCP
+        limit rate 6/minute log prefix "domus-firewall verworfen: " level info
+        counter drop
+    }
+}

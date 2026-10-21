@@ -1,0 +1,14 @@
+# Firewall des NUC: lädt /home/claude/domus/system/firewall.nft (eigene Tabelle «inet domus», Docker bleibt unberührt)
+[Unit]
+Description=domus: Firewall (nur SSH, Webseiten, Home Assistant und Geräte-Suche aus dem Heimnetz)
+Wants=network-pre.target
+Before=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /home/claude/domus/system/firewall.nft
+ExecStop=/usr/sbin/nft delete table inet domus
+
+[Install]
+WantedBy=multi-user.target
