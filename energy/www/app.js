@@ -9,17 +9,20 @@ function zaehlen(name, daten) { try { if (window.umami) window.umami.track(name,
   // Fehlt ein Element (Abschnitt entfernt), läuft alles weiter: ein «leeres» Objekt nimmt jeden Zugriff an
   const LEER = new Proxy(function () {}, { get: (t, k) => k === Symbol.toPrimitive ? () => "" : LEER, set: () => true, apply: () => LEER });
   const $ = id => document.getElementById(id) || LEER;
+  // Sprache: die englische Seite (/en/) hat <html lang="en">; tr(deutsch, englisch) wählt den passenden Text
+  const EN = document.documentElement.lang === "en";
+  const tr = (de, en) => EN ? en : de;
   const N = 288;                                   // 5-Minuten-Schritte pro Tag
   const PROFILE = {
     heim: {
       kwp: 9.8, batt: 10, battKw: 5, autoMax: 7.4, autoBedarf: 16, tarif: 26.68,
-      haus: "Verbrauch", auto: "E-Auto",
+      haus: tr("Verbrauch", "Consumption"), auto: tr("E-Auto", "EV"),
       note: "Simulierte Daten eines typischen Einfamilienhauses am Zürichsee: 9.8 kWp Solaranlage, 10 kWh Batterie, Wärmepumpe und E-Auto. Tageszeit und Sonnenstand sind echt, Wetter und Verbrauch sind simuliert.",
       kat: { grund: ["Grundlast", "#98a2b3"], wp: ["Wärmepumpe", "#f97066"], haushalt: ["Küche & Haushalt", "#ffb020"], auto: ["E-Auto", "#53b1fd"], boiler: ["Boiler & Wäsche", "#a48bff"] },
     },
     betrieb: {
       kwp: 60, batt: 40, battKw: 20, autoMax: 22, autoBedarf: 70, tarif: 22.4,
-      haus: "Betrieb", auto: "E-Flotte",
+      haus: tr("Betrieb", "Business"), auto: tr("E-Flotte", "EV fleet"),
       note: "Simulierte Daten eines Gewerbebetriebs (Schreinerei): 60 kWp Solaranlage, 40 kWh Batterie, zwei E-Lieferwagen. Tageszeit und Sonnenstand sind echt, Wetter und Verbrauch sind simuliert.",
       kat: { grund: ["Kühlung & IT", "#98a2b3"], wp: ["Heizung", "#f97066"], haushalt: ["Maschinen", "#ffb020"], auto: ["E-Flotte", "#53b1fd"], boiler: ["Druckluft & Absaugung", "#a48bff"] },
     },
@@ -33,7 +36,7 @@ function zaehlen(name, daten) { try { if (window.umami) window.umami.track(name,
   const kw = v => (Math.abs(v) < 10 ? v.toFixed(1) : v.toFixed(0)).replace(".", ".") + " kW";
   const chf = v => "CHF " + v.toFixed(2);
   const hm = min => `${String(Math.floor(min / 60) % 24).padStart(2, "0")}:${String(Math.floor(min % 60)).padStart(2, "0")}`;
-  const WT = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+  const WT = EN ? ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] : ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
 
   function zuerich(date = new Date()) {
     const p = Object.fromEntries(new Intl.DateTimeFormat("de-CH", { timeZone: "Europe/Zurich", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" })
@@ -174,11 +177,11 @@ function zaehlen(name, daten) { try { if (window.umami) window.umami.track(name,
     $("v-haus").textContent = kw(w.last);
     $("s-haus").textContent = P.haus;
     $("v-soc").textContent = Math.round(w.soc) + " %";
-    $("s-bat").textContent = Math.abs(w.bat) < 0.05 ? "wartet" : w.bat > 0 ? "lädt " + kw(w.bat) : "liefert " + kw(-w.bat);
+    $("s-bat").textContent = Math.abs(w.bat) < 0.05 ? tr("wartet", "idle") : w.bat > 0 ? tr("lädt ", "charging ") + kw(w.bat) : tr("liefert ", "supplying ") + kw(-w.bat);
     $("v-netz").textContent = kw(Math.abs(w.netz));
-    $("s-netz").textContent = Math.abs(w.netz) < 0.05 ? "ausgeglichen" : w.netz > 0 ? "Bezug" : "Einspeisung";
+    $("s-netz").textContent = Math.abs(w.netz) < 0.05 ? tr("ausgeglichen", "balanced") : w.netz > 0 ? tr("Bezug", "import") : tr("Einspeisung", "export");
     $("v-auto").textContent = kw(w.auto);
-    $("s-auto").textContent = w.auto > 0.05 ? P.auto + " lädt" : P.auto;
+    $("s-auto").textContent = w.auto > 0.05 ? P.auto + tr(" lädt", " charging") : P.auto;
     $("bat-fill").setAttribute("height", (26 * w.soc / 100).toFixed(1));
     $("bat-fill").setAttribute("y", (-26 + 26 * (1 - w.soc / 100)).toFixed(1));
     $("sun-glow").setAttribute("opacity", (0.08 + 0.9 * clamp(w.pv / P.kwp, 0, 1)).toFixed(2));
@@ -273,7 +276,8 @@ function zaehlen(name, daten) { try { if (window.umami) window.umami.track(name,
     zeichneFluss(o, w);
     zeichneKacheln(o, w, s, prog, z.min);
     const wt = WT[new Date(z.datum + "T12:00:00Z").getUTCDay()];
-    const uhr = z.raffer ? `⏩ ${hm(z.min)}` : `${wt} ${z.datum.slice(8)}.${z.datum.slice(5, 7)}. · ${hm(z.min)}`;
+    const uhr = z.raffer ? `⏩ ${hm(z.min)}` : EN ? `${wt} ${+z.datum.slice(8)}/${+z.datum.slice(5, 7)} · ${hm(z.min)}`
+      : `${wt} ${z.datum.slice(8)}.${z.datum.slice(5, 7)}. · ${hm(z.min)}`;
     $("uhr").textContent = uhr; $("uhr").classList.toggle("zeitraffer", z.raffer);
     $("flow-uhr").textContent = uhr;
     const t = performance.now();
@@ -285,11 +289,11 @@ function zaehlen(name, daten) { try { if (window.umami) window.umami.track(name,
   function starteZeitraffer() {
     zeitraffer = { start: performance.now(), datum: zuerich().datum };
     clearInterval(timer); timer = setInterval(tick, 50);
-    $("zeitraffer").textContent = "■ Zurück zu live";
+    $("zeitraffer").textContent = tr("■ Zurück zu live", "■ Back to live");
   }
   function stoppeZeitraffer() {
     zeitraffer = null; clearInterval(timer); timer = setInterval(tick, 1000);
-    $("zeitraffer").textContent = "▶ Ein Tag in 30 Sekunden"; letzterChart = -Infinity; letzteMeldung = -Infinity; tick();
+    $("zeitraffer").textContent = tr("▶ Ein Tag in 30 Sekunden", "▶ A day in 30 seconds"); letzterChart = -Infinity; letzteMeldung = -Infinity; tick();
   }
   $("zeitraffer").addEventListener("click", () => zeitraffer ? stoppeZeitraffer() : starteZeitraffer());
   document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
@@ -400,25 +404,25 @@ function zaehlen(name, daten) { try { if (window.umami) window.umami.track(name,
     for (const [k, v] of fd.entries()) if (k.startsWith("sys_") && String(v).trim()) systeme[k.slice(4)] = String(v).trim();
     const daten = { name: fd.get("name").trim(), email: fd.get("email").trim(), telefon: fd.get("telefon").trim(), ort: fd.get("ort").trim(),
       rolle: fd.get("rolle"), objekt: fd.get("objekt"), systeme, wunsch: fd.get("wunsch").trim(),
-      website: fd.get("website"), einwilligung: fd.get("einwilligung") === "on", t: Date.now() - geladen, demo: profil };
+      website: fd.get("website"), einwilligung: fd.get("einwilligung") === "on", t: Date.now() - geladen, demo: profil, sprache: EN ? "en" : "de" };
     st.className = "form-status fehler";
-    if (!daten.name) return st.textContent = "Bitte gib deinen Namen an.";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(daten.email)) return st.textContent = "Bitte gib eine gültige E-Mail-Adresse an.";
-    if (!daten.einwilligung) return st.textContent = "Bitte bestätige die Einwilligung zur Speicherung.";
-    st.className = "form-status"; st.textContent = "Wird gesendet …";
+    if (!daten.name) return st.textContent = tr("Bitte gib deinen Namen an.", "Please enter your name.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(daten.email)) return st.textContent = tr("Bitte gib eine gültige E-Mail-Adresse an.", "Please enter a valid email address.");
+    if (!daten.einwilligung) return st.textContent = tr("Bitte bestätige die Einwilligung zur Speicherung.", "Please confirm that we may store your details.");
+    st.className = "form-status"; st.textContent = tr("Wird gesendet …", "Sending …");
     f.querySelector("button[type=submit]").disabled = true;
     try {
-      const r = await fetch("api/anfrage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten) });
+      const r = await fetch("/api/anfrage", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.ok) throw new Error(j.fehler || "Fehler " + r.status);
       zaehlen("Anmeldung abgeschickt", { rolle: daten.rolle });
-      f.outerHTML = `<div class="card danke"><div class="gross">☀️</div><h3>Danke, ${daten.name.split(" ")[0].replace(/[<>&]/g, "")}!</h3><p class="sub">Deine Anmeldung ist angekommen. Ich melde mich in den nächsten Tagen persönlich bei dir.</p></div>`;
+      f.outerHTML = `<div class="card danke"><div class="gross">☀️</div><h3>${tr("Danke", "Thank you")}, ${daten.name.split(" ")[0].replace(/[<>&]/g, "")}!</h3><p class="sub">${tr("Deine Anmeldung ist angekommen. Ich melde mich in den nächsten Tagen persönlich bei dir.", "Your sign-up has arrived. I'll get back to you personally within the next few days.")}</p></div>`;
     } catch (err) {
       f.querySelector("button[type=submit]").disabled = false;
       const body = encodeURIComponent(`Name: ${daten.name}\nTelefon: ${daten.telefon}\nOrt: ${daten.ort}\nIch bin: ${daten.rolle}\nObjekt: ${daten.objekt}\n`
         + Object.entries(daten.systeme).map(([k, v]) => `${k}: ${v}`).join("\n") + `\n\n${daten.wunsch}`);
       st.className = "form-status fehler";
-      st.innerHTML = `Das hat leider nicht geklappt (${String(err.message).replace(/[<>&]/g, "")}). <a href="mailto:support@homi.solar?subject=homi%20Anmeldung&body=${body}">Stattdessen per Mail senden</a>`;
+      st.innerHTML = `${tr("Das hat leider nicht geklappt", "Sorry, that didn't work")} (${String(err.message).replace(/[<>&]/g, "")}). <a href="mailto:support@homi.solar?subject=homi%20${tr("Anmeldung", "sign-up")}&body=${body}">${tr("Stattdessen per Mail senden", "Send by email instead")}</a>`;
     }
   });
 
@@ -428,7 +432,7 @@ function zaehlen(name, daten) { try { if (window.umami) window.umami.track(name,
     const preis = [9, 8, 8, 8, 8, 9, 12, 15, 14, 10, 4, -2, -6, -8, -5, 1, 8, 15, 22, 24, 20, 16, 12, 10];
     const W = 640, H = 260, L = 54, R = 40, T = 16, B = 28, w = W - L - R, h = H - T - B, bw = w / 24;
     const pMin = -10, pMax = 26, Yp = v => T + h - (v - pMin) / (pMax - pMin) * h, Yk = v => T + h - v / 5.5 * h;
-    let g = `<rect x="${L + 11 * bw}" y="${T}" width="${4 * bw}" height="${h}" fill="#f04438" opacity=".08"/><text x="${L + 13 * bw}" y="${T + 14}" text-anchor="middle" font-size="12" font-weight="700" fill="#d92d20">Minuspreise: Einspeisen kostet</text>`;
+    let g = `<rect x="${L + 11 * bw}" y="${T}" width="${4 * bw}" height="${h}" fill="#f04438" opacity=".08"/><text x="${L + 13 * bw}" y="${T + 14}" text-anchor="middle" font-size="12" font-weight="700" fill="#d92d20">${tr("Minuspreise: Einspeisen kostet", "Negative prices: feeding in costs")}</text>`;
     g += `<path d="M${L} ${Yk(0)}` + ueb.map((v, i) => `L${L + i * bw + bw / 2} ${Yk(v)}`).join("") + `L${L + w} ${Yk(0)}Z" fill="#FFB020" opacity=".35"/>`;
     g += `<line x1="${L}" x2="${W - R}" y1="${Yp(0)}" y2="${Yp(0)}" stroke="#98a2b3"/>`;
     preis.forEach((p, i) => { const y = Yp(p), y0 = Yp(0); g += `<rect x="${L + i * bw + 3}" y="${Math.min(y, y0)}" width="${bw - 6}" height="${Math.max(1, Math.abs(y - y0))}" rx="2" fill="${p < 0 ? "#f04438" : "#2e90fa"}" opacity=".85"><title>${i}:00 · ${p} Rp/kWh</title></rect>`; });
@@ -442,26 +446,26 @@ function zaehlen(name, daten) { try { if (window.umami) window.umami.track(name,
   // ---------- Gratis-Minuspreis-Warnung ----------
   const wq = new URLSearchParams(location.search).get("warnung");
   if (wq) {
-    const t = { aktiv: ["ok", "✓ Bestätigt! Du bekommst ab jetzt an Tagen mit negativen Strompreisen um 6:45 Uhr eine Mail."],
-      abgemeldet: ["ok", "Du bist abgemeldet und bekommst keine Warnungen mehr."],
-      ungueltig: ["nein", "Dieser Link ist nicht (mehr) gültig. Melde dich einfach neu an."] }[wq];
+    const t = { aktiv: ["ok", tr("✓ Bestätigt! Du bekommst ab jetzt an Tagen mit negativen Strompreisen um 6:45 Uhr eine Mail.", "✓ Confirmed! From now on you'll get an email at 6:45 am on days with negative electricity prices.")],
+      abgemeldet: ["ok", tr("Du bist abgemeldet und bekommst keine Warnungen mehr.", "You've unsubscribed and won't receive any more alerts.")],
+      ungueltig: ["nein", tr("Dieser Link ist nicht (mehr) gültig. Melde dich einfach neu an.", "This link is no longer valid. Simply sign up again.")] }[wq];
     if (t) { const d = document.createElement("div"); d.className = "warnung-meldung " + t[0]; d.textContent = t[1]; document.querySelector("#einspeisung .section-head").after(d); }
   }
   $("warnung-form").addEventListener("submit", async e => {
     e.preventDefault();
     const f = e.target, st = $("warnung-status"), fd = new FormData(f);
-    const daten = { email: fd.get("email").trim(), einwilligung: fd.get("einwilligung") === "on", website: fd.get("website"), t: Date.now() - geladen };
+    const daten = { email: fd.get("email").trim(), einwilligung: fd.get("einwilligung") === "on", website: fd.get("website"), t: Date.now() - geladen, sprache: EN ? "en" : "de" };
     st.className = "form-status fehler";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(daten.email)) return st.textContent = "Bitte gib eine gültige E-Mail-Adresse an.";
-    if (!daten.einwilligung) return st.textContent = "Bitte bestätige, dass du die Warnung erhalten möchtest.";
-    st.className = "form-status"; st.textContent = "Wird gesendet …";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(daten.email)) return st.textContent = tr("Bitte gib eine gültige E-Mail-Adresse an.", "Please enter a valid email address.");
+    if (!daten.einwilligung) return st.textContent = tr("Bitte bestätige, dass du die Warnung erhalten möchtest.", "Please confirm that you want to receive the alert.");
+    st.className = "form-status"; st.textContent = tr("Wird gesendet …", "Sending …");
     try {
-      const r = await fetch("api/warnung", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten) });
+      const r = await fetch("/api/warnung", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(daten) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok || !j.ok) throw new Error(j.fehler || "Fehler " + r.status);
       zaehlen("Minuspreis-Warnung abonniert");
-      f.innerHTML = `<div class="warnung-meldung ok" style="grid-column:1/-1;margin:0">📬 Fast geschafft! Bitte bestätige den Link in der Mail, die wir dir gerade geschickt haben.</div>`;
-    } catch (err) { st.className = "form-status fehler"; st.textContent = "Das hat nicht geklappt: " + String(err.message).replace(/[<>&]/g, "") + ". Versuch es bitte später nochmals."; }
+      f.innerHTML = `<div class="warnung-meldung ok" style="grid-column:1/-1;margin:0">📬 ${tr("Fast geschafft! Bitte bestätige den Link in der Mail, die wir dir gerade geschickt haben.", "Almost done! Please confirm the link in the email we've just sent you.")}</div>`;
+    } catch (err) { st.className = "form-status fehler"; st.textContent = tr("Das hat nicht geklappt: ", "That didn't work: ") + String(err.message).replace(/[<>&]/g, "") + tr(". Versuch es bitte später nochmals.", ". Please try again later."); }
   });
 
   // ---------- Einblenden beim Scrollen ----------

@@ -76,6 +76,18 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         pfad = self.path.split("?")[0]
+        # Sprache: «/» ohne Zusatz → Englisch (/en/), wenn die bevorzugte Browsersprache nicht Deutsch ist.
+        # Ohne Accept-Language (Suchmaschinen) bleibt es Deutsch; kein Cookie. Links auf die deutsche Seite zeigen auf
+        # /index.html und werden deshalb nie umgeleitet.
+        if self.path == "/":
+            sprache = (self.headers.get("Accept-Language") or "").strip().lower()
+            if sprache and not re.match(r"(de|gsw)\b", sprache):
+                self.send_response(302)
+                self.send_header("Location", "/en/")
+                self.send_header("Vary", "Accept-Language")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+                return
         if pfad == "/api/health":
             return self.antwort(200, {"ok": True})
         if pfad in ("/api/warnung/bestaetigen", "/api/warnung/abmelden"):
@@ -134,6 +146,7 @@ class Handler(SimpleHTTPRequestHandler):
             "systeme": {k: str(v).strip()[:120] for k, v in (d.get("systeme") or {}).items()
                         if k in SYSTEME and isinstance(v, str) and v.strip()} if isinstance(d.get("systeme"), dict) else {},
             "demo": "betrieb" if d.get("demo") == "betrieb" else "heim",
+            "sprache": "en" if d.get("sprache") == "en" else "de",           # Seite, über die angemeldet wurde
         }
         if not a["name"] or not EMAIL.match(a["email"]) or d.get("einwilligung") is not True:
             return self.antwort(400, {"ok": False, "fehler": "Name, E-Mail und Einwilligung sind nötig"})

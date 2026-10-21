@@ -468,6 +468,13 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   erneuert) → fällt homi aus, ist sie nach 5 min aus. Zählt Verbrauch, Solaranteil und Laufzeit. Überall: App-Karte in
   der Übersicht, Retro-Kachel mit AUTO/EIN/AUS, HA `sensor.ladestation_handy` (Name «Solarladestation», + `_leistung`,
   `_heute`) und `select.ladestation_handy_modus`. (Zuerst war «Heizung Dachstock ab 3 kW» geplant – verworfen.)
+- **Englische Fassungen** (seit 21.10.2026): homi.solar/en/ (Verkaufsseite, `en/privacy.html`) und biber.solar/en/ (alle
+  Seiten, Repo biber-solar). Sprachwahl: «/» ohne Zusatz → 302 nach `/en/`, wenn die erste Browsersprache nicht de/gsw
+  ist (homi: `energy/server.py` do_GET, biber.solar: `map $http_accept_language` in `biber-solar*/nginx.conf`, dort mit
+  `absolute_redirect off`). Umschalter oben rechts (Wappen = Deutsch, Globus = English) verlinkt die Gegenseite;
+  deutsche Links zeigen auf `/index.html`, damit niemand zurückgeleitet wird. Kein Cookie. `hreflang`-Links für
+  Suchmaschinen. Formular auf Englisch: Auswahlwerte bleiben deutsch (Server-Prüfung), Feld `sprache` kommt in der Mail
+  an Patrick mit («auf Englisch antworten»). Mails an Abonnenten bleiben vorerst Deutsch (steht so auf der Seite).
 - **Webstatistik Umami** (`umami/`, https://stats.biber.solar, seit 20.10.2026): Container `umami` + `umami-db`
   (Postgres 16) im Netz proxy_default/intern, Geheimnisse `UMAMI_DB_PASSWORT`/`UMAMI_APP_SECRET` in `.env` (`umami/.env`
   ist ein Verweis darauf, für die Variablen-Ersetzung von Compose). Login: Benutzer `patrick`, Passwort in

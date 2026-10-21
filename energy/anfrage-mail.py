@@ -24,6 +24,7 @@ for name in sorted(f for f in os.listdir(NEU) if f.endswith(".json") and not f.s
             f"Neue Anmeldung über https://homi.solar – {a.get('rolle', 'Privat')}", "",
             f"Name:       {a['name']}", f"E-Mail:     {a['email']}", f"Telefon:    {a.get('telefon') or '–'}",
             f"Ort:        {a.get('ort') or '–'}", f"Ich bin:    {a.get('rolle') or '–'}", f"Objekt:     {a.get('objekt')}",
+            f"Sprache:    {'Englisch (homi.solar/en/) – auf Englisch antworten' if a.get('sprache') == 'en' else 'Deutsch'}",
             "", "SYSTEME",
         ] + ([f"  {SYSTEME.get(k, k) + ':':32} {v}" for k, v in systeme.items()] or ["  (keine Angaben)"]) + [
             "", "Was ist wichtig:", a.get("wunsch") or "–", "",

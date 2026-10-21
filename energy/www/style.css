@@ -460,3 +460,14 @@ img { max-width: 100%; height: auto; }
 .recht-kurz { background: var(--green-soft); border-radius: 14px; padding: 14px 18px; color: var(--ink); }
 .recht-inhalt { display: flex; flex-wrap: wrap; gap: 8px 14px; font-size: .9rem; margin: 18px 0 8px; }
 .recht a { color: #1f6feb; }
+
+/* Sprachumschalter oben rechts: Schweizer Wappen = Deutsch, Globus = English */
+.nav .sprache { display: flex; gap: 2px; flex: none; margin-left: -10px; }
+.nav .sprache a { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: #fff; opacity: .55;
+  border: 1px solid transparent; transition: opacity .2s, background-color .2s; }
+.nav .sprache a:hover { opacity: 1; }
+.nav .sprache a.aktiv { opacity: 1; background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); }
+.nav .sprache svg { width: 20px; height: 20px; display: block; }
+.nav .brand + .btn-small { margin-left: auto; }          /* Seiten ohne Menü (Datenschutz): Knopf nach rechts */
+@media (max-width: 520px) { .nav .wrap { gap: 12px; } .nav .sprache { margin-left: -4px; } .nav .sprache a { width: 30px; } }
+.recht section { padding: 0; }

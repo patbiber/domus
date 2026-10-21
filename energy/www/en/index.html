@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>homi – your energy live, in Swiss francs | Energy management for homes & businesses</title>
+<meta name="description" content="homi shows live what your solar system, battery, heat pump and the grid are doing – in Swiss francs. With an energy advisor, negative price alerts, solar forecast and an app. Vendor-independent, data stored in Switzerland.">
+<meta property="og:title" content="homi – see what your energy is doing right now. In Swiss francs.">
+<meta property="og:description" content="Solar system, battery, heat pump and EV live in Swiss francs – with an energy advisor, negative price alerts and an app. Sign up now.">
+<meta property="og:image" content="https://homi.solar/img/vorschau.png">
+<meta property="og:url" content="https://homi.solar/en/">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0b1730">
+<link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
+<script defer src="https://stats.biber.solar/s.js" data-website-id="39990f1d-716e-46a7-9870-77b53d8c79f1" data-domains="homi.solar" data-do-not-track="true"></script>
+<link rel="stylesheet" href="../style.css?v=20261021c">
+<link rel="alternate" hreflang="de" href="https://homi.solar/">
+<link rel="alternate" hreflang="en" href="https://homi.solar/en/">
+<link rel="alternate" hreflang="x-default" href="https://homi.solar/">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="homi Startseite">
+      <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="23" cy="9" r="5.5" fill="#FFB020"/><path d="M3 18 14 8.5 25 18v11H3z" fill="#fff"/><rect x="11" y="20" width="6" height="9" rx="1" fill="#FFB020"/></svg>
+      homi <small>by Biber Solar</small>
+    </a>
+    <nav aria-label="Main navigation">
+      <a href="#funktionen">Features</a><a href="#einspeisung">Negative prices</a><a href="#einblick">App</a><a href="#technik">Platform</a><a href="#investoren">Investors</a><a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn btn-sun btn-small" href="#anmelden" data-umami-event="Klick Jetzt anmelden (Kopf)">Sign up now</a><div class="sprache" role="navigation" aria-label="Sprache / Language"><a href="/index.html" hreflang="de" lang="de" title="Deutsch" aria-label="Deutsch"><svg viewBox="0 0 32 36" aria-hidden="true"><path d="M2 2h28v14c0 9-6 15-14 18C8 31 2 25 2 16z" fill="#d52b1e" stroke="#fff" stroke-width="1.5"/><path d="M13.5 8h5v6h6v5h-6v6h-5v-6h-6v-5h6z" fill="#fff"/></svg></a><a href="/en/" hreflang="en" lang="en" title="English" aria-label="English" class="aktiv" aria-current="true"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="16" cy="16" r="13"/><ellipse cx="16" cy="16" rx="6" ry="13"/><path d="M16 3v26M3 16h26M5 9.5h22M5 22.5h22"/></svg></a></div>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <a class="neu-pill" href="#einspeisung"><b>New</b> Free alert for negative electricity prices →</a>
+      <span class="eyebrow">Energy management for homes & businesses</span>
+      <h1>Your energy. Live, in Swiss francs – <span class="gold">and smartly controlled.</span></h1>
+      <p class="lead">homi brings your solar system, battery, heat pump, EV and the grid together in one picture – with your real tariff, spot market prices and a solar forecast. An energy advisor tells you what pays off. And from 2027, homi protects you from negative electricity prices.</p>
+      <div class="ctas">
+        <a class="btn btn-sun" href="#anmelden" data-umami-event="Klick Jetzt anmelden (Start)">Sign up now</a>
+        <a class="btn btn-ghost" href="#funktionen">All features</a>
+      </div>
+      <ul class="trust">
+        <li>Vendor-independent</li><li>Data in Switzerland</li><li>Running live</li><li>App without an app store</li>
+      </ul>
+    </div>
+
+    <div class="flow-card" aria-label="Energy flow, simulated live values">
+      <div class="flow-top"><span class="live">Live</span><span id="flow-uhr" class="num">–</span><span id="uhr" hidden></span><button class="raffer" type="button" id="zeitraffer">▶ A day in 30 seconds</button></div>
+      <svg id="flow" viewBox="0 -16 560 436" role="img" aria-label="Energy flow between sun, house, battery, grid and EV">
+        <defs>
+          <radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#FFB020" stop-opacity=".55"/><stop offset="1" stop-color="#FFB020" stop-opacity="0"/></radialGradient>
+        </defs>
+        <circle id="sun-glow" cx="280" cy="62" r="80" fill="url(#glow)" opacity=".2"/>
+        <!-- Leitungen: jeweils vom äusseren Knoten zum Haus gezeichnet -->
+        <path class="flow-line" d="M280 106V157"/><path id="d-pv" class="flow-dash" stroke="#FFB020" d="M280 106V157"/>
+        <path class="flow-line" d="M124 215H222"/><path id="d-bat" class="flow-dash" stroke="#A48BFF" d="M124 215H222"/>
+        <path class="flow-line" d="M436 215H338"/><path id="d-netz" class="flow-dash" stroke="#F97066" d="M436 215H338"/>
+        <path class="flow-line" d="M280 273V321"/><path id="d-auto" class="flow-dash" stroke="#53B1FD" d="M280 273V321"/>
+        <!-- Sonne -->
+        <g transform="translate(280 62)">
+          <circle r="44" class="node-bg"/>
+          <g id="sun-icon" stroke="#FFB020" stroke-width="3" stroke-linecap="round"><circle r="9" fill="#FFB020" stroke="none" cy="-12"/><path d="M0-31v4M0 3v4M-19-12h4M15-12h4M-13-25l3 3M10 1l3 3M13-25l-3 3M-10 1l-3 3"/></g>
+          <text class="node-value" y="24" id="v-pv">–</text>
+          <text class="node-label" y="-52">Solar</text>
+        </g>
+        <!-- Haus -->
+        <g transform="translate(280 215)">
+          <circle r="58" class="node-bg" style="stroke:rgba(255,176,32,.5)"/>
+          <path d="M-20-6-1-24 18-6v22h-38z" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round" transform="translate(1 -6)"/>
+          <text class="node-value" y="32" id="v-haus">–</text>
+          <text class="node-sub" y="49" id="s-haus">Consumption</text>
+        </g>
+        <!-- Batterie -->
+        <g transform="translate(80 215)">
+          <circle r="44" class="node-bg"/>
+          <rect x="-13" y="-30" width="26" height="34" rx="4" fill="none" stroke="#A48BFF" stroke-width="3"/><rect x="-5" y="-35" width="10" height="5" rx="1" fill="#A48BFF"/>
+          <rect id="bat-fill" x="-9" y="-26" width="18" height="26" rx="2" fill="#A48BFF"/>
+          <text class="node-value" y="26" id="v-soc">–</text>
+          <text class="node-label" y="-52">Battery</text>
+          <text class="node-sub" y="62" id="s-bat">–</text>
+        </g>
+        <!-- Netz -->
+        <g transform="translate(480 215)">
+          <circle r="44" class="node-bg"/>
+          <path d="M-12 6 0-30 12 6M-8-8H8M-10-1h20M-14 6h28M0-30v-4" fill="none" stroke="#F97066" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" id="netz-icon"/>
+          <text class="node-value" y="28" id="v-netz">–</text>
+          <text class="node-label" y="-52">Grid</text>
+          <text class="node-sub" y="62" id="s-netz">–</text>
+        </g>
+        <!-- E-Auto -->
+        <g transform="translate(280 365)">
+          <circle r="44" class="node-bg"/>
+          <path d="M-20 0v-8l6-11h28l6 11v8z" fill="none" stroke="#53B1FD" stroke-width="3" stroke-linejoin="round" transform="translate(0 -6)"/>
+          <circle cx="-11" cy="-4" r="4" fill="#53B1FD"/><circle cx="11" cy="-4" r="4" fill="#53B1FD"/>
+          <text class="node-value" y="22" id="v-auto">–</text>
+          <text class="node-sub" x="54" y="4" style="text-anchor:start" id="s-auto">–</text>
+        </g>
+      </svg>
+      <div class="flow-bottom">
+        <div class="mini"><div class="k">Saved today</div><div class="v green num" id="m-gespart">–</div></div>
+        <div class="mini"><div class="k">Self-supplied today</div><div class="v gold num" id="m-autarkie">–</div></div>
+      </div>
+      <p class="flow-note">Simulation of a single-family house on Lake Zurich with real time of day and sun position.</p>
+    </div>
+  </div>
+</section>
+
+<section id="funktionen">
+  <div class="wrap">
+    <div class="section-head center rein">
+      <span class="kicker">Features</span>
+      <h2>Everything your energy needs – in one app</h2>
+      <p class="sub">From the live overview to automatic control.</p>
+    </div>
+    <div class="f-gruppen">
+      <div class="f-gruppe gold rein">
+        <div class="f-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <h3>See</h3>
+        <p>Everything at a glance – live and in Swiss francs.</p>
+        <ul class="f-liste">
+          <li><b>Live energy flow</b> every 5 seconds</li>
+          <li><b>Costs and earnings</b> with your real tariff</li>
+          <li><b>History</b> over days, months and years</li>
+          <li><b>Swiss spot market prices</b> live</li>
+        </ul>
+      </div>
+      <div class="f-gruppe gruen rein">
+        <div class="f-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg></div>
+        <h3>Understand</h3>
+        <p>homi does the maths – and explains why.</p>
+        <ul class="f-liste">
+          <li><b>Energy advisor:</b> three tips with francs per year</li>
+          <li><b>Payback:</b> when your system has paid for itself</li>
+          <li><b>Battery check</b> with your real data</li>
+          <li><b>Solar forecast</b> with the best time for the washing machine &amp; co.</li>
+        </ul>
+      </div>
+      <div class="f-gruppe rot rein">
+        <div class="f-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></div>
+        <h3>Notified</h3>
+        <p>You know before it costs money.</p>
+        <ul class="f-liste">
+          <li><b>Negative price alert</b> every morning</li>
+          <li><b>Weekly report</b> every Monday</li>
+          <li><b>Sun forecast</b> in the evening</li>
+          <li><b>Fault alert</b> when something is stuck</li>
+        </ul>
+      </div>
+      <div class="f-gruppe blau rein">
+        <div class="f-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="5"/><circle cx="16" cy="12" r="3"/></svg></div>
+        <h3>Control</h3>
+        <p>homi switches for you – based on sun and market price. <span class="leise-uhr">With a clock: coming soon.</span></p>
+        <ul class="f-liste">
+          <li><b>Feed-in stop</b> as soon as feeding in costs money – calculated including the minimum remuneration</li>
+          <li><b>2027 remuneration calculated</b> – fixed tariff, quarterly average or market price</li>
+          <li><b>Inverter on/off</b> at the push of a button in the app and Home Assistant</li>
+          <li><b>Appliances on solar surplus</b> – a smart plug (e.g. myStrom) switches on as soon as there is power to spare</li>
+          <li class="bald"><b>Battery</b> charges in the cheapest hours</li>
+          <li class="bald"><b>Wallbox and heat pump</b> on solar power</li>
+          <li class="bald"><b>Avoid peak loads</b> in businesses</li>
+        </ul>
+      </div>
+      <div class="f-gruppe lila rein">
+        <div class="f-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></div>
+        <h3>Always with you</h3>
+        <p>On any phone, secure and without an app store.</p>
+        <ul class="f-liste">
+          <li><b>Your own address</b> like sonnenhof.homi.solar</li>
+          <li><b>Face ID</b> or fingerprint instead of a password</li>
+          <li><b>Push notifications</b> to your phone</li>
+          <li><b>Data in Switzerland</b>, no tracking</li>
+        </ul>
+      </div>
+      <div class="f-gruppe orange rein">
+        <div class="f-ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z"/><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></svg></div>
+        <h3>Made to measure</h3>
+        <p>homi grows with your wishes.</p>
+        <ul class="f-liste">
+          <li><b>Vendor-independent</b> via open standards</li>
+          <li><b>New devices</b> connected in days</li>
+          <li><b>Custom analyses</b> on request, AI-assisted</li>
+          <li><b>Every control</b> starts in test mode</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="einspeisung">
+  <div class="wrap">
+    <div class="section-head rein">
+      <span class="kicker">Feed-in from 2027</span>
+      <h2>When feeding in suddenly costs money</h2>
+      <p class="sub">From 2027 in Switzerland, unless agreed otherwise with the grid operator, solar power is paid <b>hour by hour at the spot market price</b>. The minimum remuneration remains – but only as a top-up paid after each quarter on every kWh fed in. On sunny days the market price drops below zero around midday, and as soon as it falls below that top-up, <b>you pay to feed in</b>. homi keeps recalculating the threshold for your system – using the official federal reference market prices. That makes a big difference: in 2025, feeding in with the minimum remuneration would really have cost money in only 36 hours, not in the 303 hours with a negative market price. And a battery that simply charges as soon as the sun shines is long full by the time it would pay off most.</p>
+    </div>
+    <div class="ein-grid">
+      <div class="card tile rein">
+        <div class="chart-head"><h3>Example: a sunny Sunday</h3>
+          <div class="legend"><span><i class="dot" style="background:var(--sun)"></i>Solar surplus</span><span><i class="dot" style="background:var(--blue)"></i>Market price</span><span><i class="dot" style="background:var(--red)"></i>negative</span></div></div>
+        <svg class="chart" id="ein-chart" viewBox="0 0 640 260" role="img" aria-label="Example day: solar surplus and market price, negative prices at midday"></svg>
+        <div class="vergleich">
+          <div class="vg schlecht"><span class="k">Without control</span><b>– CHF 0.98</b><span>for 18 kWh fed in at negative prices · battery already full at 11 am</span></div>
+          <div class="vg gut"><span class="k">With homi</span><b>+ CHF 1.26</b><span>more on the same day: feed-in stopped, battery charges at the deepest negative, expensive evening power saved</span></div>
+        </div>
+        <p class="s" style="margin:10px 0 0">Example calculation with the homi schedule: solar system approx. 9 kWp, battery 5 kWh, remuneration = Swiss day-ahead market price.</p>
+      </div>
+      <div class="ein-angebote">
+        <div class="card angebot gratis rein">
+          <span class="badge-gratis">Free</span>
+          <h3>Negative price alert by email</h3>
+          <p class="s">On days with negative market prices you get an email at <b>6:45 am</b>: when it happens and what you can do. You then throttle your inverter yourself (or homi does it automatically) or run the washing machine &amp; co. The emails are in German for now.</p>
+          <form id="warnung-form" class="warnung-form" novalidate>
+            <input name="email" type="email" autocomplete="email" placeholder="you@email.ch" aria-label="Email address" required maxlength="150">
+            <div class="honig" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
+            <button class="btn btn-sun" type="submit">Subscribe for free</button>
+            <label class="einwilligung"><input type="checkbox" name="einwilligung" required><span>Yes, send me the alert. Only on negative price days, unsubscribe any time with one click. <a href="/en/privacy.html" target="_blank" rel="noopener">Privacy</a></span></label>
+            <div class="form-status" id="warnung-status" role="status"></div>
+          </form>
+        </div>
+        <div class="card angebot auto rein">
+          <span class="badge-auto">homi control · feed-in stop live</span>
+          <h3>Fully automatic</h3>
+          <ul>
+            <li>Feed-in stops by itself as soon as it costs money – <b>already running</b>: homi throttles Fronius inverters to self-consumption, taking the minimum remuneration and quarterly top-up into account</li>
+            <li>Which remuneration model pays off? homi calculates fixed tariff, quarterly average and market price with your real data</li>
+            <li>Safe: every command expires after 5 minutes – if homi fails, the system simply keeps producing</li>
+            <li>Battery charges in the cheapest hours – not simply at sunrise <i>(coming soon)</i></li>
+            <li>Water heater, heat pump or EV step in at negative prices <i>(coming soon)</i></li>
+            <li>Test mode first – with proof of what it brings</li>
+          </ul>
+          <a class="btn btn-dark" href="#anmelden" data-rolle="Privat">Reserve automatic control</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="einblick">
+  <div class="wrap">
+    <div class="section-head center rein">
+      <span class="kicker">A look inside</span>
+      <h2>What your homi looks like</h2>
+      <p class="sub">Real values from Uerikon, where homi has been running every day since autumn 2026. The app is in German for now.</p>
+    </div>
+    <div class="ansicht-reihe vier">
+      <figure class="rein"><img src="../img/app-uebersicht.png" width="1170" height="2532" alt="homi on a phone: overview with energy flow and today's key figures" loading="lazy"><figcaption><b>Overview</b><span>Energy flow, daily balance and forecast.</span></figcaption></figure>
+      <figure class="rein"><img src="../img/berater-tipps.png" width="1170" height="2532" alt="homi on a phone: energy advisor with three tips" loading="lazy"><figcaption><b>Energy advisor</b><span>Three tips with francs per year.</span></figcaption></figure>
+      <figure class="rein"><img src="../img/app-verlauf.png" width="1170" height="2532" alt="homi on a phone: history of the last week" loading="lazy"><figcaption><b>History</b><span>Days, months, years and weekly report.</span></figcaption></figure>
+      <figure class="rein"><img src="../img/app-preise.png" width="1170" height="2532" alt="homi on a phone: market prices and tariff" loading="lazy"><figcaption><b>Electricity price</b><span>Market, tariff and schedule.</span></figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section id="technik">
+  <div class="wrap">
+    <div class="section-head center rein">
+      <span class="kicker">Platform</span>
+      <h2>Ready for production</h2>
+      <p class="sub">homi is not a concept study: the platform runs in production, is secured and simply grows with every new customer.</p>
+    </div>
+    <div class="tech-grid">
+        <div class="tech rein"><span class="ic">🌐</span><div><b>Own instance per customer</b><p>Every homi runs under its own address, set up in seconds, with a valid certificate.</p></div></div>
+        <div class="tech rein"><span class="ic">🔐</span><div><b>Sign in without a password</b><p>Code by email or a passkey with Face ID and fingerprint. Sessions stay valid for 180 days.</p></div></div>
+        <div class="tech rein"><span class="ic">⏱️</span><div><b>Real time & 5-year archive</b><p>Live values every 5 seconds, a 10-minute archive over five years, weather and market data automatically.</p></div></div>
+        <div class="tech rein"><span class="ic">📣</span><div><b>Push & email</b><p>End-to-end encrypted push notifications, emails from our own domain with SPF, DKIM and DMARC.</p></div></div>
+        <div class="tech rein"><span class="ic">🛡️</span><div><b>Round-the-clock operation</b><p>Automatic updates with checks and rollback, fault alerts, daily encrypted backups.</p></div></div>
+        <div class="tech rein"><span class="ic">🧩</span><div><b>Open & local</b><p>Hosted in Switzerland, vendor-independent, open standards, integration with Home Assistant.</p></div></div>
+    </div>
+    <details class="aufbau rein">
+      <summary>Show the technical architecture</summary>
+      <div class="aufbau-fluss">
+        <div class="stufe"><b>At your place</b><span>Inverter, smart meter, battery, wallbox, heat pump – connected via a small gateway, encrypted and without port forwarding <i>(in development)</i></span></div>
+        <div class="pfeil" aria-hidden="true">→</div>
+        <div class="stufe"><b>homi platform</b><span>Data capture every 5 seconds, archive, tariffs, market prices (EPEX day-ahead), solar forecast, energy advisor, control logic – a separate instance per customer</span></div>
+        <div class="pfeil" aria-hidden="true">→</div>
+        <div class="stufe"><b>With you</b><span>App on phone and computer, push and email, Home Assistant – sign-in by code or passkey</span></div>
+      </div>
+      <ul class="aufbau-liste">
+        <li><b>Software:</b> lean Python services in containers, a reverse proxy with automatic certificates, a web app (PWA) without third-party libraries.</li>
+        <li><b>Data:</b> your measurements stay with you or on servers in Switzerland; the only external sources are weather (Open-Meteo) and market prices (Energy-Charts).</li>
+        <li><b>Security:</b> TLS everywhere, passkeys (WebAuthn), end-to-end encrypted push notifications, rate limiting, encrypted backups.</li>
+        <li><b>Operations:</b> automatic updates with checks and rollback, fault alerts, dynamic DNS updates; a standby server for automatic failover is being set up.</li>
+        <li><b>Development:</b> AI-assisted – new device integrations and analyses in days rather than months, every control starts in test mode.</li>
+      </ul>
+    </details>
+  </div>
+</section>
+
+<section id="investoren">
+  <div class="wrap investor-grid">
+    <div class="rein">
+      <span class="kicker">For investors</span>
+      <h2>The electricity market is going dynamic. homi is ready.</h2>
+      <p class="sub">Switzerland's new electricity act brings local electricity communities, and utilities are moving to feed-in tariffs based on market prices. Anyone with a solar system needs visibility and control for that. That is exactly where homi comes in.</p>
+    </div>
+    <div class="investor-punkte rein">
+      <div><b>Platform in place</b><span>Live in operation, own instance per customer, secure sign-in, app, push.</span></div>
+      <div><b>Scalable</b><span>New customers set up in seconds, integrations via open standards.</span></div>
+      <div><b>Swiss focus</b><span>Swiss tariffs, market and electricity law built in from the start.</span></div>
+      <div><b>Fast development</b><span>AI-assisted: new features in days.</span></div>
+      <a class="btn btn-sun" href="#anmelden" data-rolle="Investor" data-umami-event="Klick Investoren-Gespräch">Arrange a call</a>
+    </div>
+  </div>
+</section>
+
+<section id="ablauf">
+  <div class="wrap">
+    <div class="section-head center rein"><span class="kicker">How it works</span><h2>Your homi in three steps</h2></div>
+    <div class="steps">
+      <div class="card step rein"><h3>Sign up</h3><p>Fill in the form and tell me which devices you have. I'll get back to you within a few days.</p></div>
+      <div class="card step rein"><h3>Connect</h3><p>A small gateway plugs into your router – no drilling, no port forwarding.</p></div>
+      <div class="card step rein"><h3>Get going</h3><p>Your homi runs under your own address, as an app on your phone and with reports by email.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="anmelden">
+  <div class="wrap anmelde-grid">
+    <div class="rein">
+      <span class="kicker">Sign up now</span>
+      <h2>Get your homi</h2>
+      <p class="sub">Tell me briefly what you have and what interests you. The more I know about your devices, the faster your homi will be up and running.</p>
+      <ul class="vorteile">
+        <li>No obligation and free of charge</li><li>Personal reply within a few days</li><li>Your details stay with me</li>
+      </ul>
+    </div>
+    <form class="card anfrage rein" id="anfrage" novalidate>
+      <div class="reihe">
+        <label>I am<select name="rolle" id="rolle"><option value="Privat">A private person</option><option value="Betrieb">A business</option><option value="Gemeinschaft (ZEV / LEG)">A community (ZEV / LEG)</option><option value="Installateur / Partner">An installer / partner</option><option value="Investor">An investor</option></select></label>
+        <label>Property<select name="objekt"><option value="Einfamilienhaus">Single-family house</option><option value="Mehrfamilienhaus / Wohnung">Apartment building / flat</option><option value="Gewerbe">Commercial</option><option value="Landwirtschaft">Farm</option><option value="ZEV / LEG / Gemeinschaft">ZEV / LEG / community</option><option value="Anderes">Other</option></select></label>
+      </div>
+      <div class="reihe">
+        <label>Name *<input name="name" autocomplete="name" required maxlength="100"></label>
+        <label>Email *<input name="email" type="email" autocomplete="email" required maxlength="150"></label>
+      </div>
+      <div class="reihe">
+        <label>Phone<input name="telefon" type="tel" autocomplete="tel" maxlength="40"></label>
+        <label>Postcode / town<input name="ort" autocomplete="address-level2" maxlength="80"></label>
+      </div>
+      <fieldset class="systeme" id="systeme">
+        <legend>Your systems <span>(as far as known – brand, model, size)</span></legend>
+        <label>Solar system / inverter<input name="sys_solar" maxlength="120" placeholder="e.g. Fronius Symo 8.2, 9 kWp"></label>
+        <label>Battery<input name="sys_batterie" maxlength="120" placeholder="e.g. BYD 10 kWh or none"></label>
+        <label>Heat pump / heating<input name="sys_heizung" maxlength="120" placeholder="e.g. Stiebel Eltron, district heating"></label>
+        <label>EV / wallbox<input name="sys_eauto" maxlength="120" placeholder="e.g. Zaptec Go, Tesla"></label>
+        <label>Smart meter<input name="sys_zaehler" maxlength="120" placeholder="e.g. Fronius Smart Meter"></label>
+        <label>Hot water<input name="sys_warmwasser" maxlength="120" placeholder="e.g. electric boiler, heat pump boiler"></label>
+        <label>Utility<input name="sys_versorger" maxlength="120" placeholder="e.g. EKZ, GWS Stäfa"></label>
+        <label>Home automation<input name="sys_automation" maxlength="120" placeholder="e.g. Home Assistant, Loxone, KNX"></label>
+      </fieldset>
+      <label>What matters to you?<textarea name="wunsch" id="wunsch-feld" maxlength="3000" placeholder="e.g. «I want to know whether a battery pays off» or «The EV should only charge with sunshine»"></textarea></label>
+      <div class="honig" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+      <label class="einwilligung"><input type="checkbox" name="einwilligung" required><span>I agree that my details are stored to process my sign-up. They will not be passed on. <a href="/en/privacy.html" target="_blank" rel="noopener">Privacy</a></span></label>
+      <button class="btn btn-sun" type="submit">Sign up now</button>
+      <div class="form-status" id="form-status" role="status"></div>
+    </form>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="section-head center rein"><span class="kicker">Questions</span><h2>Good to know</h2></div>
+    <div class="faq">
+      <details><summary>Do I need a solar system?</summary><p>No. Even without solar, homi shows what electricity costs you and when, and finds power guzzlers. It gets really exciting with a solar system, battery, heat pump or EV.</p></details>
+      <details><summary>Which devices are supported?</summary><p>Live today: Fronius inverters with a smart meter. I connect other inverters, batteries, wallboxes and heat pumps via open standards – list your devices in the form and I'll check them.</p></details>
+      <details><summary>How do I reach my homi?</summary><p>Under your own address like <b>sonnenhof.homi.solar</b>, in the browser or as an app on your phone. Sign in with a code by email or with Face ID / fingerprint. <a href="https://beispiel.homi.solar" target="_blank" rel="noopener">See an example</a></p></details>
+      <details><summary>Where is my data stored?</summary><p>At your home or on servers in Switzerland – not with an international cloud provider. No tracking, no sharing with third parties.</p></details>
+      <details><summary>Does homi control my devices?</summary><p>Yes, step by step. The feed-in stop as soon as feeding in costs money (from 2027 calculated with the minimum remuneration and quarterly top-up) already runs with Fronius inverters (via Modbus, locally in the house), plus an on/off button in the app and in Home Assistant. homi switches on appliances on smart plugs (e.g. myStrom) as soon as there is solar power to spare – such as the charging station for phone and tablet. Battery, wallbox and heat pump come next. Every control starts in test mode, you decide when to activate it – and every command expires by itself should homi ever fail.</p></details>
+      <details><summary>Who is behind it?</summary><p>Patrick Biber from Uerikon on Lake Zurich – solar consultant and IT professional. homi grew out of his own home. More at <a href="https://biber.solar/en/" target="_blank" rel="noopener">biber.solar</a>.</p></details>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>© 2026 homi · a service by <a href="https://biber.solar/en/">Biber Solar</a>, Patrick Biber, Uerikon, Switzerland</div>
+    <nav aria-label="Legal"><a href="https://biber.solar/en/imprint.html">Imprint</a><a href="/en/privacy.html">Privacy</a><a href="mailto:patrick@biber.solar">Contact</a></nav>
+  </div>
+</footer>
+
+<script src="../app.js?v=20261021c" defer></script>
+</body>
+</html>
