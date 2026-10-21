@@ -468,6 +468,13 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   erneuert) → fällt homi aus, ist sie nach 5 min aus. Zählt Verbrauch, Solaranteil und Laufzeit. Überall: App-Karte in
   der Übersicht, Retro-Kachel mit AUTO/EIN/AUS, HA `sensor.ladestation_handy` (Name «Solarladestation», + `_leistung`,
   `_heute`) und `select.ladestation_handy_modus`. (Zuerst war «Heizung Dachstock ab 3 kW» geplant – verworfen.)
+- **GitHub nur am Abend** (seit 21.10.2026, Wunsch Patrick): tagsüber nur lokale Commits. Timer `github-abend`
+  (täglich 20:00 + Zufall bis 1 h 45 min, keine Nachholläufe) startet `system/github-abend.py`: holt Neues von GitHub
+  (rebase), baut die noch nicht hochgeladenen Commits mit Zeitstempeln im Abendfenster nach (gleicher Inhalt, Autor,
+  Nachricht; per `git commit-tree`, Arbeitsverzeichnis bleibt unberührt) und pusht. Repos: `~/domus` (main) und
+  `biber-solar-test/site` (Branch `freigegeben` → main, danach wird die Vorschau darauf umgehängt). Fehler → Mail.
+  Probelauf: `system/github-abend.py --jetzt --trocken`. biber.solar live: `biber-solar/update.sh` holt den lokalen
+  Branch `freigegeben` (Fallback GitHub).
 - **Englische Fassungen** (seit 21.10.2026): homi.solar/en/ (Verkaufsseite, `en/privacy.html`) und biber.solar/en/ (alle
   Seiten, Repo biber-solar). Sprachwahl: «/» ohne Zusatz → 302 nach `/en/`, wenn die erste Browsersprache nicht de/gsw
   ist (homi: `energy/server.py` do_GET, biber.solar: `map $http_accept_language` in `biber-solar*/nginx.conf`, dort mit

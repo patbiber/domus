@@ -1,0 +1,14 @@
+# Täglich zu einer zufälligen Zeit zwischen 20:00 und 21:45. Verpasste Läufe NICHT nachholen (sonst Upload ausserhalb
+# des Fensters); das Skript prüft die Uhrzeit zusätzlich selbst.
+[Unit]
+Description=domus: Abend-Upload zu GitHub (20–22 Uhr, zufällig)
+
+[Timer]
+OnCalendar=*-*-* 20:00:00
+RandomizedDelaySec=6300
+FixedRandomDelay=false
+AccuracySec=1s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,8 @@
+# Commits des Tages gesammelt zu GitHub hochladen (Patrick: nur zwischen 20 und 22 Uhr, nicht immer zur gleichen Zeit)
+[Unit]
+Description=domus: Abend-Upload zu GitHub
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/system/github-abend.py
