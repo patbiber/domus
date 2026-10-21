@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Vorschau test.biber.solar = Arbeitskopie ./site von github.com/patbiber/biber-solar.
 # Holt neue Commits von GitHub nur, wenn hier nichts in Arbeit ist (keine lokalen Änderungen/Commits),
-# damit eine laufende Änderung nie überschrieben wird. Push: git -C site push (Deploy-Key, Host github-biber-solar).
+# damit eine laufende Änderung nie überschrieben wird. Hochladen: nur abends gesammelt per system/github-abend.py
+# (Branch «freigegeben» → GitHub main, Deploy-Key, Host github-biber-solar); kein Push von Hand.
 set -euo pipefail
 cd "$(dirname "$0")"
 if [ ! -d site/.git ]; then
