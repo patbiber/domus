@@ -431,6 +431,10 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   - **Schalter Ein/Aus:** Standby über Conn = 0; Zustand in `data/steuerung.json`, übersteht Neustarts.
   - **Sicherheitsnetz:** jeder Befehl mit Ablaufzeit 5 min, homi erneuert ihn jede Minute. Fällt homi aus, gibt der
     Fronius selbst frei. Getestet: Drosseln wirkt sofort; nach dem Einschalten aus Standby speist er nach ~2 min ein.
+  - **Schutz gegen gefälschte Anfragen (CSRF, seit 21.10.2026):** POST auf `/api/steuerung`, `/api/geraete`, `/api/push`
+    nur mit `Content-Type: application/json` und – falls der Browser sie schickt – `Origin` = eigene Seite und
+    `Sec-Fetch-Site` same-origin; sonst 403 und Eintrag «Abgewiesen (fremde Herkunft)» im Log. Grund: bei
+    home.biber.solar schickt der Browser das Basic-Auth-Passwort auch bei heimlich abgesendeten fremden Formularen mit.
   - **Schalten nur mit Anmeldung:** POST `/api/steuerung` `{"wr":"ein|aus"}` / `{"regel":true|false}` nur über nginx
     (home.biber.solar mit Passwort, biber.homi.solar mit Login; Absender 172.18.x) oder von HA (127.0.0.1). Direkt aus
     dem LAN → 403.

@@ -164,8 +164,25 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({"schluessel": push_schluessel(), "themen": PUSH_THEMEN})
         return super().do_GET()
 
+    def eigene_herkunft(self):
+        """Schutz gegen gefälschte Anfragen fremder Webseiten (CSRF). Bei home.biber.solar schickt der Browser das
+        gespeicherte Passwort auch bei Formularen mit, die eine fremde Seite heimlich absendet. Darum gilt für jeden
+        Befehl: Format JSON (fremde Seiten können JSON nur nach einer Rückfrage senden, die homi nie erlaubt) und –
+        wenn der Browser es mitschickt – Herkunft = diese Seite. Home Assistant (lokal) schickt JSON ohne Origin."""
+        if not (self.headers.get("Content-Type") or "").lower().startswith("application/json"):
+            return False
+        host = (self.headers.get("Host") or "").lower()
+        origin = self.headers.get("Origin")
+        if origin is not None and origin.lower() != f"https://{host}":
+            return False
+        return (self.headers.get("Sec-Fetch-Site") or "same-origin").lower() in ("same-origin", "none")
+
     def do_POST(self):
         """App-Push: {"aktion": "anmelden"|"abmelden"|"lesen"|"test", "abo": PushSubscription, "themen": [...]}"""
+        if self.path in ("/api/steuerung", "/api/geraete", "/api/push") and not self.eigene_herkunft():
+            print(f"Abgewiesen (fremde Herkunft): {self.path} Origin={self.headers.get('Origin')} "
+                  f"Sec-Fetch-Site={self.headers.get('Sec-Fetch-Site')} Content-Type={self.headers.get('Content-Type')}", flush=True)
+            return self.send_error(403)
         if self.path == "/api/steuerung":
             return self.post_steuerung()
         if self.path == "/api/geraete":
