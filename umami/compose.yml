@@ -1,4 +1,5 @@
 # Webstatistik Umami (https://umami.is): ohne Cookies, ohne gespeicherte IP-Adressen, Daten nur auf dem NUC.
+# Netz: eigenes Netz «statistik» (nur Umami + nginx), nicht proxy_default.
 # Dashboard: https://stats.biber.solar (eigener Login). Zählt biber.solar und homi.solar – bewusst NICHT die
 # privaten Seiten mit Anmeldung (home.biber.solar, <name>.homi.solar).
 # Zählskript: https://stats.biber.solar/s.js (eigener Name, wird von Werbeblockern seltener blockiert).
@@ -20,7 +21,7 @@ services:
       umami-db:
         condition: service_healthy
     networks:
-      - proxy_default
+      - statistik            # nur mit nginx geteilt – NICHT im Netz proxy_default (Sicherheitsprüfung 22.10.2026)
       - intern
     logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB
       driver: json-file
@@ -52,6 +53,9 @@ services:
         max-file: "3"
 
 networks:
-  proxy_default:
-    external: true
+  # Eigenes Netz für die Statistik: Umami (fremde, öffentlich erreichbare Software) liegt nicht im Netz proxy_default.
+  # homi nimmt Schaltbefehle nur aus proxy_default an (172.18.x) – ein übernommenes Umami käme so nicht an die
+  # Wechselrichter-Steuerung. nginx hängt an beiden Netzen (proxy/compose.yml).
+  statistik:
+    name: statistik
   intern: {}

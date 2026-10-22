@@ -490,7 +490,8 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   Suchmaschinen. Formular auf Englisch: Auswahlwerte bleiben deutsch (Server-Prüfung), Feld `sprache` kommt in der Mail
   an Patrick mit («auf Englisch antworten»). Mails an Abonnenten bleiben vorerst Deutsch (steht so auf der Seite).
 - **Webstatistik Umami** (`umami/`, https://stats.biber.solar, seit 20.10.2026): Container `umami` + `umami-db`
-  (Postgres 16) im Netz proxy_default/intern, Geheimnisse `UMAMI_DB_PASSWORT`/`UMAMI_APP_SECRET` in `.env` (`umami/.env`
+  (Postgres 16) im eigenen Netz `statistik` (nur Umami + nginx; seit 22.10.2026 bewusst NICHT in proxy_default, damit ein
+  übernommenes Umami nicht an die homi-Schalt-Schnittstelle kommt – homi nimmt Befehle nur aus 172.18.x) und `intern`, Geheimnisse `UMAMI_DB_PASSWORT`/`UMAMI_APP_SECRET` in `.env` (`umami/.env`
   ist ein Verweis darauf, für die Variablen-Ersetzung von Compose). Login: Benutzer `patrick`, Passwort in
   `~/.config/domus/umami-login` (600; Standard-Login admin/umami ist ersetzt). Zählskript `/s.js`, keine Cookies, keine
   IP gespeichert, «Do Not Track» respektiert, `access_log off` für stats. Login-Bremse: `/api/auth/login` höchstens

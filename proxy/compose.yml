@@ -1,6 +1,9 @@
 services:
   nginx:
     container_name: nginx
+    networks:
+      - default              # proxy_default: alle anderen Dienste
+      - statistik            # nur Umami (umami/compose.yml), getrennt von proxy_default
     image: nginx:stable-alpine
     restart: unless-stopped
     env_file: ../.env
@@ -37,3 +40,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+networks:
+  statistik:
+    name: statistik
+    external: true           # wird von umami/compose.yml angelegt
