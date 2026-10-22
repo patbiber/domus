@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """homi-login: Anmeldung für die Kunden-Instanzen <name>.homi.solar (statt Browser-Passwortfenster).
 
-Läuft auf dem Host (systemd-User-Dienst homi-login, python3-cryptography), lauscht nur am Docker-Netz proxy_default
+Läuft auf dem Host als eigener, unprivilegierter Benutzer homi-login (System-Dienst homi-login.service, gehärtet; kein
+sudo, kein Docker), python3-cryptography; lauscht nur am Docker-Netz proxy_default
 (LOGIN_BIND, Standard 172.18.0.1:8098) – erreichbar für nginx, nicht aus dem LAN oder Internet. nginx setzt pro Instanz
 den Kopf X-Homi-Instanz und fragt für jede Anfrage per auth_request /pruefen.
 
@@ -9,7 +10,7 @@ Anmelden: E-Mail → Mail mit 6-stelligem Code und Link (Code, weil installierte
 haben) → Sitzung 180 Tage (Cookie __Host-homi, HttpOnly, Secure, SameSite=Lax). Danach optional Passkey
 (Face ID / Fingerabdruck, WebAuthn ES256) für die Anmeldung mit einem Tipp.
 
-Daten (nicht im Repo, nur Besitzer lesbar) in login/data/:
+Daten (nicht im Repo, nur homi-login und claude lesbar, per ACL) in login/data/:
   instanzen/<name>.json   {"benutzer": ["mail@…"]}      (gepflegt mit kunden/kunde.py benutzer)
   sitzungen/<sha256>.json {"instanz", "email", "erstellt", "zuletzt", "geraet"}
   passkeys/<name>.json    [{"id", "x", "y", "zaehler", "email", "name", "erstellt", "zuletzt"}]
@@ -96,7 +97,7 @@ def lesen(pfad, standard):
 def schreiben(pfad, inhalt):
     os.makedirs(os.path.dirname(pfad), exist_ok=True)
     tmp = f"{pfad}.{os.getpid()}.{threading.get_ident()}.tmp"   # eigene Zwischendatei pro Thread (gleichzeitige Anfragen)
-    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o660)   # 660: ACL-Maske lässt homi-login und claude zu
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         json.dump(inhalt, f, ensure_ascii=False)
     os.replace(tmp, pfad)

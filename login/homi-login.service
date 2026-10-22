@@ -1,13 +1,45 @@
-# Anmeldung für die Kunden-Instanzen <name>.homi.solar (nginx auth_request), nur am Docker-Netz proxy_default
+# homi-login: Anmeldung für die Kunden-Instanzen <name>.homi.solar (nginx auth_request), nur am Docker-Netz proxy_default.
+# System-Dienst unter dem eigenen Benutzer homi-login (seit 22.10.2026, Sicherheitsprüfung): kein sudo, keine Docker-
+# Gruppe; Zusatzgruppe msmtp, damit der Mailversand /etc/msmtprc lesen kann. Schreiben nur in login/data (ACL).
+# Einrichten: sudo cp login/homi-login.service /etc/systemd/system/ && sudo systemctl daemon-reload &&
+#             sudo systemctl enable --now homi-login        Protokoll: journalctl -u homi-login
 [Unit]
 Description=homi-login: Anmeldung mit Code per Mail und Passkey
 After=network-online.target docker.service
+Wants=network-online.target
 
 [Service]
+User=homi-login
+Group=homi-login
+SupplementaryGroups=msmtp
 Environment=LOGIN_BIND=172.18.0.1:8098
-ExecStart=/usr/bin/python3 %h/domus/login/server.py
+ExecStart=/usr/bin/python3 /home/claude/domus/login/server.py
 Restart=always
 RestartSec=5
+UMask=0007
+
+# Härtung
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/claude/domus/login/data
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+AmbientCapabilities=
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target

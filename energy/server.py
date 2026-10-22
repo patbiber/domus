@@ -39,6 +39,15 @@ def text(d, k, n):
     return v.strip()[:n] if isinstance(v, str) else ""
 
 
+def einzeilig(v):
+    """Zeilenumbrüche und andere Steuerzeichen durch Leerzeichen ersetzen (Felder landen z. B. im Mail-Betreff)."""
+    return re.sub(r"\s+", " ", re.sub(r"[\x00-\x1f\x7f]", " ", v)).strip()
+
+
+def zeile(d, k, n):
+    return einzeilig(text(d, k, n))
+
+
 def schreiben(pfad, daten):
     os.makedirs(os.path.dirname(pfad), exist_ok=True)
     tmp = os.path.join(os.path.dirname(pfad), "." + os.path.basename(pfad))
@@ -127,7 +136,7 @@ class Handler(SimpleHTTPRequestHandler):
         if d.get("website") or not isinstance(d.get("t"), (int, float)) or d["t"] < 3000:
             return self.antwort(200, {"ok": True})            # Bot: freundlich ignorieren
         if pfad == "/api/warnung":
-            email = text(d, "email", 150)
+            email = zeile(d, "email", 150)
             if not EMAIL.match(email) or d.get("einwilligung") is not True:
                 return self.antwort(400, {"ok": False, "fehler": "E-Mail und Einwilligung sind nötig"})
             t = secrets.token_urlsafe(24)
@@ -137,13 +146,13 @@ class Handler(SimpleHTTPRequestHandler):
             return self.antwort(200, {"ok": True})
         a = {
             "zeit": datetime.now().isoformat(timespec="seconds"),
-            "name": text(d, "name", 100), "email": text(d, "email", 150), "telefon": text(d, "telefon", 40),
-            "ort": text(d, "ort", 80), "wunsch": text(d, "wunsch", 3000),
+            "name": zeile(d, "name", 100), "email": zeile(d, "email", 150), "telefon": zeile(d, "telefon", 40),
+            "ort": zeile(d, "ort", 80), "wunsch": text(d, "wunsch", 3000),
             "objekt": d.get("objekt") if d.get("objekt") in OBJEKTE else "Anderes",
             "paket": d.get("paket") if d.get("paket") in PAKETE else "Noch offen",
             "vorhanden": [v for v in d.get("vorhanden", []) if v in VORHANDEN][:6] if isinstance(d.get("vorhanden"), list) else [],
             "rolle": d.get("rolle") if d.get("rolle") in ROLLEN else "Privat",
-            "systeme": {k: str(v).strip()[:120] for k, v in (d.get("systeme") or {}).items()
+            "systeme": {k: einzeilig(str(v))[:120] for k, v in (d.get("systeme") or {}).items()
                         if k in SYSTEME and isinstance(v, str) and v.strip()} if isinstance(d.get("systeme"), dict) else {},
             "demo": "betrieb" if d.get("demo") == "betrieb" else "heim",
             "sprache": "en" if d.get("sprache") == "en" else "de",           # Seite, über die angemeldet wurde

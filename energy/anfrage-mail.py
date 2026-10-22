@@ -31,7 +31,8 @@ for name in sorted(f for f in os.listdir(NEU) if f.endswith(".json") and not f.s
             f"Eingegangen: {a['zeit'].replace('T', ' ')}", "",
             "Mit «Antworten» schreibst du direkt an die anfragende Person.",
         ]
-        senden("root", f"homi-Anmeldung ({a.get('rolle', 'Privat')}): {a['name']}" + (f", {a['ort']}" if a.get("ort") else "") + f" – {a.get('objekt')}",
+        betreff = f"homi-Anmeldung ({a.get('rolle', 'Privat')}): {a['name']}" + (f", {a['ort']}" if a.get("ort") else "") + f" – {a.get('objekt')}"
+        senden("root", " ".join(betreff.split()),       # Betreff immer einzeilig (ältere Anfragen konnten Umbrüche enthalten)
                "\n".join(zeilen), absender=ABSENDER["anfragen"], reply_to=formataddr((a["name"], a["email"])))
         os.replace(pfad, os.path.join(FERTIG, name))
         print("verschickt:", name)

@@ -232,7 +232,7 @@ def ausfall():
     if alter_h is not None and alter_h > 50:
         probleme["backup"] = ("Das Gesamt-Backup", f"Seit {alter_h / 24:.0f} Tagen kein Gesamt-Backup gelungen.")
     # Anmeldedienst der Kunden-Instanzen (läuft auf dem Host, nicht im Status von homi enthalten)
-    if subprocess.run(["systemctl", "--user", "is-active", "--quiet", "homi-login.service"]).returncode:
+    if subprocess.run(["systemctl", "is-active", "--quiet", "homi-login.service"]).returncode:   # System-Dienst
         probleme["dienst_homi-login"] = ("Die Anmeldung (homi-login)", "Die Anmeldung für <name>.homi.solar läuft nicht – niemand kann sich anmelden.")
     neu = {}
     for k, (wer, text) in probleme.items():

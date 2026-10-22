@@ -11,6 +11,12 @@ services:
     working_dir: /app
     command: python -u server.py
     read_only: true
+    # Möglichst wenig Rechte (Sicherheitsprüfung 21.10.2026): keine Rechteausweitung, keine Linux-Sonderrechte ausser
+    # DAC_OVERRIDE (Schreiben in die Datenordner, die teils dem Benutzer claude gehören)
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    cap_add: [DAC_OVERRIDE]
     volumes:
       - ./server.py:/app/server.py:ro
       - ./www:/app/www:ro

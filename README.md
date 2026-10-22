@@ -431,6 +431,9 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   - **Schalter Ein/Aus:** Standby über Conn = 0; Zustand in `data/steuerung.json`, übersteht Neustarts.
   - **Sicherheitsnetz:** jeder Befehl mit Ablaufzeit 5 min, homi erneuert ihn jede Minute. Fällt homi aus, gibt der
     Fronius selbst frei. Getestet: Drosseln wirkt sofort; nach dem Einschalten aus Standby speist er nach ~2 min ein.
+  - **Container mit wenig Rechten (seit 22.10.2026):** `energie` und `energy` mit `no-new-privileges`, `cap_drop: ALL`,
+    nur `CAP_DAC_OVERRIDE` (Schreiben in Datenordner von claude); Formular homi.solar: einzeilige Felder ohne
+    Zeilenumbrüche (`zeile()`/`einzeilig()` in `energy/server.py`), Mail-Betreff immer einzeilig.
   - **Schutz gegen gefälschte Anfragen (CSRF, seit 21.10.2026):** POST auf `/api/steuerung`, `/api/geraete`, `/api/push`
     nur mit `Content-Type: application/json` und – falls der Browser sie schickt – `Origin` = eigene Seite und
     `Sec-Fetch-Site` same-origin; sonst 403 und Eintrag «Abgewiesen (fremde Herkunft)» im Log. Grund: bei
@@ -534,18 +537,23 @@ Statt Browser-Passwortfenster: **Code per Mail** (6 Ziffern, 15 min gültig, max
 nach Klick auf «Jetzt anmelden» gilt – Mail-Scanner öffnen Links) und danach optional **Passkey** (Face ID /
 Fingerabdruck, WebAuthn ES256). Angemeldet bleibt man 180 Tage (Cookie `__Host-homi`, HttpOnly, Secure, SameSite=Lax,
 gleitend verlängert); «Abmelden» unter «Mehr → Dein Konto» in der App, dort auch Passkeys einrichten und entfernen.
-- Dienst `login/server.py` (systemd-User-Dienst `homi-login`, Host-Python mit `python3-cryptography`), lauscht nur am
+- Dienst `login/server.py` (System-Dienst `homi-login` unter eigenem Benutzer `homi-login` – kein sudo, kein Docker,
+  gehärtet mit `NoNewPrivileges`, `ProtectSystem=strict` u. a., `systemd-analyze security`: 3.1; Zusatzgruppe `msmtp`
+  für den Mailversand; Host-Python mit `python3-cryptography`; seit 22.10.2026), lauscht nur am
   Gateway des Docker-Netzes (`172.18.0.1:8098`). nginx fragt per `auth_request /_auth` → `/pruefen`, setzt pro Instanz
   `X-Homi-Instanz`; nicht angemeldet: Seiten → 302 `/login/`, `/api/` → 401 (die App leitet dann selbst um).
 - Schutz: POST nur mit passendem `Origin`, max. 3 Code-Mails pro Adresse in 15 min, gleiche Antwort für unbekannte
   Adressen (keine Rückschlüsse), nginx-Zone `home_login` (20/min). Mails über `energy/mailer.py` (Absender domus@biber.solar).
-- Daten in `login/data/` (nicht im Repo, nur Besitzer lesbar): `instanzen/<name>.json` (wer sich anmelden darf),
+- Daten in `login/data/` (nicht im Repo; per ACL nur `homi-login` und `claude`, neue Dateien 660 mit Default-ACL): `instanzen/<name>.json` (wer sich anmelden darf),
   `sitzungen/`, `passkeys/`. Test ohne echten Versand: `LOGIN_MAIL_DATEI=<datei>` (schreibt Mails in die Datei).
 - Service Worker (beide Oberflächen, Cache v3): gibt Weiterleitungen (z. B. zur Anmeldung) als echte Weiterleitung
   zurück – sonst zeigt eine installierte App bei abgelaufener Sitzung eine Fehlerseite.
 
 ```bash
-cd ~/.config/systemd/user && ln -sf ~/domus/login/homi-login.service . && systemctl --user daemon-reload && systemctl --user enable --now homi-login.service
+sudo useradd --system --no-create-home --shell /usr/sbin/nologin homi-login && sudo usermod -aG msmtp homi-login
+sudo setfacl -m u:homi-login:x /home/claude   # Durchgang zum Code; login/data: siehe ACL oben (setfacl -R / -d)
+sudo cp login/homi-login.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable --now homi-login
+journalctl -u homi-login                           # Protokoll
 kunden/kunde.py benutzer biber +neue@adresse.ch      # Anmelde-Adressen pflegen (-adresse entfernt)
 ```
 
