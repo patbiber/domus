@@ -17,5 +17,11 @@
     "bis": "2026-10-16T14:10",
     "notiz": "Waschmaschine, sonst nur Internet und homi an (Angabe Patrick, 16.10.2026 12:38, «die nächsten 1.5 h»).",
     "ergebnis": "0.32 kWh über der Grundlast (136 W); Heizphase 12:30–12:50 (10-min-Mittel 1440 W), danach Grundlast-Niveau. Ganz aus der Solaranlage, 0 kWh Netzbezug."
+  },
+  {
+    "name": "Waschgang 23.10.",
+    "von": "2026-10-23T13:25",
+    "bis": null,
+    "notiz": "Waschmaschine läuft (Angabe Patrick, 23.10.2026 13:32). Bei Start: Solar 1.5 kW, Haus 0.5 kW, 1.0 kW Einspeisung; Prognose: bestes Fenster 15–17 Uhr. Vergleich: Waschgang 16.10. (0.32 kWh, ganz aus Solar)."
   }
 ]
