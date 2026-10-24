@@ -139,11 +139,32 @@ def berater():
                          f"{ir['netz_pct']} % aus dem Netz zu {rp(bezug)}, Rest Sonne (entgangene Vergütung {rp(rueck)}) "
                          f"→ im Mittel {rp(preis)} pro kWh",
                          f"Annahme: Thermostat/Zeitschaltuhr spart 25 % → {tsd(spar)} kWh × {rp(preis)} = CHF {round(spar * preis)} pro Jahr"],
-            "aktion": "Ein Steckdosen-Thermostat (ca. CHF 30–50) oder eine Zeitschaltuhr vor die Heizung schalten. Tagsüber bei "
-                      "Sonne vorheizen: Mit einer zweiten smarten Steckdose kann homi die Heizung bei Sonnenüberschuss "
-                      "einschalten – wie die Solarladestation."})
+            "aktion": ("In der App der Heizung eine Solltemperatur (z. B. 19 °C) und einen Zeitplan mit Ende um 22 Uhr "
+                       "einstellen. Tagsüber bei Sonne vorheizen: homi kann die Heizung über ihr eingebautes WLAN schalten, "
+                       "sobald sie in der App «Smart Life» gekoppelt ist.")
+                      if geraete_cfg.get("infrarot", {}).get("wlan") else
+                      ("Ein Steckdosen-Thermostat (ca. CHF 30–50) oder eine Zeitschaltuhr vor die Heizung schalten. Tagsüber "
+                       "bei Sonne vorheizen: Mit einer zweiten smarten Steckdose kann homi die Heizung bei Sonnenüberschuss "
+                       "einschalten – wie die Solarladestation.")})
     elif hat_heizung:
         geprueft.append({"titel": "Infrarotheizung", "ergebnis": "in den letzten Tagen kaum gelaufen"})
+
+    # 2c) Licht: alte Leuchtmittel (gemessene Leistung, «led»: false) auf LED
+    alt = [g for g in geraete_cfg.values() if g.get("typ") == "licht" and g.get("led") is False and (g.get("w_typ") or 0) >= 30]
+    if alt:
+        STD = 3                                            # Annahme: 3 Stunden pro Tag eingeschaltet
+        kwh_l = sum(g["w_typ"] * 0.8 for g in alt) * STD * 365 / 1000
+        chf_l = kwh_l * bezug                              # Licht brennt vor allem abends → Netzstrom
+        tipps.append({"id": "led", "titel": "LED im " + " und ".join(g["name"].replace("Licht ", "") for g in alt),
+            "chf_jahr": round(chf_l), "kwh_jahr": round(kwh_l), "bedingung": "gemessen am Zähler",
+            "text": "Gemessen beim Ausschalten: " + ", ".join(f"{g['name']} {g['w_typ']} W" for g in alt)
+                    + ". Mit LED-Leuchtmitteln braucht das gleiche Licht rund 80 % weniger.",
+            "warum": "Halogen- und alte Glühlampen wandeln den grössten Teil des Stroms in Wärme um. LED gibt es heute in "
+                     "jeder Fassung und Lichtfarbe; sie halten 15–25 Jahre.",
+            "rechnung": [f"{' + '.join(str(g['w_typ']) for g in alt)} W × 80 % Einsparung × {STD} h/Tag × 365 = {tsd(kwh_l)} kWh",
+                         f"{tsd(kwh_l)} kWh × {rp(bezug)} (Licht brennt abends, Strom aus dem Netz) = CHF {round(chf_l)} pro Jahr"],
+            "aktion": "Leuchtmittel anschauen (Sockel und Watt notieren) und durch LED mit ähnlicher Helligkeit ersetzen "
+                      "(z. B. 50-W-Halogen → 5–7-W-LED)."})
 
     # 3) Überschuss für Warmwasser / E-Auto / Wärmepumpe nutzen
     try:
@@ -352,8 +373,9 @@ def grundlast_aktion(zg):
         return ("Mit einem Steckdosen-Messgerät (ca. CHF 20) die grössten Dauerverbraucher suchen: alte Kühl- und "
                 "Gefriergeräte, Router und Netzwerk, Umwälzpumpe, TV und Spielkonsole im Standby. "
                 "Was nachts nicht laufen muss, mit Steckdosenleiste oder Zeitschaltuhr ausschalten.")
-    teile = ["Aktivboxen, Beamer und Desktop über eine schaltbare Steckdosenleiste ganz ausschalten (Standby zusammen "
-             f"rund {zg['standby']['w']:g} W)" if "standby" in zg else None,
+    teile = ["die Aktivboxen im Dachstock ausschalten, wenn keine Musik läuft – sie brauchen schon eingeschaltet ohne Ton "
+             "36 W (gemessen), das sind über 300 kWh im Jahr; am einfachsten mit einer schaltbaren Steckdosenleiste, die "
+             "auch Beamer und Desktop ganz vom Netz nimmt" if "standby" in zg else None,
              "prüfen, ob beide Router nötig sind – oft reicht einer, der zweite als Access Point oder ganz aus (je ca. 10 W)"
              if "router" in zg else None,
              f"die unbekannte Dauerlast von rund {zg['grundlast_rest']['w']:g} W mit einem Steckdosen-Messgerät (ca. CHF 20) "
