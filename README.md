@@ -395,11 +395,19 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   Stand 10.10.2026: 19.9 % zurückverdient, CHF ~1'490/Jahr, Break-even ca. Juli 2042 (nach ~19.7 Jahren).
   Überall vorhanden: Kunden-UI (Karte unten in der Übersicht, Rechnung unter «Mehr»), Retro-Seite (Kachel «Anlage
   abbezahlt») und Home Assistant (`sensor.pv_anlage_amortisiert` mit Attributen, `sensor.pv_anlage_break_even`).
+- **Verbraucher-Zuordnung** (`energie/homi/zuordnung.py`, `/api/zuordnung`, Cache 30 min, seit 24.10.2026): schätzt
+  aus 14 Tagen Zählerwerten, welche Geräte aus `anlage.json → haushalt.geraete` den Strom brauchen. Grundlast (Median
+  01–05 Uhr) aufgeteilt auf gemessene/typische Dauerläufer, Infrarotheizung an langen gleichmässigen Blöcken (Leistung
+  daraus geschätzt), Waschgänge aus `messungen.json` («sicher»), übrige Ereignisse > 250 W nach Uhrzeit/Leistung/Dauer
+  (Kochen, Spülmaschine, Frühstück, Tumbler). Je Gerät kWh, Netzanteil, CHF, Sicherheit; dazu «läuft gerade vermutlich».
+  Anzeige: App (Tab Verlauf «Wer braucht den Strom?»), Retro (Inventar mit echten Geräten), HA-Sensoren
+  `sensor.grosster_verbraucher`, `sensor.infrarotheizung_pro_tag_geschatzt`, `sensor.grundlast_zuordnung`.
 - **Energieberater** (`/api/berater`, stündlich neu): drei Tipps mit dem grössten Nutzen in CHF/Jahr aus den letzten
   14 Tagen, Kandidaten: Grundlast senken (Median 01–05 Uhr, Ziel −30 %), Nachtverbraucher ≥ 600 W in den Mittag legen,
   Sonnenüberschuss selbst nutzen (Boiler/E-Auto, max. 2'500 kWh) bzw. ohne eigenen Abnehmer Überschuss an Nachbarn
-  verkaufen (LEG, seit 2026; Annahme 25 % zu +3 Rp.), grosse Geräte in die Sonnenstunden (40 % des Bezugs über
-  der Grundlast), akut: negative Preise heute/morgen (immer zuoberst). Batterie: ohne Batterie Kaufempfehlung aus der
+  verkaufen (LEG, seit 2026; Annahme 25 % zu +3 Rp.; entfällt mit Infrarotheizung als Abnehmer), Infrarotheizung
+  mit Thermostat (25 % von 180 Heiztagen), grosse Geräte in die Sonnenstunden (aus der Zuordnung: 80 % des Netzstroms
+  von Spülmaschine/Wäsche, sonst 40 % des Bezugs über der Grundlast), akut: negative Preise heute/morgen (immer zuoberst). Batterie: ohne Batterie Kaufempfehlung aus der
   Speicher-Simulation und Richtpreisen (`BATTERIE_PREISE` in `homi/berater.py`, überschreibbar mit `batterie_preise` in
   anlage.json; Urteil ≤ 8 J. «lohnt sich», ≤ 12 J. «knapp», sonst «lohnt sich nicht»); mit `haushalt.batterie` in
   anlage.json stattdessen Betriebstipps. `haushalt` (warmwasser, boiler_elektrisch, e_auto, waermepumpe, batterie;

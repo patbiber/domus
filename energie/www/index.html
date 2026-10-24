@@ -256,32 +256,28 @@ function ptext(ctx, s, x, y, c, sc = 1) {
 }
 
 // ---------- Geräte-Katalog ----------
+// Patricks echte Geräte (anlage.json → haushalt.geraete); wann sie laufen, schätzt /api/zuordnung aus dem Zähler.
+// dauer = läuft immer, zeit = Stunden, in denen es typisch läuft
 const CATALOG = [
-  { id: "router", name: "WLAN-Router", w: 12, spr: "router", q: "Blinkt. Seit 2019. Niemand weiss warum." },
-  { id: "fridge", name: "Kühlschrank", w: 120, spr: "fridge", q: "Der Kühlschrank brummt. Er behauptet, er sei unschuldig." },
-  { id: "kettle", name: "Wasserkocher", w: 2000, spr: "kettle", q: "Tee! Das Lieblingsgetränk aller Stromzähler." },
-  { id: "toaster", name: "Toaster", w: 900, spr: "toaster", q: "Der Toaster wirkt verdächtig. Er verbirgt etwas." },
-  { id: "tv", name: "Fernseher", w: 110, spr: "tv", q: "Läuft gerade: 'Die Rückkehr der Kilowattstunde'." },
-  { id: "laptop", name: "Laptop", w: 60, spr: "laptop", q: "Jemand programmiert hier ein Heimsystem. Verrückt." },
-  { id: "console", name: "Spielkonsole", w: 150, spr: "console", q: "Nur noch ein Level. Ehrlich." },
-  { id: "vacuum", name: "Staubsauger", w: 800, spr: "vacuum", q: "Saugt Staub. Und Watt." },
-  { id: "washer", name: "Waschmaschine", w: 2000, spr: "washer", q: "Schleudergang! Festhalten!" },
-  { id: "dryer", name: "Tumbler", w: 2500, spr: "dryer", q: "Der Tumbler. Grösster Feind der Solarbilanz." },
-  { id: "fohn", name: "Föhn", w: 1800, spr: "fohn", q: "Frisur: gesichert. Budget: föhngetrocknet." },
-  { id: "lamp", name: "Stehlampe", w: 40, spr: "lamp", q: "Eine Lampe. Sie leuchtet. Mehr gibt es nicht zu sagen." },
-  { id: "aquarium", name: "Aquarium", w: 60, spr: "aquarium", q: "Die Fische schwimmen im Kreis. Wie die Zählerscheibe." },
-  { id: "coffee", name: "Kaffeemaschine", w: 1200, spr: "coffee", q: "Ohne Kaffee keine Abenteuer." },
-  { id: "micro", name: "Mikrowelle", w: 1000, spr: "micro", q: "Pling! Die Pizza von gestern ist bereit." },
-  { id: "freezer", name: "Gefriertruhe", w: 150, spr: "freezer", q: "Hier drin: Glace und ein verdächtiger Kristall." },
-  { id: "iron", name: "Bügeleisen", w: 2200, spr: "iron", q: "Ich bügle nie. Wer hat das eingeschaltet?" },
-  { id: "heater", name: "Elektroheizung", w: 2000, spr: "heater", q: "Heizen mit Strom. Die Wärmepumpe schaut beleidigt." },
-  { id: "kazoo", name: "Elektro-Kazoo", w: 5, spr: "kazoo", q: "Mein elektrischer Kazoo. Absolut unverzichtbar." },
-  { id: "detector", name: "Alien-Detektor", w: 25, spr: "detector", q: "Warnt vor Aliens. Bisher keine gesichtet. Bisher." },
-  { id: "boiler", name: "Boiler", w: 2000, spr: "boiler", q: "Heisses Wasser. Die GWS steuert ihn per Rundsteuerung." },
-  { id: "ebike", name: "E-Bike-Ladegerät", w: 250, spr: "ebike", q: "Tankt Sonne für den Berg nach Uerikon." },
-  { id: "heatpump", name: "Wärmepumpe", w: 1500, spr: "heatpump", q: "Holt Wärme aus der Luft. Magie? Nein, Physik." },
-  { id: "pc", name: "Gaming-PC", w: 400, spr: "pc", q: "RGB-Beleuchtung: das wichtigste Bauteil." },
+  { id: "router", name: "2 Router", w: 20, spr: "router", dauer: true, q: "Zwei Router. Einer für mich, einer für… niemand weiss es." },
+  { id: "netzwerk", name: "Netzwerk-Switch", w: 10, spr: "switch", dauer: true, q: "Blinkenlights! Hier fliessen die Daten von homi." },
+  { id: "foodcenter", name: "Foodcenter", w: 40, spr: "fridge", dauer: true, q: "Das Foodcenter brummt. Kühlen und Gefrieren, Tag und Nacht." },
+  { id: "ventilator", name: "Abluftventilator Bad", w: 8, spr: "fan", dauer: true, q: "Surrrr. Der Ventilator im Bad dreht. Immer." },
+  { id: "infrarot", name: "Infrarotheizung", w: 790, spr: "heater", zeit: [[6, 9], [16, 24]], ab: 600, q: "Die Infrarotheizung im Dachstock. Grösster Stromfresser im Haus – ein Thermostat wäre nett." },
+  { id: "induktion", name: "Induktionsherd", w: 1800, spr: "herd", zeit: [[11, 13.5], [17.5, 20.5]], ab: 1200, q: "Es brutzelt! Induktion: schnell, aber durstig." },
+  { id: "backofen", name: "Backofen", w: 2200, spr: "ofen", zeit: [[11, 13.5], [17.5, 20.5]], ab: 1800, q: "Der Backofen heizt. Riecht nach Pizza. Oder Kuchen?" },
+  { id: "wasserkocher", name: "Wasserkocher", w: 2000, spr: "kettle", zeit: [[6, 10], [14, 17]], ab: 1700, q: "Tee! Das Lieblingsgetränk aller Stromzähler." },
+  { id: "spuelmaschine", name: "Spülmaschine", w: 1900, spr: "spueler", zeit: [[20.5, 24], [0, 2], [12, 15]], ab: 900, q: "Die Spülmaschine. Am Mittag liefe sie mit Sonne…" },
+  { id: "waschmaschine", name: "Waschmaschine", w: 2000, spr: "washer", zeit: [[9, 17]], ab: 1500, q: "Schleudergang! Festhalten!" },
+  { id: "tumbler", name: "Wärmepumpentrockner", w: 800, spr: "dryer", zeit: [[10, 20]], ab: 500, q: "Der Wärmepumpentrockner. Sparsam – für einen Trockner." },
+  { id: "desktop", name: "Desktop-Computer", w: 150, spr: "pc", zeit: [[8, 24]], ab: 120, q: "RGB-Beleuchtung: das wichtigste Bauteil." },
+  { id: "notebooks", name: "Notebooks", w: 50, spr: "laptop", zeit: [[7, 24]], ab: 40, q: "Jemand programmiert hier ein Heimsystem. Verrückt." },
+  { id: "beamer", name: "Beamer", w: 250, spr: "beamer", zeit: [[19, 24]], ab: 220, q: "Kino im Wohnzimmer! Der Beamer surrt." },
+  { id: "aktivboxen", name: "Aktivboxen", w: 60, spr: "boxen", zeit: [[16, 24]], ab: 50, q: "Bumm-tschak. Die Aktivboxen. Im Standby ziehen sie trotzdem." },
+  { id: "hue", name: "Hue-Licht", w: 40, spr: "hue", zeit: [[6, 8], [17, 24]], ab: 30, q: "Hue-Licht: heute in «Sonnenuntergang über Uerikon»." },
 ];
+// Solarladestation (myStrom, exakt gemessen) – erscheint, wenn sie lädt
+const LADE = { id: "laden", name: "Solarladestation", spr: "lader", q: "Die Solarladestation: lädt Handy und Co. nur mit Sonnenüberschuss." };
 // Der echte homi-Server (Intel NUC) wohnt fest unter der Treppe; Verbrauch live gemessen
 const SERVER = { id: "nuc", name: "homi-Server (NUC)", spr: "nuc", fest: true, q: "Psst. Hier unten wohne ich." };
 const NUC_SLOT = { x: 66, f: 0 };
@@ -313,17 +309,19 @@ let talkUntil = 0;
 function rollDevices(target) {
   const chosen = [];
   let sum = 0;
+  const add = d => { chosen.push(d); sum += d.w; };
   const srvW = S && S.server && S.server.leistung_w ? Math.round(S.server.leistung_w) : 0;
-  if (srvW && srvW <= target) { chosen.push({ ...SERVER, w: srvW }); sum += srvW; }
-  const base = ["router", "fridge"];
-  for (const id of base) {
-    const d = CATALOG.find(c => c.id === id);
-    if (sum + d.w <= target) { chosen.push({ ...d }); sum += d.w; }
-  }
-  const rest = CATALOG.filter(c => !base.includes(c.id)).sort(() => Math.random() - .5);
-  for (const d of rest) {
+  if (srvW && srvW <= target) add({ ...SERVER, w: srvW });
+  if (ladeW > 1 && sum + ladeW <= target) add({ ...LADE, w: Math.round(ladeW) });
+  for (const d of CATALOG.filter(c => c.dauer)) if (sum + d.w <= target) add({ ...d });
+  // Grössere Verbraucher: was zur Tageszeit passt und in den Rest «hineinpasst» (wie die Zuordnung im Berater)
+  const h = new Date().getHours() + new Date().getMinutes() / 60;
+  const passt = c => c.zeit.some(([a, b]) => h >= a && h < b);
+  const kand = CATALOG.filter(c => !c.dauer && passt(c)).map(c => [c, c.w + Math.random() * 400]).sort((a, b) => b[1] - a[1]).map(x => x[0]);
+  for (const d of kand) {
     if (chosen.filter(d => !d.fest).length >= SLOTS.length - 1) break;
-    if (sum + d.w <= target) { chosen.push({ ...d }); sum += d.w; }
+    const rest = target - sum;
+    if (rest >= d.ab) add({ ...d, w: Math.min(d.w, Math.round(rest)) });
   }
   const remain = Math.round(target - sum);
   if (remain >= 1) chosen.push({ ...GHOST, w: remain });
@@ -519,9 +517,11 @@ async function pollVerguetung() {
 }
 
 // Steckdosen (myStrom), z. B. Solarladestation – wie in der Kunden-Oberfläche
+let ladeW = 0;
 async function pollGeraete() {
   let d;
   try { d = await (await fetch("api/geraete", { cache: "no-store" })).json(); } catch { return; }
+  ladeW = (d.geraete || []).reduce((a, g) => a + ((g.live || {}).an ? (g.live.leistung_w || 0) : 0), 0);
   $("geraete").innerHTML = (d.geraete || []).map(g => {
     const l = g.live || {}, h = g.heute || {};
     const v = l.erreichbar === false ? "nicht erreichbar" : l.an ? `LÄDT · ${Math.round(l.leistung_w)} W` : l.erreichbar === undefined ? "–" : "aus";
@@ -539,6 +539,15 @@ $("geraete").addEventListener("click", async e => {
   } catch { b.textContent = "nur mit Passwort"; setTimeout(pollGeraete, 2500); return; }
   pollGeraete(); setTimeout(pollGeraete, 3000);
 });
+
+// Verbraucher-Zuordnung (Schätzung aus dem Zähler): erkannte Heizleistung übernehmen, alle 30 Minuten
+async function pollZuordnung() {
+  try {
+    const z = await (await fetch("api/zuordnung", { cache: "no-store" })).json();
+    const ir = CATALOG.find(c => c.id === "infrarot");
+    if (z && z.infrarot_w) { ir.w = z.infrarot_w; ir.ab = Math.round(z.infrarot_w * .7); }
+  } catch {}
+}
 
 // Amortisation und Batterie-Simulation (wie in der Kunden-Oberfläche), alle 10 Minuten
 const MONATE = ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"];
@@ -929,6 +938,15 @@ const SPR = {
   ebike(x, y, t) { R(x - 7, y - 5, 5, 5, "#222"); R(x + 2, y - 5, 5, 5, "#222"); R(x - 6, y - 4, 3, 3, "#99bbcc"); R(x + 3, y - 4, 3, 3, "#99bbcc"); R(x - 4, y - 8, 9, 2, "#33aa33"); R(x, y - 11, 2, 3, "#33aa33"); const lv = Math.floor(t * 2) % 4; for (let i = 0; i <= lv; i++) R(x - 3 + i * 2, y - 7, 1, 1, "#ffff55"); },
   heatpump(x, y, t) { R(x - 7, y - 12, 14, 12, "#dddddd"); R(x - 5, y - 10, 8, 8, "#555"); const a = t * 10; R(x - 1 + Math.cos(a) * 3, y - 6 + Math.sin(a) * 3, 1, 1, "#fff"); R(x - 1 - Math.cos(a) * 3, y - 6 - Math.sin(a) * 3, 1, 1, "#fff"); R(x + 4, y - 10, 2, 1, "#55ff55"); },
   pc(x, y, t) { R(x - 4, y - 16, 8, 16, "#222"); const c = `hsl(${(t * 120) % 360},100%,60%)`; R(x - 4, y - 16, 1, 16, c); R(x + 3, y - 16, 1, 16, c); R(x - 2, y - 13, 4, 1, "#555"); R(x - 2, y - 11, 4, 1, "#555"); },
+  switch(x, y, t) { R(x - 6, y - 4, 12, 4, "#333"); for (let i = 0; i < 4; i++) { R(x - 5 + i * 3, y - 2, 2, 1, "#111"); if (Math.sin(t * (7 + i * 3) + i) > .2) R(x - 5 + i * 3, y - 4, 1, 1, i % 2 ? "#ffaa33" : "#55ff55"); } },
+  fan(x, y, t) { R(x - 5, y - 19, 10, 10, "#dddddd"); R(x - 4, y - 18, 8, 8, "#999"); const a = t * 14; for (let i = 0; i < 3; i++) R(x - 1 + Math.cos(a + i * 2.1) * 2.5, y - 15 + Math.sin(a + i * 2.1) * 2.5, 2, 2, "#555"); R(x, y - 14, 1, 1, "#222"); },
+  herd(x, y, t) { R(x - 7, y - 9, 14, 9, "#885533"); R(x - 7, y - 10, 14, 1, "#111"); R(x - 5, y - 10, 4, 1, "#ff3333"); R(x + 1, y - 10, 4, 1, Math.sin(t * 5) > 0 ? "#ff5533" : "#aa2222"); R(x - 5, y - 14, 5, 4, "#666"); R(x - 6, y - 14, 1, 1, "#444"); if (Math.sin(t * 4) > -.3) for (let i = 0; i < 2; i++) R(x - 3 + i * 2, y - 16 - ((t * 8 + i * 3) % 5), 1, 1, "#dddddd"); },
+  ofen(x, y, t) { R(x - 6, y - 14, 12, 14, "#bbbbbb"); R(x - 6, y - 14, 12, 2, "#444"); R(x - 4, y - 10, 8, 7, "#222"); R(x - 3, y - 9, 6, 5, Math.sin(t * 3) > 0 ? "#ff8833" : "#dd6622"); R(x + 3, y - 13, 1, 1, "#ff5555"); },
+  spueler(x, y, t) { R(x - 6, y - 14, 12, 14, "#e8e8e8"); R(x - 6, y - 14, 12, 2, "#999"); R(x - 3, y - 13, 1, 1, "#55ff55"); R(x - 2, y - 9, 4, 1, "#888"); for (let i = 0; i < 3; i++) if (Math.sin(t * 6 + i * 2) > .5) R(x - 4 + i * 4, y - 18 - ((t * 5 + i) % 3), 1, 1, "#aaddff"); },
+  beamer(x, y, t) { R(x - 5, y - 9, 10, 9, "#885533"); R(x - 4, y - 13, 8, 4, "#eeeeee"); R(x + 2, y - 12, 2, 2, "#335577"); const c = ["#ffffaa", "#aaffff", "#ffaaff"][Math.floor(t * 2) % 3]; for (let i = 1; i < 6; i++) R(x + 4 + i * 2, y - 12 - i, 1, 1 + i, c); },
+  boxen(x, y, t) { for (const dx of [-6, 2]) { R(x + dx, y - 12, 5, 12, "#222"); const s = Math.abs(Math.sin(t * 8 + dx)) > .6 ? 2 : 1; R(x + dx + 1, y - 6 - s, 3, 2 + s, "#555"); R(x + dx + 2, y - 10, 1, 1, "#777"); } if (Math.sin(t * 3) > .3) { R(x, y - 21, 1, 4, "#55ffff"); R(x - 2, y - 18, 2, 2, "#55ffff"); R(x + 1, y - 21, 2, 1, "#55ffff"); } },
+  hue(x, y, t) { R(x - 1, y - 16, 1, 16, "#444"); R(x - 3, y - 1, 5, 1, "#444"); R(x - 4, y - 20, 8, 4, `hsl(${(t * 30) % 360},90%,65%)`); R(x - 3, y - 16, 6, 1, `hsl(${(t * 30) % 360},90%,80%)`); },
+  lader(x, y, t) { R(x - 5, y - 9, 10, 9, "#885533"); R(x - 4, y - 15, 3, 6, "#222"); R(x - 3, y - 14, 1, 4, "#55ff55"); R(x + 1, y - 13, 3, 4, "#222"); R(x + 2, y - 12, 1, 2, Math.sin(t * 4) > 0 ? "#55ff55" : "#226622"); if (Math.sin(t * 3) > .5) ptext(g, "+", x - 2, y - 22, "#ffff55"); },
   nuc(x, y, t) {
     const sv = (S && S.server) || {}, cpu = sv.cpu_pct || 0;
     R(x - 7, y - 6, 14, 6, "#2a2a2a"); R(x - 7, y - 6, 14, 1, "#666666");   // Gehäuse
@@ -1251,6 +1269,7 @@ pollBerater(); setInterval(pollBerater, 60 * 60000);
 try { sessionStorage.removeItem("homi-neuladen"); } catch {}   // Neuladen-Seite: Wartezeit wieder von vorne
 pollSteuerung(); setInterval(pollSteuerung, 15000);
 pollGeraete(); setInterval(pollGeraete, 15000);
+pollZuordnung(); setInterval(pollZuordnung, 1800000);
 pollVerguetung(); setInterval(pollVerguetung, 10 * 60000);
 pollWoche(); setInterval(pollWoche, 60 * 60000);
 // Klick auf einen Tipp: die Figur erklärt, warum (Rechenweg im Tooltip)

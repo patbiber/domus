@@ -370,6 +370,26 @@ function navWoche() { $("w-vor").disabled = !wocheAktuell || wocheAktuell === wo
 $("w-zurueck").onclick = () => wocheAktuell && wocheLaden(wocheVersetzt(wocheAktuell, -1));
 $("w-vor").onclick = () => wocheAktuell && wocheAktuell !== wocheNeueste && wocheLaden(wocheVersetzt(wocheAktuell, 1));
 
+/* ======================= Wer braucht den Strom? (Schätzung aus dem Zähler) ======================= */
+function werZeichnen() {
+  const z = D.zuordnung;
+  if (!z || !z.aktiv) { $("wer").hidden = true; return; }
+  $("wer").hidden = false;
+  $("wer-zeit").textContent = `${z.zeitraum} · ${zahl(z.gesamt_kwh, 0)} kWh`;
+  const j = (z.jetzt || []).filter(x => x.w >= 5);
+  $("wer-jetzt").innerHTML = j.length ? `<b>Läuft gerade vermutlich:</b> ${j.map(x => `${esc(x.name)} ${zahl(x.w, 0)} W`).join(" · ")}` : "";
+  const g = (z.geraete || []).filter(x => x.kwh >= 0.05), max = Math.max(...g.map(x => x.kwh), 1);
+  const SICHER = { gemessen: "gemessen", sicher: "sicher", wahrscheinlich: "wahrscheinlich", vermutet: "vermutet" };
+  $("wer-liste").innerHTML = g.map(x => {
+    const netz = x.netz_pct ?? 0, breite = 100 * x.kwh / max;
+    return `<li title="${esc(x.hinweis || "")}"><div class="wer-kopf"><span>${esc(x.name)}${x.sicherheit ? ` <small class="s-${x.sicherheit}">${SICHER[x.sicherheit] || ""}</small>` : ""}</span>
+      <b>${zahl(x.kwh_tag, x.kwh_tag < .1 ? 2 : 1)} kWh/Tag</b></div>
+      <div class="wer-balken" style="width:${Math.max(2, breite).toFixed(1)}%"><i class="sonne" style="width:${100 - netz}%"></i><i class="netz" style="width:${netz}%"></i></div>
+      <small>${zahl(x.anteil_pct, 0)} % des Verbrauchs${x.chf ? ` · Netzstrom CHF ${zahl(x.chf, 2)}` : ""}${x.ereignisse ? ` · ${x.ereignisse}×` : ""}${x.w ? ` · ${zahl(x.w, 0)} W` : ""}</small></li>`;
+  }).join("");
+  $("wer-hinweis").textContent = z.hinweis || "";
+}
+
 /* ======================= Strompreis ======================= */
 let planTag = "heute";
 function boerseZeichnen() {
@@ -640,7 +660,7 @@ function speicherZeichnen() {
 /* ======================= Laden ======================= */
 function zeichnen() {
   flussZeichnen(); kpisZeichnen(); prognoseZeichnen(); preisZeichnen(); warnungZeichnen();
-  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen(); steuerungZeichnen(); geraeteZeichnen(); verguetungZeichnen();
+  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen(); werZeichnen(); steuerungZeichnen(); geraeteZeichnen(); verguetungZeichnen();
 }
 async function status() {
   try { D.status = await holen("status"); flussZeichnen(); kpisZeichnen(); preisZeichnen(); }
@@ -654,7 +674,7 @@ async function minute() {
   kpisZeichnen(); verlauf24Zeichnen(); amortZeichnen(); steuerungZeichnen(); geraeteZeichnen();
 }
 async function selten() {
-  for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"], ["berater", "berater"], ["steuerung", "steuerung"], ["verguetung", "verguetung"]]) {
+  for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"], ["berater", "berater"], ["zuordnung", "zuordnung"], ["steuerung", "steuerung"], ["verguetung", "verguetung"]]) {
     try { D[k] = await holen(p); } catch {}
   }
   zeichnen();

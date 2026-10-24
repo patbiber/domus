@@ -271,6 +271,27 @@ rest:
         icon: mdi:chart-bell-curve
         json_attributes_path: "$.quartale[-1:]"
         json_attributes: [quartal, ausgleich_rp, einspeisung_mit_preis_kwh, wert_chf, rmp_quelle]
+  - resource: http://127.0.0.1:8099/api/zuordnung
+    scan_interval: 1800
+    sensor:
+      - name: Grösster Verbraucher
+        unique_id: homi_zuordnung_top
+        value_template: "{{ (value_json.geraete | first).name }}"
+        availability: "{{ value_json.aktiv | default(false) and value_json.geraete | length > 0 }}"
+        icon: mdi:magnify-expand
+        json_attributes: [zeitraum, gesamt_kwh, grundlast_w, infrarot_w, jetzt, geraete, hinweis]
+      - name: Infrarotheizung pro Tag (geschätzt)
+        unique_id: homi_zuordnung_infrarot_kwh
+        value_template: "{{ (value_json.geraete | selectattr('id', 'eq', 'infrarot') | map(attribute='kwh_tag') | first) | default(0) }}"
+        availability: "{{ value_json.aktiv | default(false) }}"
+        unit_of_measurement: kWh
+        icon: mdi:radiator
+      - name: Grundlast (Zuordnung)
+        unique_id: homi_zuordnung_grundlast
+        value_template: "{{ value_json.grundlast_w }}"
+        availability: "{{ value_json.aktiv | default(false) }}"
+        unit_of_measurement: W
+        device_class: power
   - resource: http://127.0.0.1:8099/api/geraete
     scan_interval: 30
     sensor:

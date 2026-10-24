@@ -323,3 +323,19 @@ main { max-width: 1160px; margin: 0 auto; padding: 16px; }
 .vg-tabelle th { color: var(--leise); font-weight: 600; border-top: 0; }
 .vg-tabelle tr.best td { font-weight: 700; color: var(--gruen); }
 .vg-tabelle tr.klein td { color: var(--leise); font-size: .82rem; }
+
+/* ---------- Wer braucht den Strom? ---------- */
+.wer { margin-top: 14px; }
+.wer-jetzt { margin: 0 0 12px; font-size: .92rem; color: var(--text-2); }
+.wer-jetzt:empty { display: none; }
+.wer-liste { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 12px; }
+.wer-kopf { display: flex; justify-content: space-between; gap: 10px; font-size: .95rem; }
+.wer-kopf span { min-width: 0; overflow-wrap: anywhere; }
+.wer-kopf b { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.wer-kopf small { font-size: .72rem; padding: 1px 6px; border-radius: 99px; background: var(--flaeche-2); color: var(--leise); }
+.wer-kopf small.s-gemessen, .wer-kopf small.s-sicher { color: var(--gruen); }
+.wer-balken { display: flex; height: 8px; border-radius: 99px; overflow: hidden; margin: 5px 0 3px; background: var(--flaeche-2); }
+.wer-balken i { display: block; height: 100%; }
+.wer-balken i.sonne { background: var(--sonne); }
+.wer-balken i.netz { background: var(--blau); }
+.wer-liste small { color: var(--leise); font-size: .8rem; }
