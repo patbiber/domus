@@ -23,7 +23,7 @@
       {"id": "spuelmaschine", "name": "Spülmaschine", "typ": "waschen", "w_typ": 2000, "verschiebbar": true, "sprite": "spueler"},
       {"id": "waschmaschine", "name": "Waschmaschine", "typ": "waschen", "w_typ": 2000, "verschiebbar": true, "sprite": "washer"},
       {"id": "tumbler", "name": "Wärmepumpentrockner", "typ": "waschen", "w_typ": 800, "verschiebbar": true, "sprite": "dryer"},
-      {"id": "infrarot", "name": "Infrarotheizung Dachstock", "typ": "heizen", "w_typ": null, "verschiebbar": true, "sprite": "heater"}]},
+      {"id": "infrarot", "name": "Infrarotheizung Dachstock (Sonnenkönig)", "typ": "heizen", "w_typ": 650, "w_gemessen": "24.10.2026 Ein-/Ausschalttest am Zähler", "verschiebbar": true, "sprite": "heater"}]},
   "breite": 47.240,
   "laenge": 8.724,
   "neigung": 25,

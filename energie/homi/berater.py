@@ -125,6 +125,7 @@ def berater():
         preis = netz * bezug + (1 - netz) * rueck          # was eine kWh der Heizung im Mittel kostet
         spar = 0.25 * kwh_saison
         stufe = zu.get("infrarot_w")
+        ir_gemessen = bool(geraete_cfg.get("infrarot", {}).get("w_typ"))
         tipps.append({"id": "infrarot", "titel": "Infrarotheizung mit Thermostat und Sonne", "chf_jahr": round(spar * preis),
             "kwh_jahr": round(spar), "bedingung": "Schätzung aus dem Stromzähler",
             "text": f"Die Infrarotheizung im Dachstock braucht zurzeit rund {ir['kwh_tag']:.1f} kWh pro Tag – mehr als jedes "
@@ -133,7 +134,7 @@ def berater():
                      "Blöcke laufen oft viele Stunden ohne Unterbruch – ein Thermostat würde sie zwischendurch ausschalten. "
                      "Ohne Thermostat heizt sie mit voller Leistung, auch wenn der Raum längst warm ist.",
             "rechnung": [f"Erkannt in den letzten {round(tage)} Tagen: {ir['kwh']:.1f} kWh in {ir['ereignisse']} Abschnitten, "
-                         f"Heizleistung geschätzt {stufe} W",
+                         f"Heizleistung {'gemessen' if ir_gemessen else 'geschätzt'} {stufe} W",
                          f"{ir['kwh_tag']:.1f} kWh/Tag × {saison} Heiztage = {tsd(kwh_saison)} kWh pro Heizsaison",
                          f"{ir['netz_pct']} % aus dem Netz zu {rp(bezug)}, Rest Sonne (entgangene Vergütung {rp(rueck)}) "
                          f"→ im Mittel {rp(preis)} pro kWh",

@@ -95,13 +95,14 @@ def berechnen():
     # 2) Infrarotheizung: lange, gleichmässige Blöcke
     rest = list(x)
     stufen = []
-    for b in _bloecke(rows, x, lambda v: v >= 450, luecke=1):
+    wk = (geraete.get("infrarot") or {}).get("w_typ")      # gemessene Leistung (Ein-/Ausschalttest), sonst schätzen
+    for b in _bloecke(rows, x, lambda v: v >= (0.75 * wk if wk else 450), luecke=1):
         if len(b) < 9:
             continue
         band = [x[i] for i in b if 450 <= x[i] <= 1300]
-        if not band:
+        if not band and not wk:
             continue
-        L = statistics.median(band)
+        L = wk or statistics.median(band)
         if sum(1 for i in b if abs(x[i] - L) <= 0.2 * L) / len(b) < 0.6:
             continue
         stufen.append(L)
@@ -109,7 +110,7 @@ def berechnen():
             teil = min(x[i], L)
             buchen("infrarot", i, teil, "wahrscheinlich", b[0])
             rest[i] = x[i] - teil
-    infrarot_w = round(statistics.median(stufen)) if stufen else None
+    infrarot_w = round(wk) if wk else round(statistics.median(stufen)) if stufen else None
     # 2b) Heizung auch in kürzeren Abschnitten (z. B. beim Einschalten am Abend, bevor gekocht wird): mindestens
     #     3 aufeinanderfolgende Werte auf der Heizstufe (±20 %) bzw. darüber
     if infrarot_w:
@@ -197,7 +198,7 @@ def berechnen():
         "grundlast_rest": "Unbekannte Dauerlast", "solarladestation": "Solarladestation (Handy & Co.)",
     }
     HINWEIS = {
-        "infrarot": f"läuft in langen, gleichmässigen Blöcken mit rund {infrarot_w} W" if infrarot_w else "",
+        "infrarot": (f"Leistung {infrarot_w} W gemessen (Ein-/Ausschalttest); " if (geraete.get("infrarot") or {}).get("w_typ") else "") + (f"läuft in langen, gleichmässigen Blöcken mit rund {infrarot_w} W" if infrarot_w else ""),
         "kochen": "Spitzen über Mittag und abends", "spuelmaschine": "Heizphase spät abends",
         "waschmaschine": "aus deinen Waschgängen bekannt", "abend": "Abendlast über der Grundlast",
         "grundlast_rest": "läuft rund um die Uhr, keinem Gerät der Liste zuzuordnen",
