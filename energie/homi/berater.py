@@ -123,29 +123,49 @@ def berater():
         kwh_saison = ir["kwh_tag"] * saison
         netz = ir["netz_pct"] / 100
         preis = netz * bezug + (1 - netz) * rueck          # was eine kWh der Heizung im Mittel kostet
-        spar = 0.25 * kwh_saison
         stufe = zu.get("infrarot_w")
-        ir_gemessen = bool(geraete_cfg.get("infrarot", {}).get("w_typ"))
-        tipps.append({"id": "infrarot", "titel": "Infrarotheizung mit Thermostat und Sonne", "chf_jahr": round(spar * preis),
-            "kwh_jahr": round(spar), "bedingung": "Schätzung aus dem Stromzähler",
+        ir_cfg = geraete_cfg.get("infrarot", {})
+        ir_gemessen = bool(ir_cfg.get("w_typ"))
+        if ir_cfg.get("thermostat"):
+            # Mit Thermostat: sparen über tiefere Solltemperatur/Zeitplan (≈ 6 % pro °C) und Aufheizen mit Sonne statt abends
+            spar = 0.12 * kwh_saison                       # 2 °C tiefer bzw. nur heizen, wenn jemand oben ist
+            verschieb = 0.3 * kwh_saison * netz            # 30 % des Netzstroms ins Sonnenfenster (Vorheizen über Mittag)
+            chf = spar * preis + verschieb * (bezug - rueck)
+            titel = "Infrarotheizung: etwas tiefer und mit Sonne vorheizen"
+            warum = ("Die Heizung hat ein Thermostat: Ist der Dachstock warm, schaltet sie im Takt ein und aus (gemessen "
+                     "am 24.10.: 9 Minuten an, 3 Minuten aus). Ist er kalt, heizt sie stundenlang mit voller Leistung auf "
+                     "– am 24.10. fünf Stunden am Stück. Genau dieses Aufheizen lässt sich in die Sonnenstunden legen, "
+                     "und jedes Grad weniger spart rund 6 %.")
+            rechnung = [f"Annahme: 2 °C tiefer oder kürzerer Zeitplan spart 12 % → {tsd(spar)} kWh × {rp(preis)}",
+                        f"Annahme: 30 % des Netzstroms über Mittag mit Sonne vorheizen → {tsd(verschieb)} kWh × "
+                        f"{rp(bezug - rueck)} Vorteil",
+                        f"zusammen CHF {round(chf)} pro Jahr"]
+            aktion = ("In der App die Solltemperatur 1–2 °C tiefer stellen und einen Zeitplan nur für die Zeit, in der "
+                      "jemand oben ist. An sonnigen Tagen über Mittag aufheizen statt am Abend – der warme Dachstock hält "
+                      "die Wärme. Später kann homi das automatisch: über das eingebaute WLAN der Heizung, sobald sie in "
+                      "der App «Smart Life» gekoppelt ist.")
+        else:
+            spar = 0.25 * kwh_saison
+            chf = spar * preis
+            titel = "Infrarotheizung mit Thermostat und Sonne"
+            warum = (f"homi erkennt die Heizung an langen, gleichmässigen Blöcken mit rund {stufe} W über der Grundlast. "
+                     "Die Blöcke laufen oft viele Stunden ohne Unterbruch – ein Thermostat würde sie zwischendurch "
+                     "ausschalten. Ohne Thermostat heizt sie mit voller Leistung, auch wenn der Raum längst warm ist.")
+            rechnung = [f"Annahme: Thermostat/Zeitschaltuhr spart 25 % → {tsd(spar)} kWh × {rp(preis)} = CHF {round(chf)} pro Jahr"]
+            aktion = ("Ein Steckdosen-Thermostat (ca. CHF 30–50) oder eine Zeitschaltuhr vor die Heizung schalten. Tagsüber "
+                      "bei Sonne vorheizen: Mit einer zweiten smarten Steckdose kann homi die Heizung bei Sonnenüberschuss "
+                      "einschalten – wie die Solarladestation.")
+        tipps.append({"id": "infrarot", "titel": titel, "chf_jahr": round(chf), "kwh_jahr": round(spar),
+            "bedingung": "Schätzung aus dem Stromzähler",
             "text": f"Die Infrarotheizung im Dachstock braucht zurzeit rund {ir['kwh_tag']:.1f} kWh pro Tag – mehr als jedes "
                     f"andere Gerät. {ir['netz_pct']} % davon kommen aus dem Netz, weil sie vor allem abends läuft.",
-            "warum": f"homi erkennt die Heizung an langen, gleichmässigen Blöcken mit rund {stufe} W über der Grundlast. Die "
-                     "Blöcke laufen oft viele Stunden ohne Unterbruch – ein Thermostat würde sie zwischendurch ausschalten. "
-                     "Ohne Thermostat heizt sie mit voller Leistung, auch wenn der Raum längst warm ist.",
+            "warum": warum,
             "rechnung": [f"Erkannt in den letzten {round(tage)} Tagen: {ir['kwh']:.1f} kWh in {ir['ereignisse']} Abschnitten, "
                          f"Heizleistung {'gemessen' if ir_gemessen else 'geschätzt'} {stufe} W",
                          f"{ir['kwh_tag']:.1f} kWh/Tag × {saison} Heiztage = {tsd(kwh_saison)} kWh pro Heizsaison",
                          f"{ir['netz_pct']} % aus dem Netz zu {rp(bezug)}, Rest Sonne (entgangene Vergütung {rp(rueck)}) "
-                         f"→ im Mittel {rp(preis)} pro kWh",
-                         f"Annahme: Thermostat/Zeitschaltuhr spart 25 % → {tsd(spar)} kWh × {rp(preis)} = CHF {round(spar * preis)} pro Jahr"],
-            "aktion": ("In der App der Heizung eine Solltemperatur (z. B. 19 °C) und einen Zeitplan mit Ende um 22 Uhr "
-                       "einstellen. Tagsüber bei Sonne vorheizen: homi kann die Heizung über ihr eingebautes WLAN schalten, "
-                       "sobald sie in der App «Smart Life» gekoppelt ist.")
-                      if geraete_cfg.get("infrarot", {}).get("wlan") else
-                      ("Ein Steckdosen-Thermostat (ca. CHF 30–50) oder eine Zeitschaltuhr vor die Heizung schalten. Tagsüber "
-                       "bei Sonne vorheizen: Mit einer zweiten smarten Steckdose kann homi die Heizung bei Sonnenüberschuss "
-                       "einschalten – wie die Solarladestation.")})
+                         f"→ im Mittel {rp(preis)} pro kWh"] + rechnung,
+            "aktion": aktion})
     elif hat_heizung:
         geprueft.append({"titel": "Infrarotheizung", "ergebnis": "in den letzten Tagen kaum gelaufen"})
 

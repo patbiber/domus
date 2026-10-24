@@ -406,7 +406,8 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   14 Tagen, Kandidaten: Grundlast senken (Median 01–05 Uhr, Ziel −30 %), Nachtverbraucher ≥ 600 W in den Mittag legen,
   Sonnenüberschuss selbst nutzen (Boiler/E-Auto, max. 2'500 kWh) bzw. ohne eigenen Abnehmer Überschuss an Nachbarn
   verkaufen (LEG, seit 2026; Annahme 25 % zu +3 Rp.; entfällt mit Infrarotheizung als Abnehmer), Infrarotheizung
-  mit Thermostat (25 % von 180 Heiztagen), grosse Geräte in die Sonnenstunden (aus der Zuordnung: 80 % des Netzstroms
+  (mit eingebautem Thermostat: 12 % tiefere Solltemperatur + 30 % Netzstrom ins Sonnenfenster; ohne: Thermostat
+  25 %; 180 Heiztage), grosse Geräte in die Sonnenstunden (aus der Zuordnung: 80 % des Netzstroms
   von Spülmaschine/Wäsche, sonst 40 % des Bezugs über der Grundlast), akut: negative Preise heute/morgen (immer zuoberst). Batterie: ohne Batterie Kaufempfehlung aus der
   Speicher-Simulation und Richtpreisen (`BATTERIE_PREISE` in `homi/berater.py`, überschreibbar mit `batterie_preise` in
   anlage.json; Urteil ≤ 8 J. «lohnt sich», ≤ 12 J. «knapp», sonst «lohnt sich nicht»); mit `haushalt.batterie` in

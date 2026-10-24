@@ -27,7 +27,7 @@
       {"id": "spuelmaschine", "name": "Spülmaschine", "typ": "waschen", "w_typ": 2000, "verschiebbar": true, "sprite": "spueler"},
       {"id": "waschmaschine", "name": "Waschmaschine", "typ": "waschen", "w_typ": 2000, "verschiebbar": true, "sprite": "washer"},
       {"id": "tumbler", "name": "Wärmepumpentrockner", "typ": "waschen", "w_typ": 800, "verschiebbar": true, "sprite": "dryer"},
-      {"id": "infrarot", "name": "Infrarotheizung Dachstock (Sonnenkönig)", "typ": "heizen", "w_typ": 650, "w_gemessen": "24.10.2026 Ein-/Ausschalttest am Zähler", "wlan": "tuya", "ip": "192.168.1.240", "hinweis": "eingebautes WLAN (Tuya 3.5, App Remote King Smart); heizt nach Stromunterbruch nicht von selbst – Steckdosen-Schaltung geht nicht", "verschiebbar": true, "sprite": "heater"}]},
+      {"id": "infrarot", "name": "Infrarotheizung Dachstock (Sonnenkönig)", "typ": "heizen", "w_typ": 650, "w_gemessen": "24.10.2026 Ein-/Ausschalttest am Zähler", "wlan": "tuya", "ip": "192.168.1.240", "thermostat": true, "hinweis": "Thermostat eingebaut (24.10.: 5 h Aufheizen, dann Takt 9 min an / 3 min aus); eingebautes WLAN (Tuya 3.5, App Remote King Smart); heizt nach Stromunterbruch nicht von selbst – Steckdosen-Schaltung geht nicht", "verschiebbar": true, "sprite": "heater"}]},
   "breite": 47.240,
   "laenge": 8.724,
   "neigung": 25,
