@@ -28,7 +28,8 @@
   {
     "name": "Waschgang 23.10. Nachmittag",
     "von": "2026-10-23T16:00",
-    "bis": null,
-    "notiz": "Zweiter Waschgang (Angabe Patrick 23.10.2026 16:00). Bei Start: Solar 4.3 kW, Haus 0.4 kW – Vergleich zum Mittag (wenig Sonne)."
+    "bis": "2026-10-23T16:50",
+    "notiz": "Zweiter Waschgang (Angabe Patrick 23.10.2026 16:00). Bei Start: Solar 4.3 kW, Haus 0.4 kW – Vergleich zum Mittag (wenig Sonne).",
+    "ergebnis": "ca. 0.44 kWh über der Grundlast; Heizphase 16:10–16:30. Bei Start 3.8 kW Sonne, um 16:30 Einbruch auf 0.35 kW (Wolke) → ca. 0.13 kWh aus dem Netz (rund 30 %), ca. 3.4 Rp."
   }
 ]

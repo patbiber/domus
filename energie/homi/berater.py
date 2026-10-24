@@ -8,6 +8,7 @@ from .amortisation import amort_cache, amortisation
 from .einspeisung import einspeise_plan
 from .konfig import ANLAGE_CFG, tsd
 from .zustand import state
+from .zuordnung import zuordnung
 
 
 # ---------------------------------------------------------------- Energieberater
@@ -60,6 +61,14 @@ def berater():
     spitze = max(range(24), key=lambda s: prof[s]["b"])
     basis = f"Messwerte der letzten {round(tage)} Tage ({(heute - timedelta(days=14)).strftime('%d.%m.')}–{(heute - timedelta(days=1)).strftime('%d.%m.%Y')})"
     tipps, geprueft = [], []
+    try:                                                   # Verbraucher-Zuordnung (Schätzung aus dem Zähler)
+        zu = zuordnung()
+    except Exception as e:                                 # Beiwerk: Berater läuft auch ohne
+        print("Berater: Zuordnung nicht verfügbar:", e, flush=True)
+        zu = {}
+    zg = {g["id"]: g for g in zu.get("geraete", [])} if zu.get("aktiv") else {}
+    geraete_cfg = {g["id"]: g for g in haushalt.get("geraete", [])}
+    hat_heizung = any(g.get("typ") == "heizen" for g in geraete_cfg.values())
 
     # 1) Grundlast
     if grund_w >= 50:
@@ -77,9 +86,11 @@ def berater():
                          f"{std_ohne} von 24 Stunden ohne Sonnenüberschuss zu {rp(bezug)}, {24 - std_ohne} Stunden zu {rp(rueck)} "
                          f"→ im Mittel {rp(wert)} pro kWh",
                          f"{tsd(kwh)} kWh × {rp(wert)} = CHF {round(kwh * wert)} pro Jahr"],
-            "aktion": "Mit einem Steckdosen-Messgerät (ca. CHF 20) die grössten Dauerverbraucher suchen: alte Kühl- und "
-                      "Gefriergeräte, Router und Netzwerk, Umwälzpumpe, TV und Spielkonsole im Standby. "
-                      "Was nachts nicht laufen muss, mit Steckdosenleiste oder Zeitschaltuhr ausschalten."})
+            "aktion": grundlast_aktion(zg)})
+        if zg:
+            tipps[-1]["rechnung"].insert(1, "Aufteilung (geschätzt): " + ", ".join(
+                f"{zg[k]['name']} {zg[k]['w']:g} W" for k in ("foodcenter", "router", "standby", "netzwerk", "ventilator",
+                                                             "nuc", "grundlast_rest") if k in zg and zg[k].get("w")))
     else:
         geprueft.append({"titel": "Grundlast senken", "ergebnis": f"nicht nötig – nachts nur {grund_w:.0f} W"})
 
@@ -104,6 +115,34 @@ def berater():
     else:
         geprueft.append({"titel": "Nachtverbraucher in den Mittag legen",
                          "ergebnis": "kein grosser Verbraucher (über 600 W) nachts gefunden"})
+
+    # 2b) Infrarotheizung (aus der Zuordnung)
+    ir = zg.get("infrarot")
+    if ir and ir["kwh_tag"] >= 0.3:
+        saison = 180                                       # Heiztage pro Jahr (Oktober–März)
+        kwh_saison = ir["kwh_tag"] * saison
+        netz = ir["netz_pct"] / 100
+        preis = netz * bezug + (1 - netz) * rueck          # was eine kWh der Heizung im Mittel kostet
+        spar = 0.25 * kwh_saison
+        stufe = zu.get("infrarot_w")
+        tipps.append({"id": "infrarot", "titel": "Infrarotheizung mit Thermostat und Sonne", "chf_jahr": round(spar * preis),
+            "kwh_jahr": round(spar), "bedingung": "Schätzung aus dem Stromzähler",
+            "text": f"Die Infrarotheizung im Dachstock braucht zurzeit rund {ir['kwh_tag']:.1f} kWh pro Tag – mehr als jedes "
+                    f"andere Gerät. {ir['netz_pct']} % davon kommen aus dem Netz, weil sie vor allem abends läuft.",
+            "warum": f"homi erkennt die Heizung an langen, gleichmässigen Blöcken mit rund {stufe} W über der Grundlast. Die "
+                     "Blöcke laufen oft viele Stunden ohne Unterbruch – ein Thermostat würde sie zwischendurch ausschalten. "
+                     "Ohne Thermostat heizt sie mit voller Leistung, auch wenn der Raum längst warm ist.",
+            "rechnung": [f"Erkannt in den letzten {round(tage)} Tagen: {ir['kwh']:.1f} kWh in {ir['ereignisse']} Abschnitten, "
+                         f"Heizleistung geschätzt {stufe} W",
+                         f"{ir['kwh_tag']:.1f} kWh/Tag × {saison} Heiztage = {tsd(kwh_saison)} kWh pro Heizsaison",
+                         f"{ir['netz_pct']} % aus dem Netz zu {rp(bezug)}, Rest Sonne (entgangene Vergütung {rp(rueck)}) "
+                         f"→ im Mittel {rp(preis)} pro kWh",
+                         f"Annahme: Thermostat/Zeitschaltuhr spart 25 % → {tsd(spar)} kWh × {rp(preis)} = CHF {round(spar * preis)} pro Jahr"],
+            "aktion": "Ein Steckdosen-Thermostat (ca. CHF 30–50) oder eine Zeitschaltuhr vor die Heizung schalten. Tagsüber bei "
+                      "Sonne vorheizen: Mit einer zweiten smarten Steckdose kann homi die Heizung bei Sonnenüberschuss "
+                      "einschalten – wie die Solarladestation."})
+    elif hat_heizung:
+        geprueft.append({"titel": "Infrarotheizung", "ergebnis": "in den letzten Tagen kaum gelaufen"})
 
     # 3) Überschuss für Warmwasser / E-Auto / Wärmepumpe nutzen
     try:
@@ -142,7 +181,10 @@ def berater():
         geprueft.append({"titel": "Sonnenüberschuss selbst nutzen (Boiler, E-Auto)",
                          "ergebnis": "kaum Überschuss" if ueberschuss_jahr <= 1000 else
                          f"kein passender Verbraucher ({haushalt.get('warmwasser') + ' für Warmwasser, ' if haushalt.get('warmwasser') else ''}kein E-Auto)"})
-    if kein_abnehmer and ueberschuss_jahr > 3000:
+    if kein_abnehmer and hat_heizung:
+        geprueft.append({"titel": "Überschuss an Nachbarn verkaufen (LEG)",
+                         "ergebnis": "nicht nötig – die Infrarotheizung kann Sonnenüberschuss selbst aufnehmen"})
+    if kein_abnehmer and not hat_heizung and ueberschuss_jahr > 3000:
         verkauf, mehr = ueberschuss_jahr * 0.25, 0.03
         tipps.append({"id": "leg", "titel": "Überschuss an Nachbarn verkaufen (LEG)",
             "chf_jahr": round(verkauf * mehr), "kwh_jahr": round(verkauf), "bedingung": "falls Nachbarn mitmachen",
@@ -163,7 +205,30 @@ def berater():
     # 4) Verbrauch verschieben (Waschen, Spülen, Trocknen)
     abend = sum(max(0.0, p["b"] - grund_w / 1000) for p in prof)
     kwh = abend * 0.4 * 365
-    if kwh > 30:
+    versch = [zg[k] for k in ("spuelmaschine", "waschmaschine", "tumbler") if k in zg]
+    netz_versch = sum(g["netz_kwh"] for g in versch) / tage * 365 if versch else 0
+    if versch and netz_versch > 15:
+        kwh = netz_versch * 0.8
+        f = ((state.get("prognose") or {}).get("morgen") or {}).get("bestes_fenster")
+        def wann(g):
+            h = g.get("haupt_stunden") or []
+            return f"meist um {', '.join(f'{x} Uhr' for x in h[:2])}" if h else ""
+        teile = [f"{g['name']} {g['ereignisse']}× ({wann(g)}, {g['netz_pct']} % aus dem Netz)" for g in versch if g["ereignisse"]]
+        tipps.append({"id": "verschieben", "titel": "Spülmaschine & Wäsche in die Sonnenstunden",
+            "chf_jahr": round(kwh * diff), "kwh_jahr": round(kwh), "bedingung": "Schätzung aus dem Stromzähler",
+            "text": f"In den letzten {round(tage)} Tagen erkannt: " + "; ".join(teile) + ".",
+            "warum": "Spülmaschine, Waschmaschine und Trockner lassen sich ohne Komfortverlust verschieben. Laufen sie abends "
+                     "oder nachts, kommt ihr Strom aus dem Netz – über Mittag deckt ihn deine Anlage.",
+            "rechnung": [f"Netzstrom dieser Geräte (geschätzt): {sum(g['netz_kwh'] for g in versch):.1f} kWh in {round(tage)} Tagen "
+                         f"→ {tsd(netz_versch)} kWh/Jahr",
+                         f"Annahme: 80 % davon lassen sich in die Sonnenstunden legen → {tsd(kwh)} kWh/Jahr",
+                         f"{tsd(kwh)} kWh × {rp(diff)} Vorteil = CHF {round(kwh * diff)} pro Jahr"],
+            "aktion": "Spülmaschine statt spät abends mit Startzeitvorwahl über Mittag laufen lassen, Wäsche ebenso"
+                      + (f" – morgen am besten {f['von']}–{f['bis']} Uhr." if f else ".")})
+        if "kochen" in zg:
+            geprueft.append({"titel": "Kochen & Backen", "ergebnis": f"rund {zg['kochen']['kwh_tag']:.1f} kWh pro Tag, "
+                             "lässt sich aber nicht in den Mittag verschieben"})
+    elif kwh > 30:
         f = ((state.get("prognose") or {}).get("morgen") or {}).get("bestes_fenster")
         tipps.append({"id": "verschieben", "titel": "Grosse Geräte in die Sonnenstunden",
             "chf_jahr": round(kwh * diff), "kwh_jahr": round(kwh),
@@ -278,3 +343,20 @@ def berater():
              "tipps": drei, "geprueft": geprueft, "summe_chf_jahr": summe, "monate_frueher": monate_frueher, "batterie": batterie}
     berater_cache.update(zeit=time.time(), daten=daten)
     return daten
+
+
+def grundlast_aktion(zg):
+    """Konkrete Schritte zur Grundlast – mit Patricks Geräten, wenn die Zuordnung sie kennt."""
+    if not zg:
+        return ("Mit einem Steckdosen-Messgerät (ca. CHF 20) die grössten Dauerverbraucher suchen: alte Kühl- und "
+                "Gefriergeräte, Router und Netzwerk, Umwälzpumpe, TV und Spielkonsole im Standby. "
+                "Was nachts nicht laufen muss, mit Steckdosenleiste oder Zeitschaltuhr ausschalten.")
+    teile = ["Aktivboxen, Beamer und Desktop über eine schaltbare Steckdosenleiste ganz ausschalten (Standby zusammen "
+             f"rund {zg['standby']['w']:g} W)" if "standby" in zg else None,
+             "prüfen, ob beide Router nötig sind – oft reicht einer, der zweite als Access Point oder ganz aus (je ca. 10 W)"
+             if "router" in zg else None,
+             f"die unbekannte Dauerlast von rund {zg['grundlast_rest']['w']:g} W mit einem Steckdosen-Messgerät (ca. CHF 20) "
+             "suchen" if zg.get("grundlast_rest", {}).get("w") else None,
+             "beim Foodcenter Temperatur prüfen (Kühlen 7 °C, Gefrieren −18 °C reichen)" if "foodcenter" in zg else None]
+    return "; ".join(x for x in teile if x) + "."
+

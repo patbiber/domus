@@ -23,7 +23,8 @@ services:
       - ./server.py:/app/server.py:ro
       - ./homi:/app/homi:ro                               # Module (Tarif, Archiv, Berater …)
       - ./tarif.json:/app/tarif.json:ro
-      - ./anlage.json:/app/anlage.json:ro                     # Standort/Ausrichtung für die Solarprognose
+      - ./anlage.json:/app/anlage.json:ro
+      - ./messungen.json:/app/messungen.json:ro             # bekannte Messungen (z. B. Waschgänge) für die Zuordnung                     # Standort/Ausrichtung für die Solarprognose
       - ./www:/app/www:ro
       - ./www-kunde:/app/www-kunde:ro                     # modernes Layout für <name>.homi.solar
       - ../strompreise/data:/strompreise:ro

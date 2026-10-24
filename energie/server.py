@@ -16,6 +16,8 @@ Endpunkte:
   /api/geraete  smarte Steckdosen (myStrom): Zustand, Regel, Verbrauch heute/7 Tage; POST {"id", "modus": auto|ein|aus}
   /api/verguetung  Abnahmevergütung ab 2027: Vergütungsmodelle je Quartal, Referenz-Marktpreis, Ausgleich der
                 Minimalvergütung, Abregelschwelle
+  /api/zuordnung  Verbraucher-Zuordnung: welche Geräte wie viel brauchen (14 Tage, Schätzung aus dem Zähler) und was
+                vermutlich gerade läuft
   /api/info     Anzeigename und Leistung der Anlage
   /api/wochenbericht  letzte ganze Woche (Mo–So) mit Vorwochen-Vergleich, ?woche=2026-W41
   /api/push     GET: öffentlicher VAPID-Schlüssel; POST: App-Push an-/abmelden, Testnachricht
@@ -25,6 +27,7 @@ Der Code liegt im Paket homi/ (ein Modul pro Thema); diese Datei enthält nur de
 """
 
 import hashlib
+import statistics
 import json
 import os
 import re
@@ -49,6 +52,7 @@ from homi.speicher import SpeicherSimulation
 from homi.geraete import starten as geraete_starten
 from homi.steuerung import Steuerung, regeln
 from homi.verguetung import poll_verguetung, verguetung
+from homi.zuordnung import zuordnung
 from homi.wochenbericht import wochenbericht
 from homi.zustand import history, lock, state
 
@@ -125,6 +129,12 @@ class Handler(SimpleHTTPRequestHandler):
             except (OSError, ValueError, KeyError) as e:      # Fronius nachts aus o. Ä.: letzte Berechnung zeigen
                 print("Amortisation:", e, flush=True)
                 return self.send_json(amort_cache["daten"] or {"aktiv": False, "fehler": "Zähler nicht erreichbar"})
+        if path == "/api/zuordnung":
+            try:
+                return self.send_json(zuordnung())
+            except (OSError, ValueError, KeyError, ZeroDivisionError, statistics.StatisticsError) as e:
+                print("Zuordnung:", e, flush=True)
+                return self.send_json({"aktiv": False, "grund": "Zuordnung gerade nicht möglich"})
         if path == "/api/verguetung":
             try:
                 return self.send_json(verguetung())
