@@ -166,7 +166,7 @@ def berechnen():
     standby = sum((gd.get("w_standby") or 0) for gd in geraete.values() if gd.get("typ") in ("it", "licht"))
     verteilt = []
     for gid, wert in dauer_ids:
-        if gid in geraete:
+        if gid in geraete and (gid == "nuc" or geraete[gid].get("typ") == "dauer"):   # nur was wirklich immer läuft
             verteilt.append((gid, wert if wert else (geraete[gid].get("w_mittel") or geraete[gid].get("w_typ") or 0)))
     verteilt.append(("standby", standby))
     summe = sum(v for _, v in verteilt)
@@ -268,5 +268,7 @@ def zuordnung():
         d["jetzt"] = jetzt(d.get("grundlast_w") or 0, d.get("infrarot_w"), {})
         return d
     d = berechnen()
-    _cache.update(zeit=time.time(), daten=d)
+    # kurz nach dem Start fehlt die Server-Messung noch → dann nur 1 Minute merken statt 30
+    ohne_server = d.get("aktiv") and not any(g["id"] == "nuc" for g in d.get("geraete", []))
+    _cache.update(zeit=time.time() - (CACHE_S - 60 if ohne_server else 0), daten=d)
     return d

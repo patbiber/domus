@@ -16,7 +16,7 @@
       {"id": "beamer", "name": "Beamer", "typ": "it", "w_typ": 250, "w_standby": 1, "sprite": "beamer"},
       {"id": "desktop", "name": "Desktop-Computer", "typ": "it", "w_typ": 150, "w_standby": 2, "sprite": "pc"},
       {"id": "notebooks", "name": "Notebooks", "typ": "it", "w_typ": 50, "w_standby": 1, "sprite": "laptop"},
-      {"id": "ventilator", "name": "Abluftventilator Bad", "typ": "dauer", "w_typ": 25, "w_mittel": 8, "sprite": "fan"},
+      {"id": "ventilator", "name": "Abluftventilator Bad", "typ": "bedarf", "w_typ": 25, "hinweis": "läuft nur bei Bedarf, nicht dauernd (Patrick, 24.10.2026)", "sprite": "fan"},
       {"id": "wasserkocher", "name": "Wasserkocher", "typ": "kochen", "w_typ": 2000, "sprite": "kettle"},
       {"id": "induktion", "name": "Induktionsherd", "typ": "kochen", "w_typ": 2500, "sprite": "herd"},
       {"id": "backofen", "name": "Backofen", "typ": "kochen", "w_typ": 2500, "sprite": "ofen"},
