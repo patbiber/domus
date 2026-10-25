@@ -2,7 +2,7 @@
 import os
 import time
 
-from .konfig import NUC_REST_W, RAPL_DIR
+from .konfig import NUC_NETZTEIL_WG, NUC_REST_W, RAPL_DIR
 
 
 class ServerMesser:
@@ -50,8 +50,11 @@ class ServerMesser:
                 w["cpu_pct"] = round(100 * (busy - self.last[3]) / (total - self.last[4]), 1)
         self.last = (t, pkg, dram, busy, total)
         if "cpu_w" in w:
-            w["leistung_w"] = round(w["cpu_w"] + w.get("ram_w", 0) + NUC_REST_W, 1)
+            intern = w["cpu_w"] + w.get("ram_w", 0) + NUC_REST_W     # hinter dem Netzteil
+            w["leistung_w"] = round(intern / NUC_NETZTEIL_WG, 1)      # an der Steckdose
             w["rest_w_geschaetzt"] = NUC_REST_W
+            w["netzteil_verlust_w"] = round(w["leistung_w"] - intern, 1)
+            w["netzteil_wirkungsgrad"] = NUC_NETZTEIL_WG
         temp = self._lies("/sys/class/hwmon/hwmon1/temp1_input") or self._lies("/sys/class/thermal/thermal_zone2/temp")
         w["temp_c"] = round(int(temp) / 1000, 1) if temp else None
         w["uptime_s"] = int(float(self._lies("/proc/uptime", "0 0").split()[0]))

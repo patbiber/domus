@@ -37,7 +37,9 @@ ARCHIV_DIR = os.environ.get("ARCHIV_DIR", "/data/archiv")
 
 RAPL_DIR = os.environ.get("RAPL_DIR", "/host/rapl/intel-rapl:0")   # Energiezähler der CPU (Intel RAPL)
 
-NUC_REST_W = float(os.environ.get("NUC_REST_W", "4.0"))          # geschätzt: Platine, SSD, Netzteilverluste
+NUC_REST_W = float(os.environ.get("NUC_REST_W", "4.0"))          # geschätzt: Platine, SSD, Lüfter, USB
+# Wirkungsgrad des externen 65-W-Netzteils bei ~8 W (12 % Last): geschätzt 80 %; mit Steckdosen-Messung ersetzen
+NUC_NETZTEIL_WG = float(os.environ.get("NUC_NETZTEIL_WG", "0.8"))
 
 GERAETE_FILE = os.environ.get("GERAETE_FILE", "/data/geraete.json")
 

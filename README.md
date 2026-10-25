@@ -127,8 +127,9 @@ Laufzeit-Zustand), `erfassung` (5-s-Schleife), `fronius`, `tarif`, `boerse`, `ar
   Abfrage `?von=&bis=&aufloesung=10min|stunde|tag|monat|jahr`. Die 24-h-Diagramme füllen Lücken nach Neustarts daraus.
   Werte 27.09.–01.10.2026 einmalig aus den 5-min-Statistiken von Home Assistant übernommen (`energie/import_ha.py`).
 - **homi-Server** (der NUC selbst) in `/api/status` → `server`: Leistung = CPU+RAM gemessen über Intel RAPL
-  (`/sys/devices/virtual/powercap/intel-rapl`, read-only gemountet) + 4 W geschätzt für Platine/SSD/Netzteil
-  (`NUC_REST_W`), CPU-Last, Temperatur, RAM, Uptime, Erreichbarkeit HA/nginx, kWh und CHF pro Jahr.
+  (`/sys/devices/virtual/powercap/intel-rapl`, read-only gemountet) + 4 W geschätzt für Platine/SSD/Lüfter
+  (`NUC_REST_W`), geteilt durch den Netzteil-Wirkungsgrad (`NUC_NETZTEIL_WG`, geschätzt 0.8 bei ~12 % Last des
+  65-W-Netzteils; mit Steckdosen-Messung ersetzen) = Verbrauch an der Steckdose, CPU-Last, Temperatur, RAM, Uptime, Erreichbarkeit HA/nginx, kWh und CHF pro Jahr.
   Auf der Seite: Server im Schrank unter der Treppe (fest im Inventar, eigene Antworten auf alle Verben) und eigene Kachel.
 - **Einspeise-Fahrplan** `/api/einspeisung` (Vorbereitung auf dynamische Einspeisetarife ab 2027): pro Stunde heute/morgen
   Börsenpreis, PV-Prognose, typischer Verbrauch (Mittel 7 Tage), Empfehlung (einspeisen / Batterie laden /
