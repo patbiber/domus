@@ -111,7 +111,7 @@ class Modbus:
             nenn = w * 10 ** sf
         return {
             "verbunden": True,
-            "leistung_w": round(struct.unpack(">f", d[40:44])[0]),
+            "leistung_w": round(w) if math.isfinite(w := struct.unpack(">f", d[40:44])[0]) else 0,  # nachts NaN
             "zustand": ZUSTAENDE.get(st, f"Code {st}"),
             "eingeschaltet": c[2] == 1,                          # Conn: 1 = am Netz, 0 = Standby
             "begrenzung_pct": round(c[3] * 10 ** c[21], 1),
@@ -193,7 +193,9 @@ def regeln():
                             letzte.update(was=None, zeit=jetzt, pct=None)
                 if jetzt and letzte["zeit"] == jetzt:              # nach dem Schreiben frisch lesen
                     st = mb.stand(s)
-        except (OSError, struct.error) as e:                      # nachts/Neustart: als nicht verbunden melden
+        except Exception as e:                                    # nachts/Neustart/unerwartet: weiterlaufen
+            if not isinstance(e, (OSError, struct.error)):
+                print(f"Steuerung: {type(e).__name__}: {e}", flush=True)
             mb.m = None
             st = {"verbunden": False, "fehler": str(e) or type(e).__name__,
                   "gelesen": datetime.now().isoformat(timespec="seconds")}
