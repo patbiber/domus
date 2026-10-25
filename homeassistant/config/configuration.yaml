@@ -19,31 +19,31 @@ rest:
       - name: Strompreis Bezug
         unique_id: gws_strompreis_bezug
         value_template: "{{ value_json.tarif.bezug_chf_kwh }}"
-        availability: "{{ value_json.tarif is not none }}"
+        availability: "{{ value_json is defined and (value_json.tarif is not none) }}"
         unit_of_measurement: CHF/kWh
         icon: mdi:cash-minus
       - name: Rückliefervergütung
         unique_id: gws_rueckliefer_verguetung
         value_template: "{{ value_json.tarif.rueckliefer_chf_kwh }}"
-        availability: "{{ value_json.tarif is not none }}"
+        availability: "{{ value_json is defined and (value_json.tarif is not none) }}"
         unit_of_measurement: CHF/kWh
         icon: mdi:cash-plus
       - name: Stromkosten aktuell
         unique_id: domus_stromkosten_aktuell
         value_template: "{{ value_json.kosten_chf_h }}"
-        availability: "{{ value_json.fronius_ok }}"
+        availability: "{{ value_json is defined and (value_json.fronius_ok) }}"
         unit_of_measurement: CHF/h
         icon: mdi:cash-clock
       - name: Einspeiseerlös aktuell
         unique_id: domus_einspeiseerloes_aktuell
         value_template: "{{ value_json.erloes_chf_h }}"
-        availability: "{{ value_json.fronius_ok }}"
+        availability: "{{ value_json is defined and (value_json.fronius_ok) }}"
         unit_of_measurement: CHF/h
         icon: mdi:solar-power
       - name: Börsenpreis Day-Ahead
         unique_id: domus_boersenpreis_day_ahead
         value_template: "{{ value_json.boerse.rp_kwh }}"
-        availability: "{{ value_json.boerse is not none and value_json.boerse.rp_kwh is not none }}"
+        availability: "{{ value_json is defined and (value_json.boerse is not none and value_json.boerse.rp_kwh is not none) }}"
         unit_of_measurement: Rp/kWh
         state_class: measurement
         icon: mdi:chart-line
@@ -57,14 +57,14 @@ rest:
       - name: Börsenpreis Day-Ahead CHF
         unique_id: domus_boersenpreis_chf
         value_template: "{{ (value_json.boerse.rp_kwh / 100) | round(4) }}"
-        availability: "{{ value_json.boerse is not none and value_json.boerse.rp_kwh is not none }}"
+        availability: "{{ value_json is defined and (value_json.boerse is not none and value_json.boerse.rp_kwh is not none) }}"
         unit_of_measurement: CHF/kWh
         state_class: measurement
         icon: mdi:chart-line
       - name: homi-Server Leistung
         unique_id: homi_server_leistung
         value_template: "{{ value_json.server.leistung_w }}"
-        availability: "{{ value_json.server is defined and value_json.server.leistung_w is not none }}"
+        availability: "{{ value_json is defined and (value_json.server is defined and value_json.server.leistung_w is not none) }}"
         unit_of_measurement: "W"
         state_class: measurement
         icon: mdi:server
@@ -72,28 +72,28 @@ rest:
       - name: homi-Server CPU
         unique_id: homi_server_cpu
         value_template: "{{ value_json.server.cpu_pct }}"
-        availability: "{{ value_json.server is defined and value_json.server.cpu_pct is not none }}"
+        availability: "{{ value_json is defined and (value_json.server is defined and value_json.server.cpu_pct is not none) }}"
         unit_of_measurement: "%"
         state_class: measurement
         icon: mdi:cpu-64-bit
       - name: homi-Server RAM
         unique_id: homi_server_ram
         value_template: "{{ value_json.server.ram_pct }}"
-        availability: "{{ value_json.server is defined and value_json.server.ram_pct is not none }}"
+        availability: "{{ value_json is defined and (value_json.server is defined and value_json.server.ram_pct is not none) }}"
         unit_of_measurement: "%"
         state_class: measurement
         icon: mdi:memory
       - name: homi-Server Disk
         unique_id: homi_server_disk
         value_template: "{{ value_json.server.disk_pct }}"
-        availability: "{{ value_json.server is defined and value_json.server.disk_pct is not none }}"
+        availability: "{{ value_json is defined and (value_json.server is defined and value_json.server.disk_pct is not none) }}"
         unit_of_measurement: "%"
         state_class: measurement
         icon: mdi:harddisk
       - name: homi-Server Temperatur
         unique_id: homi_server_temp
         value_template: "{{ value_json.server.temp_c }}"
-        availability: "{{ value_json.server is defined and value_json.server.temp_c is not none }}"
+        availability: "{{ value_json is defined and (value_json.server is defined and value_json.server.temp_c is not none) }}"
         unit_of_measurement: "°C"
         state_class: measurement
         icon: mdi:thermometer
@@ -101,7 +101,7 @@ rest:
       - name: homi-Server Warnungen
         unique_id: homi_server_warnungen
         value_template: "{{ value_json.server.warnungen | default([]) | join(' · ') or 'keine' }}"
-        availability: "{{ value_json.server is defined }}"
+        availability: "{{ value_json is defined and (value_json.server is defined) }}"
         icon: mdi:alert-circle-outline
         json_attributes_path: "$.server"
         json_attributes: [warnungen, cpu_hoch_min, ram_pct, disk_pct, cpu_pct, uptime_s]
@@ -109,12 +109,12 @@ rest:
       - name: homi-Server Warnung
         unique_id: homi_server_warnung
         value_template: "{{ value_json.server.warnungen | default([]) | length > 0 }}"
-        availability: "{{ value_json.server is defined }}"
+        availability: "{{ value_json is defined and (value_json.server is defined) }}"
         device_class: problem
       - name: Börsenpreis negativ
         unique_id: domus_boersenpreis_negativ
         value_template: "{{ value_json.boerse.negativ }}"
-        availability: "{{ value_json.boerse is not none }}"
+        availability: "{{ value_json is defined and (value_json.boerse is not none) }}"
         icon: mdi:cash-remove
   - resource: http://127.0.0.1:8099/api/speicher
     scan_interval: 60
@@ -188,7 +188,7 @@ rest:
       - name: PV-Prognose heute
         unique_id: homi_pv_prognose_heute
         value_template: "{{ value_json.heute.kwh }}"
-        availability: "{{ value_json.heute is defined }}"
+        availability: "{{ value_json is defined and (value_json.heute is defined) }}"
         unit_of_measurement: kWh
         icon: mdi:solar-power-variant
         json_attributes_path: "$.heute"
@@ -196,7 +196,7 @@ rest:
       - name: PV-Prognose morgen
         unique_id: homi_pv_prognose_morgen
         value_template: "{{ value_json.morgen.kwh }}"
-        availability: "{{ value_json.morgen is defined }}"
+        availability: "{{ value_json is defined and (value_json.morgen is defined) }}"
         unit_of_measurement: kWh
         icon: mdi:weather-sunny-alert
         json_attributes_path: "$.morgen"
@@ -204,7 +204,7 @@ rest:
       - name: PV-Prognose bestes Zeitfenster morgen
         unique_id: homi_pv_prognose_fenster_morgen
         value_template: "{{ (value_json.morgen.bestes_fenster.von ~ '–' ~ value_json.morgen.bestes_fenster.bis) if value_json.morgen.bestes_fenster else 'keins' }}"
-        availability: "{{ value_json.morgen is defined }}"
+        availability: "{{ value_json is defined and (value_json.morgen is defined) }}"
         icon: mdi:washing-machine
   - resource: http://127.0.0.1:8099/api/boerse
     scan_interval: 900
@@ -223,14 +223,14 @@ rest:
       - name: PV-Anlage amortisiert
         unique_id: homi_amortisation_pct
         value_template: "{{ value_json.amortisiert_pct }}"
-        availability: "{{ value_json.aktiv | default(false) }}"
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false)) }}"
         unit_of_measurement: "%"
         icon: mdi:cash-check
         json_attributes: [bisher_chf, netto_chf, pro_jahr_chf, rest_chf, rest_jahre, break_even, inbetriebnahme, eigenverbrauch_pct, wert_rp_kwh, jahresertrag_kwh]
       - name: PV-Anlage Break-even
         unique_id: homi_amortisation_break_even
         value_template: "{{ value_json.break_even }}"
-        availability: "{{ value_json.aktiv | default(false) }}"
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false)) }}"
         device_class: date
         icon: mdi:calendar-check
   - resource: http://127.0.0.1:8099/api/einspeisung
@@ -239,7 +239,7 @@ rest:
       - name: Einspeisung dynamisch heute
         unique_id: homi_einspeisung_dynamisch_heute
         value_template: "{{ value_json.heute.einspeisung_dynamisch_chf }}"
-        availability: "{{ value_json.heute is defined and value_json.heute }}"
+        availability: "{{ value_json is defined and (value_json.heute is defined and value_json.heute) }}"
         unit_of_measurement: CHF
         icon: mdi:transmission-tower-export
         json_attributes_path: "$.heute"
@@ -258,14 +258,14 @@ rest:
       - name: Wochenbericht Solarstrom
         unique_id: homi_woche_pv
         value_template: "{{ value_json.pv_kwh }}"
-        availability: "{{ value_json.aktiv | default(false) }}"
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false)) }}"
         unit_of_measurement: kWh
         icon: mdi:calendar-week
         json_attributes: [woche, titel, satz, verbrauch_kwh, einspeisung_kwh, bezug_kwh, autarkie_pct, eigenverbrauch_pct, erloes_chf, kosten_chf, bester_tag, vergleich, amortisation, batterie, tipp, minuspreis_stunden, vollstaendig_pct]
       - name: Wochenbericht Bilanz
         unique_id: homi_woche_bilanz
         value_template: "{{ value_json.saldo_chf }}"
-        availability: "{{ value_json.aktiv | default(false) }}"
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false)) }}"
         unit_of_measurement: CHF
         icon: mdi:cash-plus
   - resource: http://127.0.0.1:8099/api/steuerung
@@ -274,7 +274,7 @@ rest:
       - name: Fronius-Steuerung
         unique_id: homi_steuerung
         value_template: "{{ value_json.jetzt.wuerde }}"
-        availability: "{{ value_json.modus | default('aus') != 'aus' }}"
+        availability: "{{ value_json is defined and (value_json.modus | default('aus') != 'aus') }}"
         icon: mdi:solar-power-variant
         json_attributes: [modus, scharf_seit, schalter, regel, seit, auswertung_am, modbus, jetzt, summe, aktionen]
       - name: Fronius-Steuerung Modbus
@@ -284,7 +284,7 @@ rest:
       - name: Fronius-Steuerung Begrenzung
         unique_id: homi_steuerung_begrenzung
         value_template: "{{ value_json.modbus.begrenzung_pct if value_json.modbus.begrenzung_aktiv else 100 }}"
-        availability: "{{ value_json.modbus.verbunden | default(false) }}"
+        availability: "{{ value_json is defined and (value_json.modbus.verbunden | default(false)) }}"
         unit_of_measurement: "%"
         icon: mdi:speedometer
       - name: Steuerungstest abgeregelt
@@ -308,14 +308,14 @@ rest:
       - name: Vergütung Abregelschwelle 2027
         unique_id: homi_verguetung_schwelle
         value_template: "{{ (value_json.quartale | last).schwelle_rp }}"
-        availability: "{{ value_json.quartale is defined and value_json.quartale | length > 0 }}"
+        availability: "{{ value_json is defined and (value_json.quartale is defined and value_json.quartale | length > 0) }}"
         unit_of_measurement: Rp./kWh
         icon: mdi:transmission-tower-off
         json_attributes: [modell, modell_name, minimal_rp, ausgleich_bei_minuspreis, erklaerung]
       - name: Vergütung Referenz-Marktpreis Quartal
         unique_id: homi_verguetung_rmp
         value_template: "{{ (value_json.quartale | last).rmp_rp }}"
-        availability: "{{ value_json.quartale is defined and value_json.quartale | length > 0 }}"
+        availability: "{{ value_json is defined and (value_json.quartale is defined and value_json.quartale | length > 0) }}"
         unit_of_measurement: Rp./kWh
         icon: mdi:chart-bell-curve
         json_attributes_path: "$.quartale[-1:]"
@@ -326,19 +326,19 @@ rest:
       - name: Grösster Verbraucher
         unique_id: homi_zuordnung_top
         value_template: "{{ (value_json.geraete | first).name }}"
-        availability: "{{ value_json.aktiv | default(false) and value_json.geraete | length > 0 }}"
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false) and value_json.geraete | length > 0) }}"
         icon: mdi:magnify-expand
         json_attributes: [zeitraum, gesamt_kwh, grundlast_w, infrarot_w, jetzt, geraete, hinweis]
       - name: Infrarotheizung pro Tag (geschätzt)
         unique_id: homi_zuordnung_infrarot_kwh
         value_template: "{{ (value_json.geraete | selectattr('id', 'eq', 'infrarot') | map(attribute='kwh_tag') | first) | default(0) }}"
-        availability: "{{ value_json.aktiv | default(false) }}"
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false)) }}"
         unit_of_measurement: kWh
         icon: mdi:radiator
       - name: Grundlast (Zuordnung)
         unique_id: homi_zuordnung_grundlast
         value_template: "{{ value_json.grundlast_w }}"
-        availability: "{{ value_json.aktiv | default(false) }}"
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false)) }}"
         unit_of_measurement: W
         device_class: power
   - resource: http://127.0.0.1:8099/api/geraete
@@ -366,35 +366,35 @@ rest:
       - name: Energieberater Tipp 1
         unique_id: homi_berater_tipp_1
         value_template: "{{ value_json.tipps[0].titel if value_json.tipps | length > 0 else 'kein Tipp' }}"
-        availability: "{{ value_json.aktiv | default(false) }}"
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false)) }}"
         icon: mdi:lightbulb-on-outline
         json_attributes_path: "$.tipps[0]"
         json_attributes: [text, warum, rechnung, aktion, chf_jahr, kwh_jahr, bedingung, akut]
       - name: Energieberater Tipp 2
         unique_id: homi_berater_tipp_2
         value_template: "{{ value_json.tipps[1].titel if value_json.tipps | length > 1 else 'kein Tipp' }}"
-        availability: "{{ value_json.aktiv | default(false) }}"
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false)) }}"
         icon: mdi:lightbulb-on-outline
         json_attributes_path: "$.tipps[1]"
         json_attributes: [text, warum, rechnung, aktion, chf_jahr, kwh_jahr, bedingung, akut]
       - name: Energieberater Tipp 3
         unique_id: homi_berater_tipp_3
         value_template: "{{ value_json.tipps[2].titel if value_json.tipps | length > 2 else 'kein Tipp' }}"
-        availability: "{{ value_json.aktiv | default(false) }}"
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false)) }}"
         icon: mdi:lightbulb-on-outline
         json_attributes_path: "$.tipps[2]"
         json_attributes: [text, warum, rechnung, aktion, chf_jahr, kwh_jahr, bedingung, akut]
       - name: Energieberater Sparpotenzial
         unique_id: homi_berater_summe
         value_template: "{{ value_json.summe_chf_jahr }}"
-        availability: "{{ value_json.aktiv | default(false) }}"
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false)) }}"
         unit_of_measurement: CHF
         icon: mdi:piggy-bank-outline
         json_attributes: [monate_frueher, grundlast_w, spitze_stunde, tage, stand, basis, auswahl, geprueft]
       - name: Energieberater Batterie
         unique_id: homi_berater_batterie
         value_template: "{{ value_json.batterie.urteil if value_json.batterie.modus == 'kaufen' else 'vorhanden' }}"
-        availability: "{{ value_json.aktiv | default(false) }}"
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false)) }}"
         icon: mdi:home-battery-outline
         json_attributes_path: "$.batterie"
         json_attributes: [text, warum, rechnung, beste_kwh, optionen, tipps, hinweis]
