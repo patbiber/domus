@@ -131,6 +131,10 @@ Laufzeit-Zustand), `erfassung` (5-s-Schleife), `fronius`, `tarif`, `boerse`, `ar
   (`NUC_REST_W`), geteilt durch den Netzteil-Wirkungsgrad (`NUC_NETZTEIL_WG`, geschätzt 0.8 bei ~12 % Last des
   65-W-Netzteils; mit Steckdosen-Messung ersetzen) = Verbrauch an der Steckdose, CPU-Last, Temperatur, RAM, Uptime, Erreichbarkeit HA/nginx, kWh und CHF pro Jahr.
   Auf der Seite: Server im Schrank unter der Treppe (fest im Inventar, eigene Antworten auf alle Verben) und eigene Kachel.
+  Dazu RAM- und Disk-Belegung (`ram_pct`, `disk_pct`), `cpu_hoch_min` (wie lange die CPU ohne Unterbruch über 95 % liegt)
+  und `warnungen`. Alarm (seit 25.10.2026, `push.py ausfall`, Thema «Störungen»): RAM ≥ 85 % (nach 5 min),
+  Disk ≥ 85 % (sofort), CPU 10 min über 95 %; Entwarnung, sobald es vorbei ist. Anzeige: Retro-Kachel (rot bei Warnung),
+  App (Mehr → Deine Anlage), HA `sensor.homi_server_*` und `binary_sensor.homi_server_warnung`.
 - **Einspeise-Fahrplan** `/api/einspeisung` (Vorbereitung auf dynamische Einspeisetarife ab 2027): pro Stunde heute/morgen
   Börsenpreis, PV-Prognose, typischer Verbrauch (Mittel 7 Tage), Empfehlung (einspeisen / Batterie laden /
   **Einspeisung stoppen** bei Minuspreisen); Wert der Einspeisung dynamisch vs. fix (GWS) und **optimierter

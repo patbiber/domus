@@ -13,6 +13,7 @@ class ServerMesser:
         self.werte = {}
         self.dienste = {}
         self.dienste_ts = 0
+        self.hoch_seit = None       # seit wann die CPU ohne Unterbruch über 95 % liegt
 
     @staticmethod
     def _lies(pfad, default=None):
@@ -49,6 +50,9 @@ class ServerMesser:
             if total > self.last[4]:
                 w["cpu_pct"] = round(100 * (busy - self.last[3]) / (total - self.last[4]), 1)
         self.last = (t, pkg, dram, busy, total)
+        if "cpu_pct" in w:
+            self.hoch_seit = (self.hoch_seit or t) if w["cpu_pct"] >= 95 else None
+        w["cpu_hoch_min"] = round((t - self.hoch_seit) / 60, 1) if self.hoch_seit else 0
         if "cpu_w" in w:
             intern = w["cpu_w"] + w.get("ram_w", 0) + NUC_REST_W     # hinter dem Netzteil
             w["leistung_w"] = round(intern / NUC_NETZTEIL_WG, 1)      # an der Steckdose
@@ -69,6 +73,10 @@ class ServerMesser:
             w["disk_pct"] = round(100 * (1 - st.f_bavail / st.f_blocks), 1)
         except OSError:
             pass
+        w["warnungen"] = [x for x in (
+            f"RAM {w['ram_pct']:.0f} % belegt" if w.get("ram_pct", 0) >= 85 else None,
+            f"Disk {w['disk_pct']:.0f} % belegt" if w.get("disk_pct", 0) >= 85 else None,
+            f"CPU seit {w['cpu_hoch_min']:.0f} min über 95 %" if w["cpu_hoch_min"] >= 10 else None) if x]
         if t - self.dienste_ts > 60:        # Dienste nur jede Minute prüfen
             import socket
             for name, port in (("homeassistant", 8123), ("nginx", 443)):

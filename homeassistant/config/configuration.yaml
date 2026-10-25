@@ -61,7 +61,56 @@ rest:
         unit_of_measurement: CHF/kWh
         state_class: measurement
         icon: mdi:chart-line
+      - name: homi-Server Leistung
+        unique_id: homi_server_leistung
+        value_template: "{{ value_json.server.leistung_w }}"
+        availability: "{{ value_json.server is defined and value_json.server.leistung_w is not none }}"
+        unit_of_measurement: "W"
+        state_class: measurement
+        icon: mdi:server
+        device_class: power
+      - name: homi-Server CPU
+        unique_id: homi_server_cpu
+        value_template: "{{ value_json.server.cpu_pct }}"
+        availability: "{{ value_json.server is defined and value_json.server.cpu_pct is not none }}"
+        unit_of_measurement: "%"
+        state_class: measurement
+        icon: mdi:cpu-64-bit
+      - name: homi-Server RAM
+        unique_id: homi_server_ram
+        value_template: "{{ value_json.server.ram_pct }}"
+        availability: "{{ value_json.server is defined and value_json.server.ram_pct is not none }}"
+        unit_of_measurement: "%"
+        state_class: measurement
+        icon: mdi:memory
+      - name: homi-Server Disk
+        unique_id: homi_server_disk
+        value_template: "{{ value_json.server.disk_pct }}"
+        availability: "{{ value_json.server is defined and value_json.server.disk_pct is not none }}"
+        unit_of_measurement: "%"
+        state_class: measurement
+        icon: mdi:harddisk
+      - name: homi-Server Temperatur
+        unique_id: homi_server_temp
+        value_template: "{{ value_json.server.temp_c }}"
+        availability: "{{ value_json.server is defined and value_json.server.temp_c is not none }}"
+        unit_of_measurement: "°C"
+        state_class: measurement
+        icon: mdi:thermometer
+        device_class: temperature
+      - name: homi-Server Warnungen
+        unique_id: homi_server_warnungen
+        value_template: "{{ value_json.server.warnungen | default([]) | join(' · ') or 'keine' }}"
+        availability: "{{ value_json.server is defined }}"
+        icon: mdi:alert-circle-outline
+        json_attributes_path: "$.server"
+        json_attributes: [warnungen, cpu_hoch_min, ram_pct, disk_pct, cpu_pct, uptime_s]
     binary_sensor:
+      - name: homi-Server Warnung
+        unique_id: homi_server_warnung
+        value_template: "{{ value_json.server.warnungen | default([]) | length > 0 }}"
+        availability: "{{ value_json.server is defined }}"
+        device_class: problem
       - name: Börsenpreis negativ
         unique_id: domus_boersenpreis_negativ
         value_template: "{{ value_json.boerse.negativ }}"

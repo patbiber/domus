@@ -662,8 +662,16 @@ function zeichnen() {
   flussZeichnen(); kpisZeichnen(); prognoseZeichnen(); preisZeichnen(); warnungZeichnen();
   verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen(); werZeichnen(); steuerungZeichnen(); geraeteZeichnen(); verguetungZeichnen();
 }
+function serverZeichnen() {
+  const sv = D.status && D.status.server;
+  if (!sv || !sv.leistung_w) return;
+  const warn = sv.warnungen || [];
+  $("a-server").textContent = `${zahl(sv.leistung_w, 1)} W · ${zahl(sv.temp_c, 0)} °C`;
+  $("a-server2").textContent = warn.length ? `⚠ ${warn.join(" · ")}` : `${zahl(sv.cpu_pct, 0)} % · ${zahl(sv.ram_pct, 0)} % · ${zahl(sv.disk_pct, 0)} %`;
+  $("a-server2").classList.toggle("minus", warn.length > 0);
+}
 async function status() {
-  try { D.status = await holen("status"); flussZeichnen(); kpisZeichnen(); preisZeichnen(); }
+  try { D.status = await holen("status"); flussZeichnen(); kpisZeichnen(); preisZeichnen(); serverZeichnen(); }
   catch { const l = $("live"); l.className = "live fehler"; l.lastElementChild.textContent = "offline"; }
 }
 async function minute() {

@@ -9,6 +9,7 @@ Aufruf:
   push.py minuspreis [--test]         06:45 (Timer homi-push-minuspreis): heute negative Börsenpreise?
   push.py prognose                    19:00 (homi-prognose.service): Solarprognose für morgen, Minuspreise morgen
   push.py ausfall                     alle 5 min (Timer homi-push-ausfall): homi, Fronius oder Dienste ausgefallen?
+                                      Server: RAM/Disk ab 85 %, CPU 10 min über 95 %
   push.py wochenbericht               Montag 08:00 (homi-wochenbericht.service): die letzte Woche in einem Satz
   push.py test                        Testnachricht an die Geräte, die auf der Seite «Test» gedrückt haben
   push.py senden <thema> <titel> <text>   beliebige Nachricht an alle Geräte mit diesem Thema
@@ -221,6 +222,14 @@ def ausfall():
         stunde = datetime.now().hour
         if not st.get("fronius_ok") and 9 <= stunde < 16:           # nachts schläft der Wechselrichter
             probleme["fronius"] = ("Der Wechselrichter", "Der Wechselrichter (Fronius) antwortet nicht.")
+        sv = st.get("server") or {}
+        # homi-Server: RAM oder Disk ab 85 % belegt, CPU 10 min ohne Unterbruch über 95 %
+        if (sv.get("ram_pct") or 0) >= 85:
+            probleme["ram"] = ("Der Arbeitsspeicher", f"Der homi-Server hat {sv['ram_pct']:.0f} % RAM belegt.")
+        if (sv.get("disk_pct") or 0) >= 85:
+            probleme["disk"] = ("Der Speicherplatz", f"Die Disk des homi-Servers ist zu {sv['disk_pct']:.0f} % voll.")
+        if (sv.get("cpu_hoch_min") or 0) >= 10:
+            probleme["cpu"] = ("Die CPU-Last", f"Die CPU des homi-Servers läuft seit {sv['cpu_hoch_min']:.0f} min über 95 %.")
         for dienst, ok in ((st.get("server") or {}).get("dienste") or {}).items():
             if ok is False:
                 probleme["dienst_" + dienst] = (f"Der Dienst «{dienst}»", f"Der Dienst «{dienst}» läuft nicht.")
@@ -238,14 +247,17 @@ def ausfall():
     for k, (wer, text) in probleme.items():
         seit = zustand.get(k, {}).get("seit", jetzt)
         gemeldet = zustand.get(k, {}).get("gemeldet", False)
-        if not gemeldet and jetzt - seit >= (30 if k == "fronius" else 15) * 60:
+        warte = {"fronius": 30, "cpu": 0, "disk": 0, "ram": 5}.get(k, 15)   # CPU zählt schon 10 min selbst
+        if not gemeldet and jetzt - seit >= warte * 60:
             an_alle("ausfall", "🚨 homi: Störung", text, ttl=3600)
             gemeldet = True
         neu[k] = {"seit": seit, "gemeldet": gemeldet, "wer": wer}
     for k, alt in zustand.items():
         if k not in probleme and alt.get("gemeldet"):
             dauer = round((jetzt - alt["seit"]) / 60)
-            an_alle("ausfall", "✅ homi: wieder in Ordnung", f"{alt['wer']} läuft wieder (Störung dauerte {dauer} min).", ttl=3600)
+            text = (f"{alt['wer']} ist wieder im grünen Bereich (Warnung dauerte {dauer} min)." if k in ("ram", "disk", "cpu")
+                    else f"{alt['wer']} läuft wieder (Störung dauerte {dauer} min).")
+            an_alle("ausfall", "✅ homi: wieder in Ordnung", text, ttl=3600)
     tmp = datei + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(neu, f)

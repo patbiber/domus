@@ -652,7 +652,9 @@ function updateStats() {
   const sv = S && S.server;
   if (sv && sv.leistung_w != null) {
     $("s-srv").textContent = `${sv.leistung_w.toFixed(1)} W`;
-    $("s-srv2").textContent = `läuft seit ${fmtUptime(sv.uptime_s)} · CPU ${Math.round(sv.cpu_pct || 0)} % · ${Math.round(sv.temp_c || 0)} °C · ca. CHF ${Math.round(sv.kosten_jahr_chf || 0)}/Jahr`;
+    $("s-srv2").textContent = (sv.warnungen && sv.warnungen.length ? `⚠ ${sv.warnungen.join(" · ")} · ` : "")
+      + `läuft seit ${fmtUptime(sv.uptime_s)} · CPU ${Math.round(sv.cpu_pct || 0)} % · RAM ${Math.round(sv.ram_pct || 0)} % · Disk ${Math.round(sv.disk_pct || 0)} % · ${Math.round(sv.temp_c || 0)} °C · ca. CHF ${Math.round(sv.kosten_jahr_chf || 0)}/Jahr`;
+    $("s-srv2").style.color = sv.warnungen && sv.warnungen.length ? "#ff5555" : "";
   }
   const b = S && S.boerse;
   if (b && b.rp_kwh != null) {
