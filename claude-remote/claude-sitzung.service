@@ -1,0 +1,18 @@
+# Hauptsitzung von Claude Code nach einem Neustart wieder öffnen (tmux-Sitzung «claude»,
+# dieselbe Unterhaltung, mit Remote Control). Ansehen: tmux attach -t claude
+# Läuft die Sitzung schon (von Hand gestartet), tut der Dienst nichts.
+[Unit]
+Description=Claude Code Hauptsitzung (tmux «claude»)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=%h/domus
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=SITZUNG=a4986790-7de3-468b-8a34-4c70df249a93
+ExecStart=/bin/sh -c 'tmux has-session -t claude 2>/dev/null || tmux new-session -d -s claude "claude --dangerously-skip-permissions --resume $SITZUNG --remote-control domus-sitzung"'
+
+[Install]
+WantedBy=default.target

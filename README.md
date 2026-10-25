@@ -73,6 +73,16 @@ tmux -L claude-remote attach            # zuschauen (verlassen: Ctrl-b d; eigene
 
 Rechte: `--permission-mode default` – Befehle werden in der App bestätigt.
 
+**Hauptsitzung nach Neustart** (`claude-remote/claude-sitzung.service`): öffnet beim Booten die tmux-Sitzung `claude`
+mit derselben Unterhaltung wieder (`--resume <ID>`, Remote Control «domus-sitzung»). Läuft sie schon, tut der Dienst nichts.
+Andere Unterhaltung: `SITZUNG=` in der Unit anpassen, dann `systemctl --user daemon-reload`.
+
+```bash
+ln -sf ~/domus/claude-remote/claude-sitzung.service ~/.config/systemd/user/
+systemctl --user daemon-reload && systemctl --user enable claude-sitzung
+tmux attach -t claude                   # Hauptsitzung (verlassen: Ctrl-b d)
+```
+
 ### Photovoltaik (Fronius)
 
 | Gerät | IP | Details |
