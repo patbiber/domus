@@ -31,11 +31,11 @@ cp .env.example .env   # Werte anpassen
 cd homeassistant && docker compose up -d
 ```
 
-Home Assistant: https://domus.biber.solar (Internet) bzw. http://192.168.178.121:8123 (LAN)
+Home Assistant: https://domus.biber.solar (Internet) bzw. http://192.168.1.23:8123 (LAN)
 
 ### Webseite / Zertifikat (`proxy/`)
 
-Voraussetzung: Fritzbox leitet TCP 80 und 443 an `192.168.178.121` weiter, `domus.biber.solar` zeigt (A-Record bei OVH) auf die öffentliche IP.
+Voraussetzung: Router (Sunrise Sagemcom F3896LG, `192.168.1.1`) leitet TCP 80 und 443 an die feste NUC-Adresse `192.168.1.23` weiter (geprüft 25.10.2026), `domus.biber.solar` zeigt (A-Record bei OVH) auf die öffentliche IP.
 
 ```bash
 cd proxy
@@ -68,7 +68,7 @@ sudo loginctl enable-linger $USER
 systemctl --user daemon-reload && systemctl --user enable --now claude-remote
 
 systemctl --user status claude-remote   # Status
-tmux attach -t claude-remote            # zuschauen (verlassen: Ctrl-b d)
+tmux -L claude-remote attach            # zuschauen (verlassen: Ctrl-b d; eigener tmux-Server)
 ```
 
 Rechte: `--permission-mode default` – Befehle werden in der App bestätigt.

@@ -255,4 +255,3 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 - Reserve-PC domus-reserve installieren (Autoinstall per Mail verschickt), dann Abgleich, Backups auf der grossen Platte und automatische Übernahme einrichten.
 - Rückliefervergütung 2027 nachtragen, sobald die GWS sie veröffentlichen (`energie/tarif.json`).
 - MQTT, Zigbee2MQTT und Hue einbinden.
-- LAN-Adresse im README prüfen (dort steht `192.168.178.121`, der NUC meldet `192.168.1.x`).
