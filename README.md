@@ -15,7 +15,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | `zigbee2mqtt/` | Zigbee-Geräte (Zigbee-Stick folgt) | geplant |
 | – | Hue über die Hue Bridge (Integration in Home Assistant) | geplant |
 | `proxy/` | nginx (Reverse Proxy für Home Assistant) + certbot (Let's Encrypt) | läuft |
-| `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control (systemd-User-Dienst, kein Docker) | läuft |
+| `claude-remote/` | Claude-Hauptsitzung in tmux, Remote Control «domus», Autostart nach Neustart (systemd-User-Dienst, kein Docker) | läuft |
 | `biber-solar/` | Hauptseite https://biber.solar aus github.com/patbiber/biber-solar, main (nginx-Container, Veröffentlichung alle 5 min) | läuft (seit 03.10.2026) |
 | `energy/` | https://homi.solar (früher energy.biber.solar): homi-Verkaufsseite mit simulierter Live-Demo, KI-Demo und Anfrageformular | läuft (seit 05.10.2026) |
 | `training/` | https://training.biber.solar: MkDocs-Material-Seite aus github.com/patbiber/solartech (Build bei neuem Commit, nginx-Container) | läuft (seit 03.10.2026) |
@@ -56,32 +56,24 @@ sondern in `homeassistant/config/.storage/http` (nur bei gestopptem HA bearbeite
 
 Für jeden Benutzer 2-Faktor-Login (TOTP) im HA-Profil aktivieren.
 
-### Claude Remote Control (`claude-remote/`)
+### Claude-Hauptsitzung (`claude-remote/`)
 
-Dauerhafte Claude-Code-Session, steuerbar über https://claude.ai/code oder die Claude-App (Umgebung „domus“).
-Läuft als systemd-User-Dienst in tmux, startet nach Absturz/Neustart automatisch (Linger aktiv).
+Eine dauerhafte Claude-Code-Sitzung in tmux (`claude`), über Remote Control als «domus» in https://claude.ai/code
+und der Claude-App erreichbar. `claude-sitzung.service` öffnet sie nach einem Neustart mit derselben Unterhaltung
+wieder (`--resume <ID>`, Linger aktiv); läuft sie schon, tut der Dienst nichts. Nach einem Absturz oder Beenden
+startet sie erst beim nächsten Boot oder mit `systemctl --user restart claude-sitzung` (nur wenn tmux `claude` nicht läuft).
+Andere Unterhaltung als Hauptsitzung: `SITZUNG=` in der Unit anpassen, dann `systemctl --user daemon-reload`.
 
 ```bash
 mkdir -p ~/.config/systemd/user
-ln -sf ~/domus/claude-remote/claude-remote.service ~/.config/systemd/user/
-sudo loginctl enable-linger $USER
-systemctl --user daemon-reload && systemctl --user enable --now claude-remote
-
-systemctl --user status claude-remote   # Status
-tmux -L claude-remote attach            # zuschauen (verlassen: Ctrl-b d; eigener tmux-Server)
-```
-
-Rechte: `--permission-mode default` – Befehle werden in der App bestätigt.
-
-**Hauptsitzung nach Neustart** (`claude-remote/claude-sitzung.service`): öffnet beim Booten die tmux-Sitzung `claude`
-mit derselben Unterhaltung wieder (`--resume <ID>`, Remote Control «domus-sitzung»). Läuft sie schon, tut der Dienst nichts.
-Andere Unterhaltung: `SITZUNG=` in der Unit anpassen, dann `systemctl --user daemon-reload`.
-
-```bash
 ln -sf ~/domus/claude-remote/claude-sitzung.service ~/.config/systemd/user/
+sudo loginctl enable-linger $USER
 systemctl --user daemon-reload && systemctl --user enable claude-sitzung
 tmux attach -t claude                   # Hauptsitzung (verlassen: Ctrl-b d)
 ```
+
+Rechte: läuft mit `--dangerously-skip-permissions` (keine Rückfragen) – wer die Sitzung über Remote Control
+erreicht, kann auf dem NUC alles ausführen.
 
 ### Photovoltaik (Fronius)
 

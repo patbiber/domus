@@ -72,7 +72,7 @@ flowchart LR
 | `energie/` | Energie-API und Retro-Webseite | Docker (`python:3.13-alpine`), `network_mode: host` | https://home.biber.solar, LAN-Port 8099 |
 | `strompreise/` | Monatliches Archiv der GWS-Stromtarife | Bash-Skript + systemd-User-Timer | – |
 | `kunden/` | Kunden-Instanzen `<name>.homi.solar` (nginx-Konfiguration, Zertifikat, Passwort) | Python-Skript `kunde.py` | https://beispiel.homi.solar |
-| `claude-remote/` | Dauerhafte Claude-Code-Session mit Remote Control | systemd-User-Dienst in tmux | claude.ai/code, Claude-App |
+| `claude-remote/` | Claude-Hauptsitzung mit Remote Control «domus» | tmux, Autostart per systemd-User-Dienst | claude.ai/code, Claude-App |
 | (Host) | E-Mail-Versand | `msmtp`, `msmtp-mta`, `bsd-mailx` | – |
 
 Geplant: `mosquitto/` (MQTT), `zigbee2mqtt/` (Zigbee-Stick folgt), Philips Hue über die Hue Bridge.
@@ -165,11 +165,12 @@ Eine Live-Ansicht im Stil der klassischen SCUMM-Adventures der 80er-Jahre:
 
 ### 4.8 Claude Code Remote Control (`claude-remote/`)
 
-- Dauerhafte Claude-Code-Session als systemd-User-Dienst (tmux, Linger aktiv), steuerbar über claude.ai/code
-  oder die Claude-App.
+- Eine Hauptsitzung in tmux (`claude`), über Remote Control als «domus» in claude.ai/code und der Claude-App
+  erreichbar; `claude-sitzung.service` öffnet sie nach einem Neustart mit derselben Unterhaltung wieder (Linger aktiv).
+  Bis 25.10.2026 gab es zusätzlich den Spawn-Dienst `claude-remote.service`; ersetzt durch die Hauptsitzung.
 - Arbeitsregeln in `CLAUDE.md`: deutsch antworten und committen, keine Secrets, keine Portfreigaben ohne
   Rückfrage, keine Datenträger formatieren, Backup vor Änderungen an Home Assistant.
-- Befehle werden standardmässig in der App bestätigt (`--permission-mode default`).
+- Die Hauptsitzung läuft ohne Rückfragen (`--dangerously-skip-permissions`).
 
 ## 5. Sicherheit und Datenschutz
 
@@ -249,6 +250,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 13.10.2026 | homi-Mails von support@homi.solar (Anmeldung, Wochenbericht, Prognose, Warnungen, Anfragen); Systemmails weiter domus@biber.solar |
 | 14.10.2026 | Verschlüsseltes Gesamt-Backup nachts (lokal); Autoinstall für den Reserve-PC domus-reserve (Ausfallsicherung) |
 | 15.10.2026 | homi.solar neu: kurz, ohne Preise, alle (auch geplanten) Funktionen, Plattform-/Technik- und Investoren-Teil, Anmeldung mit Systemangaben per Mail |
+| 25.10.2026 | Claude-Hauptsitzung mit Autostart ersetzt den Remote-Control-Spawn-Dienst |
 
 ## 8. Offene Punkte
 
