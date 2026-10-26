@@ -84,7 +84,7 @@ erreicht, kann auf dem NUC alles ausführen.
 
 Der Smart Meter ist kein eigenes Netzwerkgerät, sondern hängt am Wechselrichter und wird über dessen Solar API ausgelesen.
 Home Assistant: Integration **Fronius** mit Host `192.168.1.221` (liefert Wechselrichter, Smart Meter und Powerflow).
-Nachts ist der Wechselrichter nicht erreichbar, die Einrichtung muss also tagsüber passieren.
+Der Datamanager ist dank Nachtmodus rund um die Uhr erreichbar (nachts 0 W).
 
 Test: `curl -s http://192.168.1.221/solar_api/v1/GetPowerFlowRealtimeData.fcgi`
 
@@ -112,7 +112,7 @@ Kleiner Python-Container (`network_mode: host`, Port 8099, nur im LAN offen). Co
 Start) und das Paket `energie/homi/` mit einem Modul pro Thema: `konfig` (Konstanten, Pfade), `zustand` (gemeinsamer
 Laufzeit-Zustand), `erfassung` (5-s-Schleife), `fronius`, `tarif`, `boerse`, `archiv`, `speicher`, `prognose`,
 `einspeisung`, `amortisation`, `berater`, `push_abo`, `servermessung`. Nur Python-Standardbibliothek.
-- fragt alle 5 s den Fronius ab (`GetPowerFlowRealtimeData`) – nachts ist der Wechselrichter aus, dann `fronius_ok: false`,
+- fragt alle 5 s den Fronius ab (`GetPowerFlowRealtimeData`) – der Datamanager ist rund um die Uhr erreichbar (nachts 0 W); nur bei Ausfall `fronius_ok: false`,
 - berechnet den aktuellen Strompreis aus `strompreise/data/latest/tarife.json` + `energie/tarif.json`
   (Produkt ÖkoStrom, Netztarif, Gemeindeabgabe, MWST, Rückliefervergütung Sommer/Winter, Korrekturen gemäss PDF),
 - `/api/status` (live) und `/api/history` (Minutenwerte der letzten 24 h, nur im Speicher),

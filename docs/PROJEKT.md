@@ -32,7 +32,7 @@ Konfiguration liegt versioniert im Git-Repository `patbiber/domus`; Geheimnisse 
 
 | Gerät | Adresse | Anbindung |
 |---|---|---|
-| Fronius-Wechselrichter (Datamanager, Solar API v1) | `192.168.1.221` | HTTP, nur tagsüber erreichbar |
+| Fronius-Wechselrichter (Datamanager, Solar API v1) | `192.168.1.221` | HTTP und Modbus TCP, rund um die Uhr erreichbar (Nachtmodus) |
 | Fronius Smart Meter TS 65A-3 | über den Wechselrichter | Einbauort Verbrauchszweig (`Meter_Location: load`) |
 
 ## 3. Architektur
