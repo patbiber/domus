@@ -12,12 +12,12 @@
 <canvas id="out" width="1080" height="1350"></canvas>
 <script>
 "use strict";
-// Kurzfilm «Ein Tag mit homi» (60 s, 1080×1350 für LinkedIn) im Stil von home.biber.solar.
+// Kurzfilm «Ein Tag mit homi» (72 s = 60 s × TEMPO 1.2, 1080×1350 für LinkedIn) im Stil von home.biber.solar.
 // Deterministisch: render(i) zeichnet Bild i (30 fps) – render.js ruft das Bild für Bild auf.
 // Sonne: echte 10-min-Werte des Fronius vom 12.10.2026; Tarife, Geräte-Watt und Beratertipps echt;
 // Tagesablauf der Geräte und E-Auto (1-phasig, 1.4–3.7 kW nur mit Überschuss) nachgestellt.
 
-const FPS = 30, DAUER = 60, N = FPS * DAUER;
+const FPS = 30, DAUER = 60, TEMPO = 1.2, N = Math.round(FPS * DAUER * TEMPO);   // TEMPO > 1 = langsamer (alles gleichmässig)
 const OUT = document.getElementById("out"), o = OUT.getContext("2d");
 const W = 360, H = 150, OX = 40;                       // Szene: 360×150 Pixel, ×3 = 1080×450
 const SC = document.createElement("canvas"); SC.width = W; SC.height = H;
@@ -452,11 +452,11 @@ function schluss() {
 
 // ---------- Hauptschleife ----------
 let T = 0, gerendert = -1;
-const dt = 1 / FPS;
+const dt = 1 / FPS / TEMPO;
 function render(i) {
   while (gerendert < i) {                               // Zustand Bild für Bild weiterschreiben
     gerendert++;
-    T = gerendert / FPS;
+    T = gerendert / FPS / TEMPO;
     const h = uhr(T), t = T, night = tagF(h) < .5;
     while (skriptI < SKRIPT.length && h >= SKRIPT[skriptI].h) SKRIPT[skriptI++].f();
     if (talk && T - talk.t0 > 4.2) talk = null;
