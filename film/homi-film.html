@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>homi – ein Tag im Solarhaus</title>
+<style>
+  html, body { margin: 0; background: #000; }
+  canvas { display: block; width: 100vw; max-width: 540px; height: auto; image-rendering: pixelated; margin: 0 auto; }
+</style>
+</head>
+<body>
+<canvas id="out" width="1080" height="1350"></canvas>
+<script>
+"use strict";
+// Kurzfilm «Ein Tag mit homi» (60 s, 1080×1350 für LinkedIn) im Stil von home.biber.solar.
+// Deterministisch: render(i) zeichnet Bild i (30 fps) – render.js ruft das Bild für Bild auf.
+// Sonne: echte 10-min-Werte des Fronius vom 12.10.2026; Tarife, Geräte-Watt und Beratertipps echt;
+// Tagesablauf der Geräte und E-Auto (1-phasig, 1.4–3.7 kW nur mit Überschuss) nachgestellt.
+
+const FPS = 30, DAUER = 60, N = FPS * DAUER;
+const OUT = document.getElementById("out"), o = OUT.getContext("2d");
+const W = 360, H = 150, OX = 40;                       // Szene: 360×150 Pixel, ×3 = 1080×450
+const SC = document.createElement("canvas"); SC.width = W; SC.height = H;
+const g = SC.getContext("2d");
+o.imageSmoothingEnabled = false;
+
+// ---------- Hilfen ----------
+let seed = 12102026;
+const rnd = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const R = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+const B = (x, y, w, h, c) => { o.fillStyle = c; o.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+const lerpC = (a, b, f) => { const p = s => [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16)); const A = p(a), C = p(b); return "#" + A.map((v, i) => Math.round(v + (C[i] - v) * f).toString(16).padStart(2, "0")).join(""); };
+
+// 3x5-Pixelschrift der Retro-Seite, ergänzt um Satzzeichen und Umlaute (Punkte darüber)
+const FONT = {
+  A:"010101111101101",B:"110101110101110",C:"011100100100011",D:"110101101101110",E:"111100110100111",
+  F:"111100110100100",G:"011100101101011",H:"101101111101101",I:"111010010010111",J:"001001001101010",
+  K:"101101110101101",L:"100100100100111",M:"101111111101101",N:"110101101101101",O:"010101101101010",
+  P:"110101110100100",Q:"010101101110011",R:"110101110101101",S:"011100010001110",T:"111010010010010",
+  U:"101101101101111",V:"101101101101010",W:"101101111111101",X:"101101010101101",Y:"101101010010010",
+  Z:"111001010100111",0:"111101101101111",1:"010110010010111",2:"110001010100111",3:"110001010001110",
+  4:"101101111001001",5:"111100110001110",6:"011100111101111",7:"111001010010010",8:"111101111101111",
+  9:"111101111001110",".":"000000000000010","-":"000000111000000","+":"000010111010000",":":"000010000010000",
+  "/":"001001010100100","%":"101001010100101","!":"010010010000010","?":"110001010000010"," ":"000000000000000",
+  ",":"000000000010100","'":"010010000000000","(":"001010010010001",")":"100010010010100","=":"000111000111000",
+  "~":"000011110000000",">":"100010001010100",'"':"101101000000000","*":"000101010101000","&":"010101010101011"
+};
+const MAP = { "–": "-", "—": "-", "…": "...", "«": '"', "»": '"', "„": '"', "“": '"', "≈": "~", "’": "'" };
+function ptext(ctx, s, x, y, c, sc = 1) {
+  s = [...String(s)].map(ch => MAP[ch] || ch).join("").toUpperCase();
+  ctx.fillStyle = c;
+  for (const ch of s) {
+    const um = "ÄÖÜ".includes(ch), p = FONT[um ? { Ä: "A", Ö: "O", Ü: "U" }[ch] : ch];
+    if (p) for (let i = 0; i < 15; i++) if (p[i] === "1") ctx.fillRect(x + (i % 3) * sc, y + ((i / 3) | 0) * sc, sc, sc);
+    if (um) { ctx.fillRect(x, y - 2 * sc, sc, sc); ctx.fillRect(x + 2 * sc, y - 2 * sc, sc, sc); }
+    x += 4 * sc;
+  }
+}
+const tw = (s, sc) => [...String(s)].length * 4 * sc - sc;
+function wrap(s, n) {
+  const out = []; let line = "";
+  for (const w of s.split(" ")) { if ((line + " " + w).trim().length > n) { out.push(line); line = w; } else line = (line + " " + w).trim(); }
+  if (line) out.push(line);
+  return out;
+}
+
+// ---------- Tagesmodell ----------
+const PV = [0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.08,0.14,0.24,0.38,0.56,0.76,0.98,0.99,0.99,1.42,1.86,2.11,2.34,2.60,2.80,3.02,3.22,3.45,3.63,3.81,3.98,4.15,4.30,4.43,4.55,4.68,4.78,4.88,4.96,5.07,5.08,5.12,5.16,5.18,5.20,5.21,5.19,5.19,5.10,5.03,4.97,4.86,4.77,4.67,4.53,4.39,4.29,4.10,3.92,3.73,3.52,3.30,3.09,2.86,2.52,2.26,1.88,1.62,1.37,1.08,0.30,0.33,0.09,0.05,0.02,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00,0.00];
+const BEZUG = 0.2668, RUECK = 0.15;                     // CHF/kWh (GWS, 2026)
+const pvAt = h => { const x = h * 6 - .5, i = Math.floor(x), f = x - i; return Math.max(0, (PV[i] || 0) * (1 - f) + (PV[i + 1] || 0) * f); };
+const an = (h, z) => z.some(([a, b]) => h >= a && h < b);
+const FLOOR = [117, 79];
+// Geräte: Watt wie in homi (gemessen bzw. Katalog), Laufzeiten nachgestellt
+const DEV = [
+  { id: "fridge", spr: "fridge", x: 84, f: 0, w: 40, z: [[0, 24]] },
+  { id: "router", spr: "router", x: 162, f: 0, w: 20, z: [[0, 24]] },
+  { id: "switch", spr: "switch", x: 90, f: 1, w: 10, z: [[0, 24]] },
+  { id: "kettle", spr: "kettle", x: 104, f: 0, w: 2000, z: [[7.55, 8.0]] },
+  { id: "laptop", spr: "laptop", x: 130, f: 1, w: 50, z: [[8.2, 22]] },
+  { id: "pc", spr: "pc", x: 110, f: 1, w: 150, z: [[9, 12], [14, 17]] },
+  { id: "boxen", spr: "boxen", x: 170, f: 1, w: 36, z: [[10, 17]] },
+  { id: "washer", spr: "washer", x: 124, f: 0, w: h => h < 11.9 ? 2000 : 300, z: [[11.5, 12.9]] },
+  { id: "herd", spr: "herd", x: 104, f: 0, w: 1800, z: [[14.0, 14.6]] },
+  { id: "spueler", spr: "spueler", x: 144, f: 0, w: h => h < 15.3 ? 1900 : 120, z: [[14.9, 15.9]] },
+  { id: "heater", spr: "heater", x: 150, f: 1, w: 650, z: [[17.6, 21.3]] },
+  { id: "ofen", spr: "ofen", x: 124, f: 0, w: 2200, z: [[19.4, 20.2]] },
+  { id: "hue", spr: "hue", x: 170, f: 1, w: 10, z: [[18.9, 22.4]] },
+  { id: "beamer", spr: "beamer", x: 144, f: 0, w: 250, z: [[20.1, 22.3]] },
+];
+const BASIS = 9 + 35;                                   // homi-Server (gemessen 9 W) + Standby-Gespenster
+const lichtAn = h => an(h, [[6.5, 8.1], [18.3, 22.3]]);
+const devW = (d, h) => an(h, d.z) ? (typeof d.w === "function" ? d.w(h) : d.w) : 0;
+const hausKW = h => (BASIS + (lichtAn(h) ? 160 : 0) + DEV.reduce((s, d) => s + devW(d, h), 0)) / 1000;
+const EV = { plug: 13.1, min: 1.4, max: 3.7, akku: 50, soc0: 34, kwh100: 17 };
+EV.ende = Math.min(17.5, (() => { for (let h = 15; h < 20; h += 1 / 120) if (pvAt(h) - hausKW(h) < EV.min) return h; return 20; })());
+const evKW = h => { if (h < EV.plug || h >= EV.ende) return 0; const s = pvAt(h) - hausKW(h); return s >= EV.min ? Math.min(EV.max, s) : 0; };
+// Tagessummen je Minute vorberechnen
+const CUM = [{ pv: 0, haus: 0, ev: 0, imp: 0, exp: 0, kost: 0, erl: 0 }];
+for (let m = 0; m < 24 * 60; m++) {
+  const h = (m + .5) / 60, pv = pvAt(h), hs = hausKW(h), ev = evKW(h), n = hs + ev - pv, c = { ...CUM[m] };
+  c.pv += pv / 60; c.haus += hs / 60; c.ev += ev / 60;
+  if (n > 0) { c.imp += n / 60; c.kost += n / 60 * BEZUG; } else { c.exp += -n / 60; c.erl += -n / 60 * RUECK; }
+  CUM.push(c);
+}
+const cumAt = h => CUM[clamp(Math.round(h * 60), 0, 24 * 60)];
+const TAG = CUM[24 * 60];
+const wert = c => (c.pv - c.exp) * BEZUG + c.erl;          // Wert der Sonne: selbst genutzt (statt kaufen) + verkauft
+
+// ---------- Zeitplan: Filmsekunde → Uhrzeit ----------
+const T_HAUPT = 3, T_BILANZ = 54, T_SCHLUSS = 57.8, H0 = 5.6, H1 = 6.5, H2 = 22.05;
+const uhr = T => T < T_HAUPT ? H0 + (H1 - H0) * T / T_HAUPT : T < T_BILANZ ? H1 + (H2 - H1) * (T - T_HAUPT) / (T_BILANZ - T_HAUPT) : H2 + (T - T_BILANZ) * .04;
+
+// ---------- Figur ----------
+const hero = { x: 154, y: FLOOR[1], dir: -1, path: [], onArrive: null };
+const floorOf = y => Math.abs(y - FLOOR[1]) < 2 ? 1 : 0;
+function walkTo(x, f, onArrive) {
+  const cur = floorOf(hero.y), pts = [];
+  if (cur !== f) {
+    if (cur === 0) pts.push({ x: 48, y: FLOOR[0] }, { x: 72, y: FLOOR[1] });
+    else pts.push({ x: 72, y: FLOOR[1] }, { x: 48, y: FLOOR[0] });
+  }
+  pts.push({ x: clamp(x, f === 1 ? 74 : -30, 186), y: FLOOR[f] });
+  hero.path = pts; hero.onArrive = onArrive || null;
+}
+let talk = null, satz = "";
+const LOG = [];
+const say = (text, c = "#ffff55") => { talk = { text, c, t0: T }; LOG.push({ T: +T.toFixed(2), h: +uhr(T).toFixed(2), text }); };
+
+// Drehbuch (Uhrzeit → Handlung). Texte kurz halten: ~3 s pro Spruch.
+const fmt1 = v => v.toFixed(1);
+const geh = (x, f, dir) => walkTo(x, f, dir ? () => { hero.dir = dir; } : null);
+const SKRIPT = [
+  { h: 6.56, f: () => { satz = "GEHE ZU WASSERKOCHER"; say("Gähn. Die Sonne schläft noch. Erst mal Tee."); geh(92, 0, 1); } },
+  { h: 7.69, f: () => { satz = "BENUTZE WASSERKOCHER"; say("2000 Watt für Tee – um diese Zeit noch aus dem Netz."); } },
+  { h: 8.1, f: () => { satz = "SCHAUE AUS DEM FENSTER"; geh(170, 1, 1); } },
+  { h: 8.76, f: () => say("Da ist sie! Panels, an die Arbeit!") },
+  { h: 9.86, f: () => { satz = "GEHE ZU HOMI-SERVER"; say("Ha! Der Zähler dreht rückwärts. Die GWS zahlt 15 Rappen pro kWh."); geh(54, 0, 1); } },
+  { h: 10.95, f: () => { satz = "WAS IST HOMI-SERVER"; say("Psst, hier unten wohne ich: homi. 9 Watt, rund um die Uhr. Ich zähle jede kWh.", "#55ffff"); } },
+  { h: 11.2, f: () => { satz = "BENUTZE WASCHMASCHINE"; geh(112, 0, 1); } },
+  { h: 12.05, f: () => say("Waschmaschine läuft, solange die Sonne gratis liefert. Schleudergang!") },
+  { h: 12.35, f: () => { satz = "GEHE ZU E-AUTO"; geh(2, 0, -1); } },
+  { h: 13.15, f: () => { satz = "BENUTZE LADEKABEL MIT E-AUTO"; say("Klick! Heute tanken wir Sonne statt Benzin. Nur mit Überschuss.", "#55ffff"); } },
+  { h: 13.45, f: () => { satz = "BENUTZE HERD"; geh(92, 0, 1); } },
+  { h: 14.25, f: () => say("Mittagessen! Der Herd zieht 1.8 kW – homi gibt dem Auto kurz weniger.") },
+  { h: 14.7, f: () => { satz = "BENUTZE SPÜLMASCHINE"; geh(132, 0, 1); } },
+  { h: 15.35, f: () => say("Tipp vom Energieberater: Nachtverbraucher in den Mittag legen. Bringt 80 CHF im Jahr.") },
+  { h: 16.0, f: () => { satz = "WAS IST STANDBY-GESPENSTER"; geh(84, 1, -1); } },
+  { h: 16.44, f: () => say("Buuuh! Wir sind die Standby-Gespenster. 35 Watt, Tag und Nacht.", "#ffffff") },
+  { h: 17.54, f: () => { satz = "WAS IST E-AUTO"; say(`Laden fertig: ${fmt1(TAG.ev)} kWh Sonne im Auto. Reicht für ${Math.round(TAG.ev / EV.kwh100 * 100)} km.`, "#55ffff"); } },
+  { h: 18.25, f: () => { satz = "LIES SPARSCHWEIN"; geh(166, 0, 1); } },
+  { h: 18.64, f: () => say(`Die Sonne geht. Oink! Sie hat heute ${wert(TAG).toFixed(2)} CHF eingebracht.`, "#ff99cc") },
+  { h: 19.25, f: () => { satz = "BENUTZE BACKOFEN"; geh(112, 0, 1); } },
+  { h: 19.74, f: () => say("Pizza! Ab jetzt kommt der Strom aus dem Netz: 26.7 Rappen pro kWh.") },
+  { h: 20.3, f: () => { satz = "SCHALTE EIN BEAMER"; geh(132, 0, 1); } },
+  { h: 20.84, f: () => { satz = "WAS IST BATTERIESPEICHER"; say("Ein Batteriespeicher? Mein Berater sagt: lohnt sich noch nicht. Ehrlich."); } },
+  { h: 21.4, f: () => { satz = "GEHE ZU BETT"; geh(160, 1, -1); } },
+];
+let skriptI = 0;
+
+// ---------- Szene ----------
+const STARS = Array.from({ length: 50 }, () => ({ x: rnd() * W, y: rnd() * 80, p: rnd() * 6 }));
+const PANEL_ROWS = [];
+for (let y = 20; y <= 38; y += 4) { const hw = (y - 12) / 30 * 81; for (let x = Math.ceil(115 - hw + 5); x + 7 <= 115 + hw - 5; x += 9) PANEL_ROWS.push({ x, y }); }
+const WIRE = [{ x: 194, y: 40 }, { x: 220, y: 36 }, { x: 258, y: 66 }];
+const wirePoint = s => { const seg = s < .45 ? 0 : 1, u = seg ? (s - .45) / .55 : s / .45, a = WIRE[seg], b = WIRE[seg + 1]; return { x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u + Math.sin(u * Math.PI) * 5 }; };
+const AUFGANG = 7.85, UNTERGANG = 18.55;
+const tagF = h => Math.min(clamp((h - 7.1) / 1.1, 0, 1), clamp((19.3 - h) / 1.1, 0, 1));
+
+function sky(t, h) {
+  const f = tagF(h);
+  const NACHT = ["#000022", "#000033", "#110044", "#221155"], DAEMM = ["#334488", "#775577", "#cc7755", "#ffaa66"], TAG_ = ["#5599ff", "#66aaff", "#88ccff", "#aaddff"];
+  NACHT.forEach((_, i) => R(0, i * 30, W, 30, f < .5 ? lerpC(NACHT[i], DAEMM[i], f * 2) : lerpC(DAEMM[i], TAG_[i], (f - .5) * 2)));
+  R(0, 120, W, 30, f < .5 ? lerpC(NACHT[3], DAEMM[3], f * 2) : lerpC(DAEMM[3], TAG_[3], (f - .5) * 2));
+  if (f < .45) {
+    for (const s of STARS) if (Math.sin(t * 2 + s.p) > -.3 + f * 3) R(s.x, s.y, 1, 1, "#ffffcc");
+    if (f < .25) { const disc = (cx, cy, r, c) => { for (let y = -r; y <= r; y++) { const w = Math.sqrt(r * r - y * y); R(cx - w, cy + y, w * 2, 1, c); } }; disc(320, 20, 7, "#ffffcc"); disc(324, 17, 6, lerpC(NACHT[0], DAEMM[0], f * 2)); }
+  }
+  const fr = (h - AUFGANG) / (UNTERGANG - AUFGANG);
+  if (fr > -.08 && fr < 1.08) {
+    const sn = Math.sin(clamp(fr, -.1, 1.1) * Math.PI), sx = 8 + fr * 344, sy = 122 - Math.sign(sn) * Math.pow(Math.abs(sn), .55) * 114;
+    const pv = pvAt(h), r = 5 + Math.min(pv * 1.1, 6);
+    for (let a = 0; a < 8; a++) { const ang = a * Math.PI / 4 + t * .4, len = r + 3 + Math.sin(t * 5 + a) * 2 + pv / 1.5; for (let k = r + 2; k < len; k++) R(sx + Math.cos(ang) * k, sy + Math.sin(ang) * k, 1, 1, "#ffee55"); }
+    for (let y = -r; y <= r; y++) { const w = Math.sqrt(r * r - y * y); R(sx - w, sy + y, w * 2, 1, "#ffdd33"); }
+    R(sx - 2, sy - 1, 1, 1, "#aa7700"); R(sx + 2, sy - 1, 1, 1, "#aa7700"); R(sx - 1, sy + 2, 3, 1, "#aa7700");
+    sonne = { x: sx, y: sy };
+  } else sonne = null;
+  if (f > .2) for (const [o0, y0, v] of [[0, 18, 4], [190, 30, 2.6]]) {
+    const cx = (t * v + o0) % (W + 60) - 40;
+    R(cx, y0, 22, 5, "#ffffff"); R(cx + 4, y0 - 4, 12, 5, "#ffffff"); R(cx + 26, y0 + 12, 16, 4, "#eeeeff");
+  }
+}
+let sonne = null;
+
+function ground(night) {
+  R(0, 118, W, 8, night ? "#115511" : "#22aa22");
+  for (let x = 0; x < W; x += 3) R(x, 117 + (x % 2), 1, 1, night ? "#1a661a" : "#33cc33");
+  R(0, 126, W, 24, night ? "#333344" : "#666666");
+  for (let x = 4; x < W; x += 20) R(x, 137, 10, 2, night ? "#888844" : "#dddd55");
+  R(0, 118, 46, 8, night ? "#444455" : "#888888");                     // Vorplatz
+}
+
+function laterne(night) {
+  R(272, 96, 2, 22, "#444444"); R(269, 94, 8, 3, "#555555");
+  if (night) { g.fillStyle = "rgba(255,230,140,0.16)"; g.beginPath(); g.moveTo(270, 97); g.lineTo(276, 97); g.lineTo(288, 126); g.lineTo(258, 126); g.fill(); R(270, 97, 6, 1, "#ffee99"); }
+}
+
+let piggyBounce = 0, gwsBounce = 0, meterAngle = 0;
+const PIGGY = { x: 178 };
+function house(t, h, night) {
+  const licht = lichtAn(h) && tagF(h) < .8;
+  R(38, 42, 154, 78, night ? "#773b00" : "#aa5500");
+  R(42, 44, 146, 36, night ? "#8a7f63" : "#ccbb99");
+  R(42, 83, 146, 35, night ? "#5f7686" : "#99bbcc");
+  for (let x = 46; x < 188; x += 12) R(x, 50, 1, 28, night ? "#7a7058" : "#bbaa88");
+  if (licht) for (const [lx, ly] of [[110, 45], [158, 45], [100, 84], [150, 84]]) {
+    g.fillStyle = "rgba(255,225,130,0.22)"; g.beginPath(); g.moveTo(lx - 2, ly + 3); g.lineTo(lx + 2, ly + 3); g.lineTo(lx + 16, ly + 34); g.lineTo(lx - 16, ly + 34); g.fill();
+    R(lx - 1, ly, 2, 2, "#444444"); R(lx - 2, ly + 2, 4, 2, "#ffee88");
+  }
+  R(74, 80, 116, 3, "#664422"); R(42, 117, 146, 3, "#664422");
+  for (let i = 0; i < 8; i++) R(46 + i * 3, 114 - i * 4.8, 6, 3, "#885533");
+  R(176, 52, 10, 10, night ? (licht ? "#ffdd66" : "#223355") : "#aaddff"); R(180, 52, 1, 10, "#664422"); R(176, 56, 10, 1, "#664422");
+  // Haustür links (offen, wenn die Figur durchgeht)
+  const offen = hero.x > 26 && hero.x < 50 && floorOf(hero.y) === 0;
+  R(38, 99, 4, 18, offen ? "#221100" : "#553311"); if (!offen) R(40, 108, 1, 1, "#ffcc00");
+  for (let y = 12; y <= 44; y++) { const hw = (y - 12) / 30 * 83; R(115 - hw, y, hw * 2, 1, "#aa0000"); }
+  R(150, 16, 7, 14, "#883300"); R(149, 14, 9, 3, "#662200");
+  const pvK = clamp(pvAt(h) / 5.5, 0, 1);
+  for (const p of PANEL_ROWS) {
+    const glow = pvK > 0 && Math.sin(t * 3 + p.x * .3 + p.y) > 1 - pvK * 1.6;
+    R(p.x, p.y, 8, 3, glow ? "#88bbff" : night ? (Math.sin(t * .7 + p.x) > .995 ? "#aaaacc" : "#141c44") : "#2233aa");
+    R(p.x + 3, p.y, 1, 3, "#5577cc");
+  }
+  // Stromzähler
+  R(192, 88, 12, 16, "#dddddd"); R(193, 89, 10, 14, "#222222"); R(194, 96, 8, 2, "#999999");
+  const m = (Math.sin(meterAngle) * 3.5) | 0; if (Math.cos(meterAngle) > 0) R(197 + m, 96, 1, 2, "#ff2222");
+  ptext(g, "KWH", 193, 90, "#ffffff");
+  // Sparschwein
+  const pb = piggyBounce > 0 ? -Math.round(Math.sin(piggyBounce * 20) * 2) : 0, px = PIGGY.x, py = FLOOR[0] + pb;
+  R(px - 6, py - 8, 12, 6, "#ff88bb"); R(px - 5, py - 9, 10, 1, "#ff88bb"); R(px + 5, py - 7, 3, 3, "#ff99cc"); R(px + 7, py - 6, 1, 1, "#aa3366");
+  R(px - 5, py - 2, 2, 2, "#dd6699"); R(px + 2, py - 2, 2, 2, "#dd6699"); R(px - 1, py - 10, 3, 1, "#330000"); R(px + 3, py - 8, 1, 1, "#000");
+}
+
+function gws(t, h, night, netz) {
+  const b = gwsBounce > 0 ? -Math.round(Math.sin(gwsBounce * 20) * 1.5) : 0;
+  R(219, 36, 3, 82, "#775533"); R(213, 38, 15, 2, "#775533"); R(213, 36, 1, 2, "#dddddd"); R(227, 36, 1, 2, "#dddddd");
+  R(246, 64 + b, 68, 54 - b, "#aaaaaa"); R(244, 60 + b, 72, 5, "#555555");
+  R(254, 70 + b, 44, 12, "#000000"); ptext(g, "GWS", 259, 72 + b, "#ffff55", 2);
+  R(300, 70 + b, 10, 12, "#000"); R(305, 71 + b, 2, 4, "#ffff55"); R(303, 75 + b, 4, 1, "#ffff55"); R(303, 76 + b, 2, 4, "#ffff55");
+  for (let x = 252; x < 310; x += 14) R(x, 88, 8, 8, night ? (x % 28 ? "#ffdd66" : "#334455") : Math.sin(t + x) > .9 ? "#ffff99" : "#556677");
+  R(274, 102, 12, 16, "#553311"); R(283, 110, 1, 1, "#ffcc00");
+  R(292, 104, 14, 14, "#447744"); R(294, 106, 10, 1, "#88aa88"); R(294, 109, 10, 1, "#88aa88");
+  if (Math.abs(netz) > .05 && Math.sin(t * 20) > 0) R(299, 100, 1, 3, "#ffff55");
+  for (let s = 0; s <= 1; s += .004) { const p = wirePoint(s); R(p.x, p.y, 1, 1, "#222222"); }
+}
+
+// E-Auto mit Wallbox (links vor dem Haus)
+const KABEL = s => ({ x: 34 + (-5 - 34) * s, y: 105 + (109 - 105) * s + Math.sin(s * Math.PI) * 6 });
+function auto(t, h, ev) {
+  const steckt = h >= EV.plug;
+  R(31, 95, 6, 10, "#eeeeee"); R(31, 95, 6, 1, "#bbbbbb");
+  R(33, 97, 2, 1, ev > 0 ? (Math.sin(t * 6) > 0 ? "#55ff55" : "#226622") : steckt ? "#55ffff" : "#3399ff");
+  if (steckt) for (let s = 0; s <= 1; s += .02) { const p = KABEL(s); R(p.x, p.y, 1, 1, "#222222"); }
+  else { R(36, 101, 1, 4, "#222222"); }
+  const x = -36;
+  R(x + 1, 107, 30, 7, "#dd3333"); R(x + 6, 101, 18, 6, "#dd3333"); R(x + 4, 104, 2, 3, "#dd3333"); R(x + 24, 104, 3, 3, "#dd3333");
+  R(x + 7, 102, 7, 4, "#aaddff"); R(x + 16, 102, 7, 4, "#aaddff");
+  R(x + 1, 109, 2, 2, "#ffff99"); R(x + 30, 109, 1, 2, "#ff3333");
+  for (const wx of [x + 4, x + 22]) { R(wx, 112, 6, 6, "#111111"); R(wx + 2, 114, 2, 2, "#888888"); }
+  if (steckt) {
+    const soc = EV.soc0 + cumAt(h).ev / EV.akku * 100;
+    R(x + 6, 93, 20, 5, "#222222"); R(x + 7, 94, Math.round(18 * soc / 100), 3, ev > 0 ? "#55ffff" : "#33aa99");
+    ptext(g, Math.round(soc) + "%", x + 8, 86, "#ffffff");
+  }
+}
+
+// Geräte-Sprites (aus home.biber.solar)
+const SPR = {
+  router(x, y, t) { R(x - 5, y - 3, 10, 3, "#222"); R(x - 4, y - 7, 1, 4, "#222"); R(x + 3, y - 7, 1, 4, "#222"); if (Math.sin(t * 9) > 0) R(x - 3, y - 2, 1, 1, "#55ff55"); R(x, y - 2, 1, 1, "#55ff55"); },
+  fridge(x, y, t) { R(x - 5, y - 20, 10, 20, "#eeeeee"); R(x - 5, y - 13, 10, 1, "#aaaaaa"); R(x + 3, y - 18, 1, 3, "#888"); R(x + 3, y - 11, 1, 4, "#888"); if (Math.sin(t * 30) > .7) R(x + 6, y - 5, 1, 1, "#ccc"); },
+  kettle(x, y, t) { R(x - 5, y - 9, 10, 9, "#885533"); R(x - 3, y - 15, 6, 6, "#cccccc"); R(x + 3, y - 14, 2, 3, "#999"); R(x - 5, y - 14, 2, 1, "#999"); for (let i = 0; i < 3; i++) R(x - 1 + Math.sin(t * 4 + i) * 2, y - 17 - ((t * 10 + i * 4) % 10), 1, 1, "#ffffff"); },
+  laptop(x, y, t) { R(x - 5, y - 9, 10, 9, "#885533"); R(x - 5, y - 10, 10, 1, "#444"); R(x - 5, y - 17, 9, 7, "#444"); R(x - 4, y - 16, 7, 5, Math.floor(t * 2) % 2 ? "#003300" : "#002200"); R(x - 3, y - 15, 3, 1, "#55ff55"); R(x - 3, y - 13, 4, 1, "#55ff55"); },
+  washer(x, y, t, c = "#eeeeee") { const s = Math.round(Math.sin(t * 25)); R(x - 6 + s, y - 14, 12, 14, c); R(x - 6 + s, y - 14, 12, 2, "#bbb"); R(x - 3 + s, y - 10, 6, 6, "#335577"); R(x - 2 + s, y - 9, 4, 4, "#5588bb"); R(x - 1 + s + Math.round(Math.sin(t * 12)), y - 8, 2, 2, "#ffffff"); },
+  heater(x, y, t) { for (let i = 0; i < 5; i++) R(x - 6 + i * 3, y - 12, 2, 11, Math.sin(t * 4 + i) > 0 ? "#ff6633" : "#dd4422"); R(x - 6, y - 1, 13, 1, "#553311"); },
+  pc(x, y, t) { R(x - 4, y - 16, 8, 16, "#222"); const c = `hsl(${(t * 120) % 360},100%,60%)`; R(x - 4, y - 16, 1, 16, c); R(x + 3, y - 16, 1, 16, c); R(x - 2, y - 13, 4, 1, "#555"); R(x - 2, y - 11, 4, 1, "#555"); },
+  switch(x, y, t) { R(x - 6, y - 4, 12, 4, "#333"); for (let i = 0; i < 4; i++) { R(x - 5 + i * 3, y - 2, 2, 1, "#111"); if (Math.sin(t * (7 + i * 3) + i) > .2) R(x - 5 + i * 3, y - 4, 1, 1, i % 2 ? "#ffaa33" : "#55ff55"); } },
+  herd(x, y, t) { R(x - 7, y - 9, 14, 9, "#885533"); R(x - 7, y - 10, 14, 1, "#111"); R(x - 5, y - 10, 4, 1, "#ff3333"); R(x + 1, y - 10, 4, 1, Math.sin(t * 5) > 0 ? "#ff5533" : "#aa2222"); R(x - 5, y - 14, 5, 4, "#666"); R(x - 6, y - 14, 1, 1, "#444"); if (Math.sin(t * 4) > -.3) for (let i = 0; i < 2; i++) R(x - 3 + i * 2, y - 16 - ((t * 8 + i * 3) % 5), 1, 1, "#dddddd"); },
+  ofen(x, y, t) { R(x - 6, y - 14, 12, 14, "#bbbbbb"); R(x - 6, y - 14, 12, 2, "#444"); R(x - 4, y - 10, 8, 7, "#222"); R(x - 3, y - 9, 6, 5, Math.sin(t * 3) > 0 ? "#ff8833" : "#dd6622"); R(x + 3, y - 13, 1, 1, "#ff5555"); },
+  spueler(x, y, t) { R(x - 6, y - 14, 12, 14, "#e8e8e8"); R(x - 6, y - 14, 12, 2, "#999"); R(x - 3, y - 13, 1, 1, "#55ff55"); R(x - 2, y - 9, 4, 1, "#888"); for (let i = 0; i < 3; i++) if (Math.sin(t * 6 + i * 2) > .5) R(x - 4 + i * 4, y - 18 - ((t * 5 + i) % 3), 1, 1, "#aaddff"); },
+  beamer(x, y, t) { R(x - 5, y - 9, 10, 9, "#885533"); R(x - 4, y - 13, 8, 4, "#eeeeee"); R(x + 2, y - 12, 2, 2, "#335577"); const c = ["#ffffaa", "#aaffff", "#ffaaff"][Math.floor(t * 2) % 3]; for (let i = 1; i < 6; i++) R(x + 4 + i * 2, y - 12 - i, 1, 1 + i, c); },
+  boxen(x, y, t) { for (const dx of [-6, 2]) { R(x + dx, y - 12, 5, 12, "#222"); const s = Math.abs(Math.sin(t * 8 + dx)) > .6 ? 2 : 1; R(x + dx + 1, y - 6 - s, 3, 2 + s, "#555"); R(x + dx + 2, y - 10, 1, 1, "#777"); } if (Math.sin(t * 3) > .3) { R(x, y - 21, 1, 4, "#55ffff"); R(x - 2, y - 18, 2, 2, "#55ffff"); R(x + 1, y - 21, 2, 1, "#55ffff"); } },
+  hue(x, y, t) { R(x - 1, y - 16, 1, 16, "#444"); R(x - 3, y - 1, 5, 1, "#444"); R(x - 4, y - 20, 8, 4, `hsl(${(t * 30) % 360},90%,65%)`); R(x - 3, y - 16, 6, 1, `hsl(${(t * 30) % 360},90%,80%)`); },
+  nuc(x, y, t) { R(x - 7, y - 6, 14, 6, "#2a2a2a"); R(x - 7, y - 6, 14, 1, "#666666"); R(x - 5, y - 4, 4, 1, "#111111"); R(x - 5, y - 2, 4, 1, "#111111"); R(x + 4, y - 4, 1, 1, "#3399ff"); if (Math.sin(t * 4) > .3) R(x + 2, y - 4, 1, 1, "#ffaa33"); R(x + 6, y - 2, 4, 1, "#444444"); ptext(g, "HOMI", x - 7, y - 13, "#55ffff"); },
+  ghost(x, y, t) { for (let i = 0; i < 4; i++) { const gx = x - 6 + i * 3 + Math.sin(t * 2 + i) * 2, gy = y - 12 - i % 2 * 3 + Math.sin(t * 3 + i * 2) * 2; R(gx, gy, 5, 6, "#ffffff"); R(gx, gy + 6, 1, 1, "#ffffff"); R(gx + 2, gy + 6, 1, 1, "#ffffff"); R(gx + 4, gy + 6, 1, 1, "#ffffff"); R(gx + 1, gy + 2, 1, 1, "#000"); R(gx + 3, gy + 2, 1, 1, "#000"); } },
+};
+
+function heroDraw(t, h) {
+  const x = Math.round(hero.x), y = Math.round(hero.y), d = hero.dir, walking = hero.path.length > 0;
+  const f = walking ? Math.floor(t * 8) % 2 : 0, sleeping = (h < 6.55 || h > 22.0) && !walking;
+  R(x - 3, y - 21, 6, 3, "#8b4513"); R(x - 4, y - 18, 8, 1, "#6b3410");
+  R(x - 2, y - 17, 5, 4, "#ffcc99"); R(x - 3, y - 17, 1, 3, "#553311");
+  if (sleeping) R(x - 1 + d, y - 16, 2, 1, "#000"); else R(x + (d > 0 ? 1 : -1), y - 16, 1, 1, "#000");
+  R(x - 3, y - 13, 7, 6, "#3366cc");
+  const arm = walking ? (f ? 1 : -1) : 0; R(x + (d > 0 ? 3 : -4), y - 12 + arm, 1, 4, "#ffcc99");
+  R(x - 3, y - 7, 7, 1, "#222222");
+  if (f) { R(x - 3, y - 6, 2, 5, "#555577"); R(x + 2, y - 6, 2, 5, "#555577"); R(x - 4, y - 1, 3, 1, "#000"); R(x + 2, y - 1, 3, 1, "#000"); }
+  else { R(x - 2, y - 6, 2, 5, "#555577"); R(x + 1, y - 6, 2, 5, "#555577"); R(x - 2, y - 1, 3, 1, "#000"); R(x + 1, y - 1, 3, 1, "#000"); }
+  if (sleeping) { const z = (t * 6) % 12; ptext(g, "Z", x + 4, y - 24 - z, "#aaaaff"); ptext(g, "Z", x + 8, y - 30 - ((z + 6) % 12), "#8888dd"); }
+}
+
+// ---------- Partikel ----------
+const parts = [], coins = [], floaters = [];
+let beamAcc = 0, netAcc = 0, coinAcc = 0, evAcc = 0;
+function partikel(dt, t, h, pv, netz, ev) {
+  if (sonne && pv > .05) { beamAcc += pv * 10 * dt; while (beamAcc >= 1) { beamAcc--; parts.push({ k: "beam", x: sonne.x - OX, y: sonne.y, tx: 115 + (rnd() - .5) * 100, ty: 28, s: 0 }); } }
+  netAcc += Math.abs(netz) * 4 * dt;
+  while (netAcc >= 1) { netAcc--; parts.push({ k: "net", s: 0, dir: netz < 0 ? 1 : -1, v: .25 + Math.abs(netz) / 12 }); }
+  evAcc += ev * 3 * dt;
+  while (evAcc >= 1) { evAcc--; parts.push({ k: "ev", s: 0 }); }
+  const chf = netz < 0 ? -netz * RUECK : netz * BEZUG;
+  if (chf > .0005) {
+    coinAcc += clamp(chf * 10, .25, 4) * dt;
+    while (coinAcc >= 1) {
+      coinAcc--;
+      const toHouse = netz < 0, a = toHouse ? { x: 270, y: 64 } : { x: PIGGY.x, y: FLOOR[0] - 10 }, b = toHouse ? { x: PIGGY.x, y: FLOOR[0] - 10 } : { x: 270, y: 64 };
+      coins.push({ a, b, s: 0, v: .45 + rnd() * .2, toHouse, h: 30 + rnd() * 25 });
+    }
+  }
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const p = parts[i];
+    if (p.k === "net") { p.s += p.v * dt; if (p.s >= 1) { parts.splice(i, 1); continue; } const q = wirePoint(p.dir > 0 ? p.s : 1 - p.s); R(q.x - 1, q.y - 1, 2, 2, "#ffff55"); R(q.x, q.y - 2, 1, 1, "#ffffff"); }
+    else if (p.k === "beam") { p.s += dt * 1.2; if (p.s >= 1) { parts.splice(i, 1); continue; } const x = p.x + (p.tx - p.x) * p.s, y = p.y + (p.ty - p.y) * p.s; R(x, y, 1, 1, "#ffffaa"); R(x - (p.tx - p.x) * .02, y - (p.ty - p.y) * .02, 1, 1, "#ffee55"); }
+    else if (p.k === "ev") { p.s += dt * .9; if (p.s >= 1) { parts.splice(i, 1); continue; } const q = KABEL(p.s); R(q.x - 1, q.y - 1, 2, 2, "#55ffff"); }
+  }
+  for (let i = coins.length - 1; i >= 0; i--) {
+    const c = coins[i]; c.s += c.v * dt;
+    if (c.s >= 1) {
+      coins.splice(i, 1);
+      if (c.toHouse) { piggyBounce = .3; floaters.push({ x: PIGGY.x - 6, y: FLOOR[0] - 16, txt: "OINK", c: "#ff99cc", life: 1 }); }
+      else { gwsBounce = .3; floaters.push({ x: 262, y: 56, txt: "+CHF", c: "#ff5555", life: 1 }); }
+      continue;
+    }
+    const x = c.a.x + (c.b.x - c.a.x) * c.s, y = c.a.y + (c.b.y - c.a.y) * c.s - Math.sin(c.s * Math.PI) * c.h, spin = Math.abs(Math.sin(t * 12 + c.h));
+    R(x - 1.5 * spin, y - 1.5, 3 * spin + 1, 3, "#ffcc00"); R(x, y - 1, 1, 1, "#fff8aa");
+  }
+  for (let i = floaters.length - 1; i >= 0; i--) { const f = floaters[i]; f.life -= dt; f.y -= dt * 10; if (f.life <= 0) { floaters.splice(i, 1); continue; } ptext(g, f.txt, f.x, f.y, f.c); }
+  piggyBounce = Math.max(0, piggyBounce - dt); gwsBounce = Math.max(0, gwsBounce - dt);
+  meterAngle += netz / 1.5 * dt * 6;
+}
+
+function stepHero(dt) {
+  if (!hero.path.length) return;
+  const p = hero.path[0], dx = p.x - hero.x, dy = p.y - hero.y, dist = Math.hypot(dx, dy), sp = 46 * dt;
+  if (Math.abs(dx) > .3) hero.dir = dx > 0 ? 1 : -1;
+  if (dist <= sp) { hero.x = p.x; hero.y = p.y; hero.path.shift(); if (!hero.path.length && hero.onArrive) { const f = hero.onArrive; hero.onArrive = null; f(); } }
+  else { hero.x += dx / dist * sp; hero.y += dy / dist * sp; }
+}
+
+// ---------- Rahmen: Kopf, Sprechzeile, Zahlen, Diagramm ----------
+const GR = { x: 40, y: 1046, w: 1000, h: 140, h0: 5, h1: 22.5 };
+const kW = v => v.toFixed(2) + " KW";
+function rahmen(h, pv, haus, ev, netz) {
+  B(0, 0, 1080, 1350, "#000000");
+  // Kopf
+  ptext(o, "HOMI", 40, 34, "#55ffff", 12);
+  ptext(o, "EIN TAG IM SOLARHAUS", 40, 112, "#ffff55", 5);
+  const hh = Math.floor(h) % 24, mm = Math.floor((h % 1) * 60);
+  const zeit = String(hh).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
+  ptext(o, zeit, 1040 - tw(zeit, 12), 34, "#ffffff", 12);
+  ptext(o, "12. OKTOBER", 1040 - tw("12. OKTOBER", 4), 112, "#aaaaaa", 4);
+  // Szene mit Rahmen
+  B(0, 152, 1080, 456, "#333333");
+  o.drawImage(SC, 0, 155, 1080, 450);
+  // Sprechzeile
+  B(24, 622, 1032, 176, "#333333"); B(30, 628, 1020, 164, "#000000");
+  if (satz) ptext(o, "> " + satz, 48, 642, "#00aa00", 4);
+  if (talk) {
+    const n = Math.floor((T - talk.t0) * 48); let rest = n;
+    wrap(talk.text, 40).slice(0, 3).forEach((l, i) => { const s = [...l].slice(0, Math.max(0, rest)).join(""); rest -= [...l].length + 1; ptext(o, s, 48, 678 + i * 38, talk.c, 6); });
+  }
+  // Zahlen
+  const c = cumAt(h);
+  const feld = (x, y, lab, val, col) => { ptext(o, lab, x, y, "#aaaaaa", 4); ptext(o, val, x, y + 30, col, 7); };
+  feld(48, 818, "SONNE JETZT", kW(pv), "#ffff55");
+  feld(48, 892, "HAUS BRAUCHT", kW(haus), "#ff5555");
+  feld(48, 966, netz < 0 ? "INS NETZ (GWS)" : "AUS DEM NETZ", kW(Math.abs(netz)), netz < 0 ? "#55ff55" : "#ff5555");
+  feld(568, 818, "SONNE HEUTE", c.pv.toFixed(1) + " KWH", "#ffff55");
+  feld(568, 892, "SPARSCHWEIN (WERT DER SONNE)", "+" + wert(c).toFixed(2) + " CHF", "#ff99cc");
+  feld(568, 966, ev > 0 ? "E-AUTO LÄDT MIT " + kW(ev) : "E-AUTO", c.ev > .05 ? c.ev.toFixed(1) + " KWH = " + Math.round(c.ev / EV.kwh100 * 100) + " KM" : h < EV.plug ? "STEHT BEREIT" : "WARTET", "#55ffff");
+  // Diagramm: Sonne (gelb), davon ins Auto (cyan), Haus (rot)
+  B(GR.x - 4, GR.y - 4, GR.w + 8, GR.h + 30, "#111111");
+  const X = hx => GR.x + (hx - GR.h0) / (GR.h1 - GR.h0) * GR.w, Y = kw => GR.y + GR.h - kw / 6 * GR.h;
+  for (let hx = 6; hx <= 22; hx += 2) { B(X(hx), GR.y, 2, GR.h, "#1e1e1e"); ptext(o, String(hx).padStart(2, "0"), X(hx) - 10, GR.y + GR.h + 8, "#666666", 3); }
+  for (let hx = GR.h0; hx < Math.min(h, GR.h1); hx += 1 / 12) {
+    const x = X(hx), w = GR.w / ((GR.h1 - GR.h0) * 12) + 1, p = pvAt(hx), e = evKW(hx), hs = hausKW(hx);
+    if (p > 0) B(x, Y(p), w, GR.y + GR.h - Y(p), "#ffdd33");
+    if (e > 0) B(x, Y(e), w, GR.y + GR.h - Y(e), "#55ffff");
+    B(x, Y(hs) - 2, w, 4, "#ff5555");
+  }
+  ptext(o, "SONNE", GR.x + 8, GR.y + 6, "#ffdd33", 3); ptext(o, "E-AUTO", GR.x + 88, GR.y + 6, "#55ffff", 3); ptext(o, "HAUS", GR.x + 184, GR.y + 6, "#ff5555", 3);
+  // Fuss
+  ptext(o, "HOMI.SOLAR", 40, 1232, "#55ff55", 7);
+  ptext(o, "SONNE: ECHTE MESSWERTE VOM 12.10.2026", 1040 - tw("SONNE: ECHTE MESSWERTE VOM 12.10.2026", 3), 1236, "#777777", 3);
+  ptext(o, "TARIFE UND GERÄTE ECHT, ABLAUF UND E-AUTO NACHGESTELLT", 1040 - tw("TARIFE UND GERÄTE ECHT, ABLAUF UND E-AUTO NACHGESTELLT", 3), 1262, "#777777", 3);
+  ptext(o, "HOMI VON BIBER SOLAR", 40, 1300, "#aaaaaa", 4);
+}
+
+function intro() {
+  const a = T < 2.2 ? 1 : clamp(1 - (T - 2.2) / .8, 0, 1);
+  if (a <= 0) return;
+  o.globalAlpha = a;
+  B(0, 155, 1080, 450, "#000000");
+  ptext(o, "EIN TAG MIT", 540 - tw("EIN TAG MIT", 8) / 2, 280, "#ffffff", 8);
+  ptext(o, "HOMI", 540 - tw("HOMI", 22) / 2, 360, "#55ffff", 22);
+  o.globalAlpha = 1;
+}
+
+function bilanz() {
+  if (T < T_BILANZ) return;
+  const a = clamp((T - T_BILANZ) / .5, 0, 1);
+  o.globalAlpha = a;
+  B(24, 152, 1032, 646, "#333333"); B(30, 158, 1020, 634, "#000000");
+  ptext(o, "TAGESBILANZ", 540 - tw("TAGESBILANZ", 9) / 2, 196, "#ffff55", 9);
+  const selbst = TAG.pv - TAG.exp;
+  const Z = [
+    ["SONNE GEERNTET", TAG.pv.toFixed(1) + " KWH", "#ffff55"],
+    ["SELBST GENUTZT", selbst.toFixed(1) + " KWH (" + Math.round(selbst / TAG.pv * 100) + "%)", "#ffffff"],
+    ["DAVON E-AUTO", TAG.ev.toFixed(1) + " KWH = " + Math.round(TAG.ev / EV.kwh100 * 100) + " KM", "#55ffff"],
+    ["INS NETZ", TAG.exp.toFixed(1) + " KWH  +" + TAG.erl.toFixed(2) + " CHF", "#55ff55"],
+    ["AUS DEM NETZ", TAG.imp.toFixed(1) + " KWH  -" + TAG.kost.toFixed(2) + " CHF", "#ff5555"],
+    ["WERT DER SONNE", "+" + wert(TAG).toFixed(2) + " CHF", "#ff99cc"],
+  ];
+  Z.forEach(([l, v, c], i) => {
+    if (T < T_BILANZ + .35 + i * .35) return;
+    ptext(o, l, 72, 300 + i * 78, "#aaaaaa", 5); ptext(o, v, 1008 - tw(v, 6), 296 + i * 78, c, 6);
+  });
+  o.globalAlpha = 1;
+}
+
+function schluss() {
+  if (T < T_SCHLUSS) return;
+  o.globalAlpha = clamp((T - T_SCHLUSS) / .5, 0, 1);
+  B(0, 0, 1080, 1350, "#000000");
+  ptext(o, "HOMI", 540 - tw("HOMI", 30) / 2, 360, "#55ffff", 30);
+  ptext(o, "ENERGIE-MANAGEMENT", 540 - tw("ENERGIE-MANAGEMENT", 7) / 2, 600, "#ffffff", 7);
+  ptext(o, "FÜR HAUS UND BETRIEB", 540 - tw("FÜR HAUS UND BETRIEB", 7) / 2, 660, "#ffffff", 7);
+  const url = "HOMI.SOLAR" + (Math.floor(T * 2) % 2 ? "_" : " ");
+  ptext(o, url, 540 - tw("HOMI.SOLAR", 11) / 2, 820, "#55ff55", 11);
+  ptext(o, "VON BIBER SOLAR", 540 - tw("VON BIBER SOLAR", 5) / 2, 960, "#aaaaaa", 5);
+  o.globalAlpha = 1;
+}
+
+// ---------- Hauptschleife ----------
+let T = 0, gerendert = -1;
+const dt = 1 / FPS;
+function render(i) {
+  while (gerendert < i) {                               // Zustand Bild für Bild weiterschreiben
+    gerendert++;
+    T = gerendert / FPS;
+    const h = uhr(T), t = T, night = tagF(h) < .5;
+    while (skriptI < SKRIPT.length && h >= SKRIPT[skriptI].h) SKRIPT[skriptI++].f();
+    if (talk && T - talk.t0 > 4.2) talk = null;
+    const pv = pvAt(h), haus = hausKW(h), ev = evKW(h), netz = haus + ev - pv;
+    sky(t, h); ground(night);
+    laterne(night);
+    g.save(); g.translate(OX, 0);
+    house(t, h, night); gws(t, h, night, netz); auto(t, h, ev);
+    for (const d of DEV) if (an(h, d.z)) SPR[d.spr](d.x, FLOOR[d.f], t);
+    SPR.nuc(66, FLOOR[0], t);
+    if (an(h, [[15.6, 16.7]])) SPR.ghost(58, FLOOR[1] - 2, t);
+    partikel(dt, t, h, pv, netz, ev);
+    stepHero(dt); heroDraw(t, h);
+    g.restore();
+    rahmen(h, pv, haus, ev, netz);
+    intro(); bilanz(); schluss();
+  }
+}
+window.FILM = { N, FPS, render, TAG, EV, LOG };
+if (!/render/.test(location.search)) {                  // Vorschau im Browser: in Echtzeit abspielen
+  const t0 = performance.now();
+  const loop = () => { const i = Math.min(N - 1, Math.floor((performance.now() - t0) / 1000 * FPS)); render(i); if (i < N - 1) requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+</script>
+</body>
+</html>

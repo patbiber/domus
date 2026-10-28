@@ -23,6 +23,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | `system/` | Neustart-Bericht, wöchentliches Docker-Image-Update mit Prüfung und Zurückrollen, Überwachung der öffentlichen IP (systemd-User-Dienste) | läuft |
 | `energie/` | Energie-API (Fronius live + GWS-Tarif) und Retro-Webseite https://home.biber.solar | läuft |
 | `strompreise/` | Monatliches Archiv der GWS-Stromtarife (Skript + systemd-User-Timer, kein Docker) | läuft |
+| `film/` | Kurzfilm «Ein Tag mit homi» (60 s, 1080×1350 für LinkedIn) im Retro-Stil, gerendert mit Puppeteer + ffmpeg | fertig (28.10.2026) |
 
 ## Einrichtung
 
@@ -590,6 +591,14 @@ Solar- & Haustechnik-Wissen, MkDocs Material, Quelle https://github.com/patbiber
 ln -sf ~/domus/training/training.{service,timer} ~/.config/systemd/user/
 systemctl --user daemon-reload && systemctl --user enable --now training.timer
 ```
+
+### Kurzfilm «Ein Tag mit homi» (`film/`)
+
+60 Sekunden im Stil von home.biber.solar: ein Oktobertag im Zeitraffer (Sonnenaufgang, Figur mit Sprüchen, Geräte,
+E-Auto lädt mit Überschuss, Tagesbilanz), Format 1080×1350 (4:5) für LinkedIn.
+Sonne = echte 10-min-Werte vom 12.10.2026, Tarife/Gerätewatt/Beratertipps echt; Geräteablauf und E-Auto nachgestellt
+(steht im Film). `film/homi-film.html` im Browser öffnen = Vorschau in Echtzeit; `film/render.sh` erzeugt
+`film/out/homi-film.mp4` (dauert auf dem NUC rund 20 min, `film/out/` ist nicht im Repo).
 
 ### Updates und Neustarts (`system/`)
 
