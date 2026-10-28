@@ -44,8 +44,13 @@ fi
 HA=$(ls -t "$DOMUS"/backups/homeassistant-*.tar.gz 2>/dev/null | head -1 || true)
 TEILE=(.env energie/data login/data energy/abos energy/anfragen proxy/conf.d proxy/certbot/conf strompreise/data)
 [ -n "$HA" ] && TEILE+=("${HA#$DOMUS/}")
-sudo tar -czf "$ARBEIT/inhalt.tar.gz" -C "$DOMUS" "${TEILE[@]}" -C / etc/msmtprc etc/aliases -C "$ARBEIT" LIESMICH.txt "${UMAMI_TEIL[@]}" \
-  || fehler "tar ist fehlgeschlagen"
+# Code 1 = Datei hat sich beim Packen geändert (homi schreibt laufend, z. B. speicher.json über .tmp) – nur
+# eine Warnung, das Archiv ist trotzdem brauchbar (Probe-Entschlüsselung unten). Erst ab Code 2 ist tar gescheitert.
+TAR_RC=0
+sudo tar -czf "$ARBEIT/inhalt.tar.gz" --exclude='*.tmp' --warning=no-file-removed \
+  -C "$DOMUS" "${TEILE[@]}" -C / etc/msmtprc etc/aliases -C "$ARBEIT" LIESMICH.txt "${UMAMI_TEIL[@]}" || TAR_RC=$?
+[ "$TAR_RC" -le 1 ] || fehler "tar ist fehlgeschlagen (Code $TAR_RC)"
+[ "$TAR_RC" -eq 0 ] || echo "Hinweis: Dateien haben sich beim Packen geändert (tar Code 1), Archiv trotzdem vollständig"
 sudo chown "$(id -u):$(id -g)" "$ARBEIT/inhalt.tar.gz"
 
 # --- Verschlüsseln und prüfen (Entschlüsseln + Inhaltsliste muss klappen)
