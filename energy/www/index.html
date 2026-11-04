@@ -13,7 +13,7 @@
 <meta name="theme-color" content="#0b1730">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <script defer src="https://stats.biber.solar/s.js" data-website-id="39990f1d-716e-46a7-9870-77b53d8c79f1" data-domains="homi.solar" data-do-not-track="true"></script>
-<link rel="stylesheet" href="style.css?v=20261021c">
+<link rel="stylesheet" href="style.css?v=20261104a">
 <link rel="alternate" hreflang="de" href="https://homi.solar/">
 <link rel="alternate" hreflang="en" href="https://homi.solar/en/">
 <link rel="alternate" hreflang="x-default" href="https://homi.solar/">
@@ -160,6 +160,7 @@
         <ul class="f-liste">
           <li><b>Einspeisestopp</b>, sobald Einspeisen Geld kostet – mit Minimalvergütung gerechnet</li>
           <li><b>Vergütung 2027 vorgerechnet</b> – fester Tarif, Quartalsdurchschnitt oder Börsenpreis</li>
+          <li><b>Abregel-Übersicht</b> – Stopps heute und morgen, Rückblick je Monat</li>
           <li><b>Wechselrichter ein/aus</b> per Knopf in App und Home Assistant</li>
           <li><b>Geräte mit Sonnenüberschuss</b> – smarte Steckdose (z. B. myStrom) schaltet ein, sobald Strom übrig ist</li>
           <li class="bald"><b>Batterie</b> lädt in den günstigsten Stunden</li>
@@ -198,7 +199,7 @@
     <div class="section-head rein">
       <span class="kicker">Einspeisung ab 2027</span>
       <h2>Wenn Einspeisen plötzlich Geld kostet</h2>
-      <p class="sub">Ab 2027 wird Solarstrom ohne andere Abmachung mit dem Netzbetreiber <b>Stunde für Stunde zum Börsenpreis</b> vergütet. Die Minimalvergütung bleibt – aber nur als Ausgleich, der nach dem Quartal auf jede eingespeiste kWh kommt. An sonnigen Tagen fällt der Börsenpreis mittags unter null, und sobald er tiefer liegt als dieser Ausgleich, <b>bezahlst du fürs Einspeisen drauf</b>. homi rechnet die Schwelle für deine Anlage laufend nach – mit den offiziellen Referenz-Marktpreisen des Bundes. Das macht viel aus: 2025 hätte Einspeisen mit Minimalvergütung nur in 36 Stunden wirklich Geld gekostet, nicht in den 303 Stunden mit negativem Börsenpreis. Und eine Batterie, die einfach lädt, sobald die Sonne scheint, ist längst voll, wenn es sich am meisten lohnen würde.</p>
+      <p class="sub">Ab 2027 wird Solarstrom ohne andere Abmachung mit dem Netzbetreiber <b>Stunde für Stunde zum Börsenpreis</b> vergütet. Die Minimalvergütung bleibt – aber nur als Ausgleich, der nach dem Quartal auf jede eingespeiste kWh kommt. An sonnigen Tagen fällt der Börsenpreis mittags unter null, und sobald er tiefer liegt als dieser Ausgleich, <b>bezahlst du fürs Einspeisen drauf</b>. homi rechnet die Schwelle für deine Anlage laufend nach – mit den offiziellen Referenz-Marktpreisen des Bundes. Das macht viel aus: 2025 hätte Einspeisen mit Minimalvergütung nur in 36 Stunden wirklich Geld gekostet, nicht in den 303 Stunden mit negativem Börsenpreis. Und eine Batterie, die einfach lädt, sobald die Sonne scheint, ist längst voll, wenn es sich am meisten lohnen würde. Die laufende ZHAW-Studie <a href="https://www.zhaw.ch/de/forschung/projekt/79181" target="_blank" rel="noopener">PVEco</a> schätzt (vorläufig): Wer nicht auf die Börsenpreise reagiert, verliert <b>2–12 %</b> der Abnahmevergütung, mit einer Batterie ohne Optimierung sogar bis zu <b>30 %</b>.</p>
     </div>
     <div class="ein-grid">
       <div class="card tile rein">
@@ -229,7 +230,8 @@
           <h3>Vollautomatisch</h3>
           <ul>
             <li>Einspeisung stoppt von selbst, sobald sie Geld kostet – <b>läuft bereits</b>: homi drosselt Fronius-Wechselrichter auf den Eigenverbrauch und rechnet dabei mit Minimalvergütung und Quartalsausgleich</li>
-            <li>Welches Vergütungsmodell lohnt sich? homi rechnet fester Tarif, Quartalsdurchschnitt und Börsenpreis mit deinen echten Daten vor</li>
+            <li>Welches Vergütungsmodell lohnt sich? homi rechnet fester Tarif, Quartalsdurchschnitt und Börsenpreis mit deinen echten Daten vor – Herkunftsnachweise nach Sommer und Winter, ohne Zuschlag in Minuspreis-Stunden</li>
+            <li>Du siehst vorher, wann gestoppt wird: Stopps heute und morgen, betroffene kWh und ein Rückblick je Monat – in der App und in Home Assistant</li>
             <li>Sicher: jeder Befehl läuft nach 5 Minuten ab – fällt homi aus, produziert die Anlage normal weiter</li>
             <li>Batterie lädt in den günstigsten Stunden – nicht einfach bei Sonnenaufgang <i>(bald)</i></li>
             <li>Boiler, Wärmepumpe oder E-Auto springen bei Minuspreisen ein <i>(bald)</i></li>
@@ -386,6 +388,6 @@
   </div>
 </footer>
 
-<script src="app.js?v=20261021c" defer></script>
+<script src="app.js?v=20261104a" defer></script>
 </body>
 </html>

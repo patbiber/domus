@@ -13,7 +13,7 @@
 <meta name="theme-color" content="#0b1730">
 <link rel="icon" href="../img/favicon.svg" type="image/svg+xml">
 <script defer src="https://stats.biber.solar/s.js" data-website-id="39990f1d-716e-46a7-9870-77b53d8c79f1" data-domains="homi.solar" data-do-not-track="true"></script>
-<link rel="stylesheet" href="../style.css?v=20261021c">
+<link rel="stylesheet" href="../style.css?v=20261104a">
 <link rel="alternate" hreflang="de" href="https://homi.solar/">
 <link rel="alternate" hreflang="en" href="https://homi.solar/en/">
 <link rel="alternate" hreflang="x-default" href="https://homi.solar/">
@@ -160,6 +160,7 @@
         <ul class="f-liste">
           <li><b>Feed-in stop</b> as soon as feeding in costs money – calculated including the minimum remuneration</li>
           <li><b>2027 remuneration calculated</b> – fixed tariff, quarterly average or market price</li>
+          <li><b>Curtailment overview</b> – stops today and tomorrow, monthly review</li>
           <li><b>Inverter on/off</b> at the push of a button in the app and Home Assistant</li>
           <li><b>Appliances on solar surplus</b> – a smart plug (e.g. myStrom) switches on as soon as there is power to spare</li>
           <li class="bald"><b>Battery</b> charges in the cheapest hours</li>
@@ -198,7 +199,7 @@
     <div class="section-head rein">
       <span class="kicker">Feed-in from 2027</span>
       <h2>When feeding in suddenly costs money</h2>
-      <p class="sub">From 2027 in Switzerland, unless agreed otherwise with the grid operator, solar power is paid <b>hour by hour at the spot market price</b>. The minimum remuneration remains – but only as a top-up paid after each quarter on every kWh fed in. On sunny days the market price drops below zero around midday, and as soon as it falls below that top-up, <b>you pay to feed in</b>. homi keeps recalculating the threshold for your system – using the official federal reference market prices. That makes a big difference: in 2025, feeding in with the minimum remuneration would really have cost money in only 36 hours, not in the 303 hours with a negative market price. And a battery that simply charges as soon as the sun shines is long full by the time it would pay off most.</p>
+      <p class="sub">From 2027 in Switzerland, unless agreed otherwise with the grid operator, solar power is paid <b>hour by hour at the spot market price</b>. The minimum remuneration remains – but only as a top-up paid after each quarter on every kWh fed in. On sunny days the market price drops below zero around midday, and as soon as it falls below that top-up, <b>you pay to feed in</b>. homi keeps recalculating the threshold for your system – using the official federal reference market prices. That makes a big difference: in 2025, feeding in with the minimum remuneration would really have cost money in only 36 hours, not in the 303 hours with a negative market price. And a battery that simply charges as soon as the sun shines is long full by the time it would pay off most. The ongoing ZHAW study <a href="https://www.zhaw.ch/de/forschung/projekt/79181" target="_blank" rel="noopener">PVEco</a> estimates (preliminary): if you don't react to market prices, you lose <b>2–12 %</b> of your feed-in remuneration, and with a battery that isn't optimised up to <b>30 %</b>.</p>
     </div>
     <div class="ein-grid">
       <div class="card tile rein">
@@ -229,7 +230,8 @@
           <h3>Fully automatic</h3>
           <ul>
             <li>Feed-in stops by itself as soon as it costs money – <b>already running</b>: homi throttles Fronius inverters to self-consumption, taking the minimum remuneration and quarterly top-up into account</li>
-            <li>Which remuneration model pays off? homi calculates fixed tariff, quarterly average and market price with your real data</li>
+            <li>Which remuneration model pays off? homi calculates fixed tariff, quarterly average and market price with your real data – guarantees of origin by summer and winter, without the bonus in negative-price hours</li>
+            <li>You see in advance when feed-in will stop: stops today and tomorrow, affected kWh and a monthly review – in the app and in Home Assistant</li>
             <li>Safe: every command expires after 5 minutes – if homi fails, the system simply keeps producing</li>
             <li>Battery charges in the cheapest hours – not simply at sunrise <i>(coming soon)</i></li>
             <li>Water heater, heat pump or EV step in at negative prices <i>(coming soon)</i></li>
@@ -386,6 +388,6 @@
   </div>
 </footer>
 
-<script src="../app.js?v=20261021c" defer></script>
+<script src="../app.js?v=20261104a" defer></script>
 </body>
 </html>
