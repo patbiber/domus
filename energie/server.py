@@ -9,6 +9,7 @@ Endpunkte:
   /api/prognose Solarprognose heute/morgen (Open-Meteo, geeicht mit den eigenen Messwerten), bestes Zeitfenster
   /api/einspeisung  Einspeise-Fahrplan heute/morgen bei dynamischer Vergütung (Börsenpreis): Minuspreis-Stunden,
                 Empfehlung pro Stunde, optimierter Batterie-Fahrplan (virtuelle Batterie) vs. einfaches Laden
+  /api/abregelung  Abregel-Übersicht (Modell ab 2027): Stopp-Zeiten heute/morgen, betroffene kWh, Historie je Tag/Monat
   /api/amortisation  bisher erwirtschaftet, Break-even (Investition/Förderung in anlage.json)
   /api/berater  Energieberater: drei Tipps mit Begründung und Rechenweg, Batterie-Empfehlung
   /api/steuerung  Wechselrichter-Steuerung über Modbus: Verbindung, Begrenzung, Testmodus-Auswertung (Minuspreis →
@@ -43,6 +44,7 @@ from homi.amortisation import amort_cache, amortisation
 from homi.archiv import Archiv, archiv_aggregat
 from homi.berater import berater, berater_cache
 from homi.boerse import boerse_now, poll_boerse
+from homi.abregelung import abregelung
 from homi.einspeisung import einspeise_plan
 from homi.erfassung import poll
 from homi.konfig import ANLAGE_CFG, ARCHIV_DIR, ARCHIV_TAGE, KUNDE_HOST, PORT, PUSH_DIR, PUSH_HOSTS, PUSH_THEMEN, SPEICHER_FILE, STEUERUNG_FILE, GERAETE_FILE, WWW, WWW_KUNDE
@@ -149,6 +151,8 @@ class Handler(SimpleHTTPRequestHandler):
                 return self.send_json(zustand.steuerung.report(state["status"], state["modbus"]))
         if path == "/api/einspeisung":
             return self.send_json(einspeise_plan())
+        if path == "/api/abregelung":
+            return self.send_json(abregelung())
         if path == "/api/prognose":
             with lock:
                 return self.send_json(state["prognose"] or {"startet": True})

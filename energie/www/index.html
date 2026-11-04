@@ -87,6 +87,7 @@
   .srv .v { color: var(--cyan); }
   .prog .v { color: var(--yellow); }
   .woche .v { color: var(--cyan); }
+  .abreg .v { color: var(--green); } .abreg.neg { border-color: var(--red); } .abreg.neg .v { color: var(--red); } .abreg .fahrplan b { color: var(--red); }
   .amort .v { color: var(--green); } .steu .v { color: var(--cyan); } .verg .v { color: var(--green); } .batt .v { color: var(--purple); } .rat .v { color: var(--yellow); }
   .rat ol { margin: 4px 0 0; padding-left: 18px; font-size: 12px; color: var(--white); }
   .rat ol li { margin: 2px 0; cursor: help; } .rat ol li:hover { color: var(--yellow); } .rat ol li span { color: var(--green); }
@@ -184,6 +185,7 @@
       <div class="stat boerse" id="t-boerse"><div class="k">Strombörse Day-Ahead CH</div><div class="v" id="s-boerse">–</div><div class="s" id="s-boerse2">&nbsp;</div></div>
       <div class="stat woche" title="Wochenbericht: kommt jeden Montag um 08:00 auch als Mail und Push"><div class="k" id="s-woche0">Letzte Woche</div><div class="v" id="s-woche">–</div><div class="s" id="s-woche2">&nbsp;</div></div>
       <div class="stat rat" title="Energieberater: drei Tipps aus den Messwerten der letzten 14 Tage"><div class="k">Energieberater · Tipp antippen = Warum</div><div class="v" id="s-rat">–</div><ol id="s-rat2"></ol><div class="s" id="s-rat3">&nbsp;</div></div>
+      <div class="stat abreg" id="t-abreg" title="Abregelung nach dem Modell ab 2027: Stunden, in denen der Börsenpreis unter der Abregelschwelle liegt"><div class="k">Abregelung ab 2027 · Stopps</div><div class="v" id="s-abreg">–</div><div class="s" id="s-abreg2">&nbsp;</div><div class="fahrplan" id="s-abreg3"></div></div>
       <div class="stat verg" id="t-verg" title="Abnahmevergütung ab 2027: Wert deiner Einspeisung je Modell im laufenden Quartal"><div class="k">Vergütung ab 2027 · Quartal</div><div class="v" id="s-verg">–</div><div class="s" id="s-verg2">&nbsp;</div></div>
       <div id="geraete"></div>
       <div class="stat batt"><div class="k">Batterie-Simulation</div><div class="v" id="s-batt">–</div><div class="s" id="s-batt2">&nbsp;</div></div>
@@ -196,6 +198,8 @@
       <canvas id="chartM" width="320" height="40" aria-label="Diagramm Geldfluss"></canvas>
       <div class="legend"><span><i style="background:#55ffff"></i>Börsenpreis (Rp/kWh)</span><span><i style="background:#ff5555"></i>negativ</span><span><i style="background:#ffff55"></i>jetzt</span><span>heute und morgen</span></div>
       <canvas id="chartB" width="320" height="50" aria-label="Diagramm Börsenpreise"></canvas>
+      <div class="legend"><span><i style="background:#55ff55"></i>Einspeisung (Prognose)</span><span><i style="background:#ff5555"></i>Stopp ab 2027</span><span>heute und morgen</span></div>
+      <canvas id="chartA" width="320" height="40" aria-label="Diagramm Einspeisung und Abregel-Stopps"></canvas>
     </div>
   </section>
   <section class="panel" id="app">
@@ -600,6 +604,44 @@ async function pollEinspeisung() {
       : "heute kein Überschuss mehr";
   }
 }
+// Abregel-Übersicht (Modell ab 2027), wie das Einspeise-Widget: Stopps heute/morgen, Monat, Diagramm
+let abreg = null;
+async function pollAbregelung() {
+  try { abreg = await (await fetch("api/abregelung", { cache: "no-store" })).json(); } catch { return; }
+  if (!abreg || abreg.startet) return;
+  const tagTxt = (n, t) => !t ? `${n}: noch keine Preise` : t.stopps.length
+    ? `${n}: <b>${t.stopps.join(" + ")}</b> (${t.betroffen_kwh.toFixed(1)} kWh${t.ohne_stopp_chf < 0 ? `, sonst ${t.ohne_stopp_chf.toFixed(2)} CHF` : ""})`
+    : `${n}: kein Stopp (${t.einspeisung_kwh.toFixed(1)} kWh Einspeisung)`;
+  const n = (abreg.heute ? abreg.heute.stopps.length : 0) + (abreg.morgen ? abreg.morgen.stopps.length : 0);
+  $("t-abreg").classList.toggle("neg", n > 0);
+  $("s-abreg").textContent = n ? `${n} Stopp${n > 1 ? "s" : ""} geplant` : "keine Stopps";
+  const m = (abreg.monate || []).slice(-1)[0];
+  $("s-abreg2").textContent = (abreg.abregeln_aktiv ? "homi regelt ab" : "fester Tarif: homi regelt nicht ab") + (m ? ` · ${MONATE[+m.monat.slice(5) - 1]}: ${m.stopp_tage} Stopp-Tage, ${m.stopp_h.toFixed(1)} h` : "");
+  $("s-abreg3").innerHTML = tagTxt("heute", abreg.heute) + "<br>" + tagTxt("morgen", abreg.morgen);
+  drawAbregelung();
+}
+function drawAbregelung() {
+  const c = $("chartA"), A = c.getContext("2d"), w = c.width, h = c.height;
+  A.fillStyle = "#050505"; A.fillRect(0, 0, w, h);
+  const T = abreg ? [abreg.heute, abreg.morgen] : [];
+  if (!T[0]) { ptext(A, "KEINE PROGNOSE", 110, 16, "#666"); return; }
+  const max = Math.max(0.5, ...T.flatMap(t => t ? t.stunden.map(x => x.einspeisung_kwh) : []));
+  const bw = w / 48, top = 8, bottom = h - 2, jetzt = new Date().getHours();
+  T.forEach((t, i) => {
+    if (!t) return;
+    for (const x of t.stunden) {
+      const x0 = Math.round((i * 24 + x.stunde) * bw), x1 = Math.round((i * 24 + x.stunde + 1) * bw) - 1;
+      if (x.stopp) { A.fillStyle = "#551515"; A.fillRect(x0, top, x1 - x0 + 1, bottom - top); }
+      const y = bottom - x.einspeisung_kwh / max * (bottom - top);
+      A.fillStyle = x.stopp ? "#ff5555" : i === 0 && x.stunde === jetzt ? "#ffff55" : "#55ff55";
+      if (x.einspeisung_kwh > 0.01) A.fillRect(x0, Math.round(y), x1 - x0, bottom - Math.round(y));
+    }
+    ptext(A, t.datum.slice(8, 10) * 1 + "." + t.datum.slice(5, 7) * 1 + ".", Math.round(i * 24 * bw) + 2, 1, "#aaa");
+  });
+  A.fillStyle = "#666"; A.fillRect(Math.round(24 * bw), 0, 1, h);
+  ptext(A, max.toFixed(1) + " KWH", w - 42, 1, "#55ff55");
+}
+
 async function pollHist() {
   try { hist = await (await fetch("api/history", { cache: "no-store" })).json(); } catch {}
   drawCharts();
@@ -1269,6 +1311,7 @@ setInterval(poll, 5000);
 setInterval(pollHist, 60000);
 pollBoerse(); setInterval(pollBoerse, 15 * 60000);
 pollEinspeisung(); setInterval(pollEinspeisung, 10 * 60000);
+pollAbregelung(); setInterval(pollAbregelung, 10 * 60000);
 pollAmort(); setInterval(pollAmort, 10 * 60000);
 pollBerater(); setInterval(pollBerater, 60 * 60000);
 try { sessionStorage.removeItem("homi-neuladen"); } catch {}   // Neuladen-Seite: Wartezeit wieder von vorne
