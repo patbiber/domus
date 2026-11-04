@@ -143,6 +143,12 @@ Laufzeit-Zustand), `erfassung` (5-s-Schleife), `fronius`, `tarif`, `boerse`, `ar
   **Einspeisung stoppen** bei Minuspreisen); Wert der Einspeisung dynamisch vs. fix (GWS) und **optimierter
   Batterie-Fahrplan** (virtuelle 5 kWh: lädt in den billigsten bzw. negativen Stunden) vs. einfaches Laden.
   Auf homi: rot blinkendes Warnband bei Minuspreisen heute/morgen, Kachel „Einspeisung dynamisch heute“, Sprüche.
+- **Abregel-Übersicht** `/api/abregelung` (`homi/abregelung.py`, seit 04.11.2026, Idee aus dem Solar-Manager-Webinar):
+  immer mit dem Modell ab 2027 gerechnet – Stopp = Börsenpreis unter der Abregelschwelle des Quartals. Heute/morgen
+  pro Stunde (Prognose-Einspeisung, Stopp ja/nein, Zeitfenster, betroffene kWh, was Einspeisen trotzdem kosten
+  würde), Rückblick je Tag/Monat aus dem Archiv (Stunden und eingespeiste kWh unter der Schwelle). Retro: Kachel
+  «Abregelung ab 2027» + Diagramm; Kunden-UI: Karte im Reiter Strompreis; HA: `sensor.abregelung_heute`,
+  `sensor.abregelung_morgen`, `sensor.abregelung_stunden_diesen_monat`.
 - **Solarprognose** `/api/prognose`: Open-Meteo-Einstrahlung auf die Modulebene (`energie/anlage.json`: Stäfa,
   25° Neigung, Azimut +30° = Süd-Südwest, aus den Messdaten bestimmt) × Eichfaktor, der stündlich aus den eigenen
   Messwerten der letzten 14 Tage nachgeführt wird. Heute/morgen/übermorgen in kWh, Spitze, Bewölkung und bestes

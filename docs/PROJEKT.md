@@ -251,6 +251,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 14.10.2026 | Verschlüsseltes Gesamt-Backup nachts (lokal); Autoinstall für den Reserve-PC domus-reserve (Ausfallsicherung) |
 | 15.10.2026 | homi.solar neu: kurz, ohne Preise, alle (auch geplanten) Funktionen, Plattform-/Technik- und Investoren-Teil, Anmeldung mit Systemangaben per Mail |
 | 25.10.2026 | Claude-Hauptsitzung mit Autostart ersetzt den Remote-Control-Spawn-Dienst |
+| 04.11.2026 | Nach dem Solar-Manager-Webinar: Abregel-Übersicht ab 2027 (Retro, App, Home Assistant), Herkunftsnachweise nach Sommer/Winter und ohne Zuschlag bei Minuspreisen |
 
 ## 8. Offene Punkte
 
