@@ -18,8 +18,10 @@ Modelle in anlage.json → verguetung.modell:
 Referenz-Marktpreis Photovoltaik: offiziell vom BFE (www.bfe-ogd.ch, Quartale und Monate, CSV; Datensatz BFE-DS-0020
 auf I14Y), täglich geladen. Für Monate ohne offiziellen Wert schätzt homi aus dem eigenen Archiv (Spotpreis gewichtet
 mit der eigenen Solarproduktion). Manuelle Werte in verguetung.rmp_offiziell gehen allem vor.
-Herkunftsnachweise (HKN): viele Netzbetreiber zahlen sie zusätzlich (einige Rp./kWh) → verguetung.hkn_rp.
-Abregeln sinnvoll, wenn Spotpreis < −(Ausgleich + HKN) (Swissolar, «Abnahmevergütung», Stand 2026).
+Herkunftsnachweise (HKN): viele Netzbetreiber zahlen sie zusätzlich (einige Rp./kWh) → verguetung.hkn_rp, als Zahl
+oder getrennt {"sommer": 0.1, "winter": 1.0} (Winterhalbjahr Oktober–März, fällt mit den Quartalen zusammen). Bei
+negativen Preisen entfällt die HKN-Vergütung meist (z. B. CKW 2027) → verguetung.hkn_bei_minuspreis (Standard false).
+Abregeln sinnvoll, wenn Spotpreis < −(Ausgleich + HKN, falls sie bei Minuspreisen bleibt) (Swissolar, «Abnahmevergütung»).
 Minimalvergütung 30–150 kW: 180 / kW Rp. mit Eigenverbrauch, 6.2 Rp. ohne Eigenverbrauch (verguetung.eigenverbrauch).
 """
 import csv
@@ -98,7 +100,20 @@ def konfig():
             "minimal_rp": v.get("minimal_rp") if v.get("minimal_rp") is not None else auto,
             "ausgleich_bei_minuspreis": v.get("ausgleich_bei_minuspreis", True),
             "rmp_offiziell": v.get("rmp_offiziell") or {}, "kw": kw,
-            "hkn_rp": float(v.get("hkn_rp") or 0.0), "eigenverbrauch": v.get("eigenverbrauch", True)}
+            "hkn_rp": hkn_saisons(v.get("hkn_rp")), "hkn_bei_minuspreis": bool(v.get("hkn_bei_minuspreis", False)),
+            "eigenverbrauch": v.get("eigenverbrauch", True)}
+
+
+def hkn_saisons(wert):
+    """hkn_rp aus anlage.json (Zahl oder {"sommer", "winter"}) → {"sommer": Rp., "winter": Rp.}."""
+    if isinstance(wert, dict):
+        return {h: float(wert.get(h) or 0.0) for h in ("sommer", "winter")}
+    return {"sommer": float(wert or 0.0), "winter": float(wert or 0.0)}
+
+
+def hkn(k, monat):
+    """HKN-Vergütung in Rp./kWh im Monat (1–12): Winterhalbjahr Oktober–März."""
+    return k["hkn_rp"]["winter" if monat >= 10 or monat <= 3 else "sommer"]
 
 
 def quartal(tag):
@@ -110,14 +125,18 @@ def quartal_start(q):
     return date(jahr, 3 * (n - 1) + 1, 1)
 
 
-def ausgleich_eff(p_rp, ausgleich, k):
+def ausgleich_eff(p_rp, ausgleich, k, monat):
     """Zuschlag, der auf eine kWh zum Spotpreis p zusätzlich anfällt: Ausgleich der Minimalvergütung + HKN."""
-    return (ausgleich if (p_rp >= 0 or k["ausgleich_bei_minuspreis"]) else 0.0) + k.get("hkn_rp", 0.0)
+    minus = p_rp < 0
+    return ((ausgleich if (not minus or k["ausgleich_bei_minuspreis"]) else 0.0)
+            + (hkn(k, monat) if (not minus or k["hkn_bei_minuspreis"]) else 0.0))
 
 
-def schwelle_rp(ausgleich, k):
-    """Unter diesem Spotpreis bringt Einspeisen weniger als nichts (Modell «boerse»): −(Ausgleich + HKN)."""
-    s = (ausgleich if k["ausgleich_bei_minuspreis"] else 0.0) + k.get("hkn_rp", 0.0)
+def schwelle_rp(ausgleich, k, monat):
+    """Unter diesem Spotpreis bringt Einspeisen weniger als nichts (Modell «boerse»): −(Ausgleich + HKN). Die Schwelle
+    ist negativ, also zählt nur, was auch bei Minuspreisen bezahlt wird."""
+    s = ((ausgleich if k["ausgleich_bei_minuspreis"] else 0.0)
+         + (hkn(k, monat) if k["hkn_bei_minuspreis"] else 0.0))
     return round(0.0 - s, 2) if s > 0 else 0.0
 
 
@@ -170,16 +189,17 @@ def berechnen():
         mit_preis = [z for z in r if z["boerse_rp"] is not None]
         rmp, rmp_quelle = rmp_quartal(q, schaetz_monat, k, bfe)
         ausgleich = max(0.0, k["minimal_rp"] - rmp) if rmp is not None else 0.0
-        schwelle = schwelle_rp(ausgleich, k)
+        q_monat = quartal_start(q).month                          # Quartale liegen ganz im Sommer- oder Winterhalbjahr
+        schwelle = schwelle_rp(ausgleich, k, q_monat)
         e_alle = sum(z["einspeisung_kwh"] or 0 for z in r)
         e_preis = sum(z["einspeisung_kwh"] or 0 for z in mit_preis)
         # alle Modelle auf derselben Basis: nur Zeiten, für die ein Börsenpreis gespeichert ist
         fix = sum(z["erloes_chf"] or 0 for z in mit_preis)
-        ref = e_preis * (max(rmp or 0, k["minimal_rp"]) + k["hkn_rp"]) / 100
+        ref = e_preis * (max(rmp or 0, k["minimal_rp"]) + hkn(k, q_monat)) / 100
         ohne = mit = minus_kwh = minus_h = 0.0
         for z in mit_preis:
             e, p = z["einspeisung_kwh"] or 0, z["boerse_rp"]
-            wert = e * (p + ausgleich_eff(p, ausgleich, k)) / 100
+            wert = e * (p + ausgleich_eff(p, ausgleich, k, q_monat)) / 100
             ohne += wert
             if p < schwelle:
                 minus_kwh += e
@@ -203,6 +223,7 @@ def berechnen():
         "modell": k["modell"], "modell_name": MODELLE[k["modell"]], "modelle": MODELLE,
         "minimal_rp": k["minimal_rp"], "anlage_kw": k["kw"],
         "ausgleich_bei_minuspreis": k["ausgleich_bei_minuspreis"], "hkn_rp": k["hkn_rp"],
+        "hkn_bei_minuspreis": k["hkn_bei_minuspreis"],
         "rmp_bfe_letzte": {"quartal": max(bfe["quartal"]) if bfe["quartal"] else None,
                            "monat": max(bfe["monat"]) if bfe["monat"] else None},
         "quartale": aus,
@@ -211,7 +232,8 @@ def berechnen():
             f"Für Anlagen unter 150 kW gilt eine Minimalvergütung, für deine Anlage ({k['kw']:g} kW) "
             f"{k['minimal_rp']:g} Rp./kWh: Lag der Quartalsdurchschnitt (Referenz-Marktpreis) darunter, gibt es die "
             "Differenz nachträglich auf jede eingespeiste kWh. Abregeln lohnt sich deshalb erst, wenn der Börsenpreis "
-            "unter minus diesem Ausgleich fällt (plus allfällige Herkunftsnachweise). Ohne intelligenten Zähler gilt bis Ende "
+            "unter minus diesem Ausgleich fällt (Herkunftsnachweise zählen nur, wenn der Netzbetreiber "
+            "sie auch bei negativen Preisen bezahlt). Ohne intelligenten Zähler gilt bis Ende "
             "2027 der Quartalsdurchschnitt. Referenz-Marktpreise: offizielle Werte des BFE, für den laufenden Monat "
             "schätzt homi aus deinen Daten."),
     }

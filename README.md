@@ -472,7 +472,9 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   Kopie in `data/rmp_bfe.json`); im laufenden Quartal BFE-Monate + eigene Schätzung (Spotpreis × eigene PV) für den
   Rest; `verguetung.rmp_offiziell` übersteuert. Geprüft an Swissolars Beispielen 2025 (Q2: 2.76 Rp. → Prämie 3.24).
   **Abregelschwelle** = −(Ausgleich + Herkunftsnachweise `hkn_rp`) (Swissolar «Abnahmevergütung»); Ausgleich bei
-  negativen Preisen gilt (Quartalsabrechnung), abschaltbar mit `ausgleich_bei_minuspreis: false`. 30–150 kW:
+  negativen Preisen gilt (Quartalsabrechnung), abschaltbar mit `ausgleich_bei_minuspreis: false`. HKN: Zahl oder
+  `{"sommer": …, "winter": …}` (Winter Okt–März); in Minuspreis-Stunden entfallen sie meist (CKW 2027) und zählen
+  deshalb nur mit `hkn_bei_minuspreis: true` zur Schwelle (Solar-Manager-Webinar 04.11.2026). 30–150 kW:
   Minimalvergütung 180/kW Rp. bzw. 6.2 Rp. ohne Eigenverbrauch (`eigenverbrauch: false`).
   `verguetung.modell`: `fix` (GWS 15 Rp., heute) und `referenzmarkt` (ohne intelligenten Zähler bis Ende 2027) →
   Abregeln lohnt sich nie, die Fronius-Steuerung drosselt dann nicht; `boerse` → drosseln unter der Schwelle. Die

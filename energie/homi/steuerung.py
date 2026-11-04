@@ -254,7 +254,7 @@ class Steuerung:
             kwh = status["einspeisung_w"] * h / 1000             # fiele bei Nulleinspeisung weg
         verlust = kwh * (t["rueckliefer_chf_kwh"] or 0)          # feste Vergütung: entgangen
         p = b["rp_kwh"]                                          # ab 2027: Spotpreis + Ausgleich; < 0 = Einspeisen kostet
-        boerse = kwh * (p + ausgleich_eff(p, ausgleich, verg_konfig())) / 100
+        boerse = kwh * (p + ausgleich_eff(p, ausgleich, verg_konfig(), now.month)) / 100
         nenn = (state.get("modbus") or {}).get("nennleistung_w") or 8200
         pct = soll_pct(status["verbrauch_w"], nenn)
         d = self.data["tage"].setdefault(now.date().isoformat(),
