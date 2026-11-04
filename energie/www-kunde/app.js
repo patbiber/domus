@@ -645,6 +645,34 @@ function verguetungZeichnen() {
     + (v.ausgleich_bei_minuspreis ? "" : " Annahme: bei negativen Preisen kein Ausgleich.");
 }
 
+/* ======================= Strompreis: Abregelung ab 2027 ======================= */
+function abregelungZeichnen() {
+  const a = D.abregelung;
+  $("abregelung").hidden = !a || a.startet || !a.heute;
+  if ($("abregelung").hidden) return;
+  const tag = (n, t) => !t ? `${n} noch offen (Preise ab dem frühen Nachmittag)` : t.stopps.length
+    ? `${n} <b>${t.stopps.join(" und ")}</b> – ${zahl(t.betroffen_kwh, 1)} kWh betroffen${t.ohne_stopp_chf < 0 ? `, trotzdem einspeisen kostete ${chf(-t.ohne_stopp_chf)}` : ""}`
+    : `${n} kein Stopp`;
+  $("ab-satz").innerHTML = `${tag("Heute", a.heute)}. ${tag("Morgen", a.morgen)}. `
+    + (a.abregeln_aktiv ? "homi drosselt in diesen Zeiten automatisch auf den Hausverbrauch." : "Mit deinem festen Tarif regelt homi nicht ab – so sähe es ab 2027 aus.");
+  const box = $("chart-abregelung");
+  if (box.offsetParent) {
+    const h = [a.heute, a.morgen].filter(Boolean).flatMap(t => t.stunden.map(x => ({ ...x, datum: t.datum })));
+    balkenChart(box, {
+      labels: h.map(x => x.stunde),
+      gruppen: [{ werte: h.map(x => x.einspeisung_kwh), farbe: farbe("gruen") }],
+      farbeFn: (v, i) => h[i].stopp ? farbe("rot") : farbe("gruen"),
+      xLabel: i => h[i].stunde === 0 ? datum(h[i].datum) : (box.clientWidth < 560 ? h[i].stunde === 12 : h[i].stunde % 6 === 0) ? `${h[i].stunde}h` : null,
+      tip: i => `<b>${datum(h[i].datum)} ${h[i].stunde}–${h[i].stunde + 1} Uhr</b><br>${zahl(h[i].einspeisung_kwh, 2)} kWh Einspeisung (Prognose)<br>${zahl(h[i].preis_rp, 1)} Rp./kWh${h[i].stopp ? "<br><b>Stopp</b>" : ""}`,
+    });
+  }
+  const m = (a.monate || []).slice(-6);
+  const MN = ["Jan.", "Feb.", "März", "April", "Mai", "Juni", "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez."];
+  $("ab-tabelle").innerHTML = `<thead><tr><th>Monat</th><th>Stopp-Tage</th><th>Std.</th><th>kWh Stopp</th><th>Einsp.</th></tr></thead><tbody>`
+    + m.map(x => `<tr><td>${MN[+x.monat.slice(5) - 1]} ${x.monat.slice(2, 4)}</td><td>${x.stopp_tage}</td><td>${zahl(x.stopp_h, 1)}</td><td>${zahl(x.stopp_kwh, 1)}</td><td>${zahl(x.einspeisung_kwh, 0)}</td></tr>`).join("") + "</tbody>";
+  $("ab-erkl").textContent = a.erklaerung + " Rückblick aus deinen Messwerten: Stunden, in denen der Börsenpreis unter der Schwelle lag, und was du in dieser Zeit eingespeist hast.";
+}
+
 /* ======================= Mehr: Speicher, Anlage ======================= */
 function speicherZeichnen() {
   const s = D.speicher;
@@ -660,7 +688,7 @@ function speicherZeichnen() {
 /* ======================= Laden ======================= */
 function zeichnen() {
   flussZeichnen(); kpisZeichnen(); prognoseZeichnen(); preisZeichnen(); warnungZeichnen();
-  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen(); werZeichnen(); steuerungZeichnen(); geraeteZeichnen(); verguetungZeichnen();
+  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen(); werZeichnen(); steuerungZeichnen(); geraeteZeichnen(); verguetungZeichnen(); abregelungZeichnen();
 }
 function serverZeichnen() {
   const sv = D.status && D.status.server;
@@ -682,7 +710,7 @@ async function minute() {
   kpisZeichnen(); verlauf24Zeichnen(); amortZeichnen(); steuerungZeichnen(); geraeteZeichnen();
 }
 async function selten() {
-  for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"], ["berater", "berater"], ["zuordnung", "zuordnung"], ["steuerung", "steuerung"], ["verguetung", "verguetung"]]) {
+  for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"], ["berater", "berater"], ["zuordnung", "zuordnung"], ["steuerung", "steuerung"], ["verguetung", "verguetung"], ["abregelung", "abregelung"]]) {
     try { D[k] = await holen(p); } catch {}
   }
   zeichnen();
