@@ -252,6 +252,27 @@ rest:
         unique_id: homi_minuspreise_morgen
         value_template: "{{ (value_json.morgen.minuspreis_bloecke | join(', ') if value_json.morgen.minuspreis_bloecke else 'keine') if value_json.morgen else 'noch offen' }}"
         icon: mdi:cash-minus
+  - resource: http://127.0.0.1:8099/api/abregelung
+    scan_interval: 900
+    sensor:
+      - name: Abregelung heute
+        unique_id: homi_abregelung_heute
+        value_template: "{{ value_json.heute.stopps | join(', ') if value_json.heute.stopps else 'kein Stopp' }}"
+        availability: "{{ value_json is defined and (value_json.heute is defined and value_json.heute) }}"
+        icon: mdi:transmission-tower-off
+        json_attributes_path: "$.heute"
+        json_attributes: [stopp_h, betroffen_kwh, ohne_stopp_chf, schwelle_rp, einspeisung_kwh]
+      - name: Abregelung morgen
+        unique_id: homi_abregelung_morgen
+        value_template: "{{ (value_json.morgen.stopps | join(', ') if value_json.morgen.stopps else 'kein Stopp') if value_json.morgen else 'noch offen' }}"
+        availability: "{{ value_json is defined and value_json.startet is not defined }}"
+        icon: mdi:transmission-tower-off
+      - name: Abregelung Stunden diesen Monat
+        unique_id: homi_abregelung_monat_h
+        value_template: "{{ (value_json.monate | last).stopp_h if value_json.monate else 0 }}"
+        availability: "{{ value_json is defined and value_json.startet is not defined }}"
+        unit_of_measurement: h
+        icon: mdi:timer-off-outline
   - resource: http://127.0.0.1:8099/api/wochenbericht
     scan_interval: 3600
     sensor:
