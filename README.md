@@ -525,6 +525,11 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   (mit Rolle), «Minuspreis-Warnung abonniert», Klicks auf «Jetzt anmelden» und «Investoren-Gespräch». CSP von
   homi.solar erlaubt stats.biber.solar. Löschen nach 25 Monaten: `umami/aufraeumen.sh` (Timer `umami-aufraeumen`,
   monatlich). Backup: Datenbank-Auszug im Gesamt-Backup. Wöchentliches Image-Update inkl. Prüfung `/api/heartbeat`.
+- **UniFi-Controller** (`unifi/`, seit 05.11.2026): UniFi Network Application (`jacobalberty/unifi`, Netz host) für den
+  Access Point UAP-AC-Pro – WLAN «homi» im Heimnetz 192.168.1.0/24 (gleiches Netz wie Fronius und homi), u. a. für die
+  Infrarotheizung im Dachstock. Oberfläche https://192.168.1.23:8443, nur im Heimnetz (Firewall: 8080/8443/3478/10001
+  nur aus 192.168.1.0/24). Daten in `unifi/data` (nicht im Repo). Der AP läuft auch ohne Controller weiter.
+  Wöchentliches Image-Update inkl. Prüfung `/status`.
 - **Datenschutzerklärung homi** (`energy/www/datenschutz.html`, https://homi.solar/datenschutz.html): gilt für
   homi.solar, biber.solar und alle Seiten mit Anmeldung; verlinkt aus Formularen, Fuss von homi.solar, Login-Seite,
   App (Tab «Mehr») und Retro-Seite. biber.solar hat eine eigene, verweist für homi hierher.
