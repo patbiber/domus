@@ -1,0 +1,23 @@
+# UniFi Network Application (Controller) für den Access Point UAP-AC-Pro (05.11.2026, Wunsch Patrick):
+# WLAN «homi» im Heimnetz 192.168.1.0/24 (gleiches Netz wie Fronius und homi), u. a. für die Infrarotheizung im Dachstock.
+# Ältere UniFi-APs lassen sich nur über einen Controller einrichten. Der AP läuft auch weiter, wenn der Controller aus ist.
+# Oberfläche: https://192.168.1.23:8443 (nur im Heimnetz; Router leitet nichts weiter, Firewall erlaubt nur 192.168.1.0/24).
+# Netz: host, damit der AP den Controller per Broadcast (UDP 10001) findet und unter 192.168.1.23:8080 meldet.
+# Daten (Konfiguration, eingebaute MongoDB, Auto-Backups): ./data (nicht im Repo).
+services:
+  unifi:
+    container_name: unifi
+    image: jacobalberty/unifi:latest
+    restart: unless-stopped
+    network_mode: host
+    init: true
+    environment:
+      TZ: Europe/Zurich
+      JVM_MAX_HEAP_SIZE: 768M          # NUC hat 7 GB RAM; der Controller braucht für einen AP wenig
+    volumes:
+      - ./data:/unifi
+    logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

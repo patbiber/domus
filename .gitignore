@@ -60,3 +60,6 @@ umami/data/
 
 # Gerenderter homi-Film (gross, jederzeit mit film/render.sh neu erzeugbar)
 film/out/
+
+# UniFi-Controller: Konfiguration, Datenbank, Backups
+unifi/data/
