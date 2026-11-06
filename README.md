@@ -549,7 +549,7 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
 - **Pi-hole** (`pihole/`, seit 06.11.2026): DNS- und DHCP-Server fürs Heimnetz, blockiert Werbung und Tracker für alle
   Geräte. Die Sunrise-Box lässt den DNS-Server nicht ändern, darum ist **ihr DHCP aus** und Pi-hole verteilt die Adressen
   (Pool .50–.250, 24 h, Gateway .1, DNS 192.168.1.23). Feste Adressen (Fronius .221, myStrom .211, Heizung .103,
-  UniFi-AP .94, Ubiquiti .196, Kühlschrank .61, Chromecast .26, Belkin .141) stehen in `pihole/compose.yml`
+  UniFi-AP .94, Ubiquiti .196, Kühlschrank .61, Chromecast .26, Belkin .141, Hue-Bridge .229) stehen in `pihole/compose.yml`
   (`FTLCONF_dhcp_hosts`). Oberfläche http://192.168.1.23:8053/admin (Passwort `PIHOLE_PASSWORT` in `.env`), nur aus
   192.168.1.0/24 (Firewall). Netz host (DHCP braucht Broadcasts), DNS nur auf eno1 gebunden, weil systemd-resolved
   127.0.0.53 hält. Blocklisten: Standard (Werbung/Tracker) + Erwachsenen-Seiten (StevenBlack porn-only, Wunsch
