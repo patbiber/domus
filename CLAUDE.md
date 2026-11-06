@@ -4,6 +4,7 @@ Home-System auf einem Intel NUC (Ubuntu Server). Jeder Dienst hat einen eigenen 
 
 ## Arbeitsweise
 - Nach jeder funktionierenden Änderung **lokal committen, aber nicht selbst pushen**. Patricks Wunsch (21.10.2026): GitHub bekommt die Commits nur gesammelt einmal am Abend, zu einer zufälligen Zeit zwischen 20:00 und 22:00 – das macht der Timer `github-abend` (`system/github-abend.py`, setzt die Zeitstempel ins Abendfenster). Kein `git push` von Hand, auch nicht bei biber.solar.
+- EnergyHub Academy: eigenes Repo in `academy/repo` (nicht in domus committen), nach Änderungen `academy/update.sh`. Inhalte immer Englisch und Französisch.
 - biber.solar: Änderungen in `biber-solar-test/site` (Vorschau test.biber.solar) committen; nach Patricks «ok» mit `git -C biber-solar-test/site branch -f freigegeben main` freigeben und `biber-solar/update.sh` ausführen – live geht es sofort vom NUC, GitHub bekommt es am Abend.
 - Commit-Messages auf Deutsch.
 - Antworten an den Nutzer auf Deutsch.
@@ -23,6 +24,6 @@ Home-System auf einem Intel NUC (Ubuntu Server). Jeder Dienst hat einen eigenen 
 - Jede `compose.yml` begrenzt das Docker-Log (`logging:` json-file, 3 × 10 MB).
 - Neue oder fertige homi-Funktionen immer auch auf der Verkaufsseite homi.solar (`energy/www/`) nachtragen (Status ehrlich: live / bald), danach `?v=` hochzählen.
 - Zweisprachig (seit 21.10.2026): homi.solar und biber.solar haben je eine englische Fassung unter `/en/` (homi: `energy/www/en/index.html`, `en/privacy.html`; Texte in `energy/www/app.js` über `tr(deutsch, englisch)`). Deutsche Texte immer zusammen mit der englischen Fassung ändern. Umschalter oben rechts (Schweizer Wappen / Globus), «/» leitet bei nicht-deutscher Browsersprache nach `/en/` um (homi: `energy/server.py`, biber.solar: `biber-solar*/nginx.conf`), kein Cookie.
-- Datenschutz: Jede Seite mit Anmeldung (heute und künftig, z. B. `<name>.homi.solar`, home.biber.solar, Login) verlinkt `https://homi.solar/datenschutz.html`. Neue Datenbearbeitungen (Felder, Dienste Dritter, Aufbewahrung) dort nachtragen, bevor sie live gehen.
-- Webstatistik Umami (`umami/`, stats.biber.solar) nur auf öffentlichen Seiten (biber.solar, homi.solar), nie auf Seiten mit Anmeldung. Session-Replay und Heatmaps in Umami nicht einschalten (widerspräche der Datenschutzerklärung).
+- Datenschutz: Ausnahme EnergyHub Academy (academy.biber.solar, Auftrag MPower) – eigene Datenschutzerklärung `/privacy` im Academy-Repo (seit 06.11.2026). Sonst: Jede Seite mit Anmeldung (heute und künftig, z. B. `<name>.homi.solar`, home.biber.solar, Login) verlinkt `https://homi.solar/datenschutz.html`. Neue Datenbearbeitungen (Felder, Dienste Dritter, Aufbewahrung) dort nachtragen, bevor sie live gehen.
+- Webstatistik Umami (`umami/`, stats.biber.solar) nur auf öffentlichen Seiten (biber.solar, homi.solar), nie auf Seiten mit Anmeldung (auch nicht in der Academy). Session-Replay und Heatmaps in Umami nicht einschalten (widerspräche der Datenschutzerklärung).
 - Docker-Images werden wöchentlich automatisch aktualisiert (`system/image-update.sh`, mit HA-Backup, Prüfung und Zurückrollen). Manuelle Image-Updates nur über dieses Skript.

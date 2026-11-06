@@ -41,8 +41,11 @@ UMAMI_TEIL=()
 if docker exec umami-db pg_dump -U umami umami 2>/dev/null | gzip > "$ARBEIT/umami.sql.gz" && [ -s "$ARBEIT/umami.sql.gz" ]; then
   UMAMI_TEIL=(umami.sql.gz)
 fi
+# EnergyHub Academy: in sich stimmige Kopie der SQLite-Datenbank (academy/data/snapshot/), danach ganz academy/data
+docker exec academy python3 -c "import os,sqlite3; os.makedirs('/data/snapshot',exist_ok=True); s=sqlite3.connect('/data/academy.db'); d=sqlite3.connect('/data/snapshot/academy.db'); s.backup(d); d.close()" 2>/dev/null \
+  || echo "Hinweis: Academy-Datenbank nicht kopiert (Container academy läuft nicht?)"
 HA=$(ls -t "$DOMUS"/backups/homeassistant-*.tar.gz 2>/dev/null | head -1 || true)
-TEILE=(.env energie/data login/data energy/abos energy/anfragen proxy/conf.d proxy/certbot/conf strompreise/data)
+TEILE=(.env energie/data login/data energy/abos energy/anfragen proxy/conf.d proxy/certbot/conf strompreise/data academy/data)
 [ -n "$HA" ] && TEILE+=("${HA#$DOMUS/}")
 # Code 1 = Datei hat sich beim Packen geändert (homi schreibt laufend, z. B. speicher.json über .tmp) – nur
 # eine Warnung, das Archiv ist trotzdem brauchbar (Probe-Entschlüsselung unten). Erst ab Code 2 ist tar gescheitert.

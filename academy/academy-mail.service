@@ -1,0 +1,6 @@
+[Unit]
+Description=EnergyHub Academy: Mails verschicken
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/academy/academy-mail.py

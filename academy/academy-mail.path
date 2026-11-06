@@ -1,0 +1,10 @@
+# Startet academy-mail.service, sobald die Academy eine Mail in den Ausgang legt
+[Unit]
+Description=EnergyHub Academy: Mail-Ausgang beobachten
+
+[Path]
+PathExistsGlob=%h/domus/academy/data/outbox/*.json
+Unit=academy-mail.service
+
+[Install]
+WantedBy=default.target
