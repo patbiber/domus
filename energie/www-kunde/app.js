@@ -624,6 +624,35 @@ $("geraete-karten").addEventListener("click", async e => {
   } catch { b.textContent = "Fehler"; }
 });
 
+/* ======================= Übersicht: Infrarotheizung (Tuya) ======================= */
+function heizungZeichnen() {
+  const d = D.heizung;
+  $("heizung").hidden = !d || !d.aktiv;
+  if (!d || !d.aktiv) return;
+  const l = d.live || {}, v = d.vorgabe || {}, k = d.kuscheln || {}, n = d.naechster || {};
+  const grad = c => c == null ? "aus" : `${zahl(c, c % 1 ? 1 : 0)} °C`;
+  $("heizung").classList.toggle("an", !!l.an); $("heizung").classList.toggle("kuschel", !!k.aktiv);
+  $("hz-name").textContent = d.name;
+  $("hz-plan").textContent = (d.plan || []).map(p => `${p.ab} ${grad(p.soll_c)}`).join(" · ");
+  $("hz-ist").textContent = l.erreichbar === false ? "Heizung nicht erreichbar" : l.ist_c != null ? `${zahl(l.ist_c, 1)} °C im Raum` : "–";
+  $("hz-grund").textContent = v.grund || "\u00a0";
+  $("hz-soll").textContent = l.erreichbar ? (l.an ? grad(l.soll_c) : "aus") : "–";
+  $("hz-naechst").textContent = k.aktiv ? `Kuscheln bis ${k.bis.slice(11, 16)}` : n.zeit ? `${n.zeit.slice(11, 16)} → ${grad(n.soll_c)}` : "–";
+  $("hz-kuscheln").textContent = k.aktiv ? `Kuscheln beenden (läuft bis ${k.bis.slice(11, 16)})` : `Kuscheln · ${k.soll_c} °C für ${k.stunden} Stunden`;
+  $("hz-regel").textContent = d.regel;
+}
+$("hz-kuscheln").addEventListener("click", async e => {
+  const b = e.currentTarget, an = !(D.heizung && D.heizung.kuscheln && D.heizung.kuscheln.aktiv);
+  b.disabled = true;
+  try {
+    const r = await fetch("api/heizung", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kuscheln: an }) });
+    if (!r.ok) throw new Error();
+    D.heizung = await r.json(); heizungZeichnen();
+    setTimeout(async () => { try { D.heizung = await holen("heizung"); heizungZeichnen(); } catch {} }, 4000);
+  } catch { b.textContent = "Fehler – nochmals versuchen"; }
+  b.disabled = false;
+});
+
 /* ======================= Strompreis: Vergütung ab 2027 ======================= */
 function verguetungZeichnen() {
   const v = D.verguetung;
@@ -688,7 +717,7 @@ function speicherZeichnen() {
 /* ======================= Laden ======================= */
 function zeichnen() {
   flussZeichnen(); kpisZeichnen(); prognoseZeichnen(); preisZeichnen(); warnungZeichnen();
-  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen(); werZeichnen(); steuerungZeichnen(); geraeteZeichnen(); verguetungZeichnen(); abregelungZeichnen();
+  verlauf24Zeichnen(); verlaufZeichnen(); boerseZeichnen(); planZeichnen(); speicherZeichnen(); amortZeichnen(); beraterZeichnen(); werZeichnen(); steuerungZeichnen(); geraeteZeichnen(); heizungZeichnen(); verguetungZeichnen(); abregelungZeichnen();
 }
 function serverZeichnen() {
   const sv = D.status && D.status.server;
@@ -707,7 +736,8 @@ async function minute() {
   try { const r = await holen(`archiv?aufloesung=tag&von=${iso(new Date())}&bis=${iso(new Date())}`); D.heute = r.zeilen[0] || null; } catch {}
   try { D.steuerung = await holen("steuerung"); } catch {}
   try { D.geraete = await holen("geraete"); } catch {}
-  kpisZeichnen(); verlauf24Zeichnen(); amortZeichnen(); steuerungZeichnen(); geraeteZeichnen();
+  try { D.heizung = await holen("heizung"); } catch {}
+  kpisZeichnen(); verlauf24Zeichnen(); amortZeichnen(); steuerungZeichnen(); geraeteZeichnen(); heizungZeichnen();
 }
 async function selten() {
   for (const [k, p] of [["boerse", "boerse"], ["ein", "einspeisung"], ["prog", "prognose"], ["speicher", "speicher"], ["amort", "amortisation"], ["berater", "berater"], ["zuordnung", "zuordnung"], ["steuerung", "steuerung"], ["verguetung", "verguetung"], ["abregelung", "abregelung"]]) {

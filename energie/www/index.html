@@ -127,6 +127,9 @@
   .g-knoepfe { display: flex; gap: 4px; margin-top: 6px; }
   .g-knoepfe button { flex: 1; font: bold 12px "Courier New", Courier, monospace; padding: 4px 0; background: #000; color: var(--grey); border: 2px solid #333; cursor: pointer; }
   .g-knoepfe button.an { color: #000; background: var(--yellow); border-color: var(--yellow); }
+  /* Infrarotheizung: Ist-Temperatur, Kuschel-Knopf */
+  .heiz .v { color: var(--cyan); } .heiz.an .v { color: #ff9944; } .heiz.kuschel { border-color: #ff66aa; }
+  .heiz.kuschel .v { color: #ff66aa; } #b-kuscheln.an { color: #000; background: #ff66aa; border-color: #ff66aa; }
   .charts { margin-top: 10px; display: grid; gap: 8px; }
   .legend { font-size: 12px; color: var(--grey); display: flex; flex-wrap: wrap; gap: 4px 14px; }
   .legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: -1px; }
@@ -188,6 +191,8 @@
       <div class="stat abreg" id="t-abreg" title="Abregelung nach dem Modell ab 2027: Stunden, in denen der Börsenpreis unter der Abregelschwelle liegt"><div class="k">Abregelung ab 2027 · Stopps</div><div class="v" id="s-abreg">–</div><div class="s" id="s-abreg2">&nbsp;</div><div class="fahrplan" id="s-abreg3"></div></div>
       <div class="stat verg" id="t-verg" title="Abnahmevergütung ab 2027: Wert deiner Einspeisung je Modell im laufenden Quartal"><div class="k">Vergütung ab 2027 · Quartal</div><div class="v" id="s-verg">–</div><div class="s" id="s-verg2">&nbsp;</div></div>
       <div id="geraete"></div>
+      <div class="stat heiz" id="t-heiz" hidden title="Infrarotheizung: Zeitplan, Solarwärme und Kuschel-Knopf"><div class="k" id="s-heiz0">Heizung</div><div class="v" id="s-heiz">–</div><div class="s" id="s-heiz2">&nbsp;</div>
+        <div class="g-knoepfe"><button type="button" id="b-kuscheln">KUSCHELN 22 °C</button></div></div>
       <div class="stat batt"><div class="k">Batterie-Simulation</div><div class="v" id="s-batt">–</div><div class="s" id="s-batt2">&nbsp;</div></div>
       <div class="stat amort" title="Investition minus bisheriger Ertrag (selbst verbraucht × Bezugstarif + eingespeist × Rücklieferung), heutige Tarife"><div class="k">Anlage abbezahlt</div><div class="v" id="s-amort">–</div><div class="s" id="s-amort2">&nbsp;</div><span class="balken8"><i id="s-amort3" style="width:0"></i></span></div>
     </div>
@@ -545,6 +550,31 @@ $("geraete").addEventListener("click", async e => {
     if (!r.ok) throw new Error();
   } catch { b.textContent = "nur mit Passwort"; setTimeout(pollGeraete, 2500); return; }
   pollGeraete(); setTimeout(pollGeraete, 3000);
+});
+
+// Infrarotheizung (Tuya, lokal): Ist-Temperatur, Vorgabe von homi, Kuschel-Knopf – wie in der Kunden-Oberfläche
+let heiz = null;
+async function pollHeizung() {
+  try { heiz = await (await fetch("api/heizung", { cache: "no-store" })).json(); } catch { return; }
+  const t = $("t-heiz"); t.hidden = !heiz.aktiv; if (!heiz.aktiv) return;
+  const l = heiz.live || {}, v = heiz.vorgabe || {}, k = heiz.kuscheln || {}, n = heiz.naechster || {};
+  t.classList.toggle("an", !!l.an); t.classList.toggle("kuschel", !!k.aktiv);
+  t.title = heiz.regel;
+  $("s-heiz0").textContent = `${heiz.name} · Ist`;
+  $("s-heiz").textContent = l.erreichbar === false ? "nicht erreichbar" : l.ist_c != null ? `${l.ist_c.toFixed(1)} °C` : "–";
+  $("s-heiz2").textContent = (l.erreichbar ? (l.an ? `Soll ${l.soll_c} °C` : "aus") : "") + (v.grund ? ` · ${v.grund}` : "")
+    + (!k.aktiv && n.zeit ? ` · ${n.zeit.slice(11, 16)} → ${n.soll_c == null ? "aus" : n.soll_c + " °C"}` : "");
+  const b = $("b-kuscheln"); b.classList.toggle("an", !!k.aktiv);
+  b.textContent = k.aktiv ? `KUSCHELN BIS ${k.bis.slice(11, 16)} · BEENDEN` : `KUSCHELN ${k.soll_c} °C · ${k.stunden} H`;
+}
+$("b-kuscheln").addEventListener("click", async () => {
+  const b = $("b-kuscheln"), an = !(heiz && heiz.kuscheln && heiz.kuscheln.aktiv);
+  b.textContent = "…";
+  try {
+    const r = await fetch("api/heizung", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kuscheln: an }) });
+    if (!r.ok) throw new Error();
+  } catch { b.textContent = "nur mit Passwort"; setTimeout(pollHeizung, 2500); return; }
+  pollHeizung(); setTimeout(pollHeizung, 4000);
 });
 
 // Verbraucher-Zuordnung (Schätzung aus dem Zähler): erkannte Heizleistung übernehmen, alle 30 Minuten
@@ -1317,6 +1347,7 @@ pollBerater(); setInterval(pollBerater, 60 * 60000);
 try { sessionStorage.removeItem("homi-neuladen"); } catch {}   // Neuladen-Seite: Wartezeit wieder von vorne
 pollSteuerung(); setInterval(pollSteuerung, 15000);
 pollGeraete(); setInterval(pollGeraete, 15000);
+pollHeizung(); setInterval(pollHeizung, 30000);
 pollZuordnung(); setInterval(pollZuordnung, 1800000);
 pollVerguetung(); setInterval(pollVerguetung, 10 * 60000);
 pollWoche(); setInterval(pollWoche, 60 * 60000);
