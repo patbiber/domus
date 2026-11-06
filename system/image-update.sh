@@ -8,7 +8,7 @@
 # Aufruf: system/image-update.sh   (Timer domus-image-update, Montag 04:15)
 set -uo pipefail
 cd "$(dirname "$0")/.."
-PROJEKTE=(homeassistant proxy energie biber-solar biber-solar-test training energy umami unifi)
+PROJEKTE=(homeassistant proxy energie biber-solar biber-solar-test training energy umami unifi pihole)
 bericht=""
 fehler=0
 geaendert=0
@@ -34,6 +34,7 @@ gesund() {    # gesund <projekt>: 0 = läuft, sonst Fehler; wartet bis 5 Minuten
                      docker exec nginx wget -q -O /dev/null "http://$(cd "$p" && docker compose ps --format '{{.Name}}' | head -1)/" 2>/dev/null && return 0 ;;
       umami)         docker exec nginx wget -q -O - http://umami:3000/api/heartbeat 2>/dev/null | grep -q ok && return 0 ;;
       unifi)         curl -sk -m 5 https://127.0.0.1:8443/status | grep -q '"up":true' && return 0 ;;
+      pihole)        dig +short +time=3 @192.168.1.23 biber.solar | grep -q . && return 0 ;;
       proxy)         [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' --resolve domus.biber.solar:443:127.0.0.1 https://domus.biber.solar/)" = 200 ] \
                        && [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' --resolve home.biber.solar:443:127.0.0.1 https://home.biber.solar/)" = 401 ] \
                        && [ "$(docker inspect -f '{{.State.Running}}' certbot)" = true ] && return 0 ;;

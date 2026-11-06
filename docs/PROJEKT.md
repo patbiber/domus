@@ -252,6 +252,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 15.10.2026 | homi.solar neu: kurz, ohne Preise, alle (auch geplanten) Funktionen, Plattform-/Technik- und Investoren-Teil, Anmeldung mit Systemangaben per Mail |
 | 25.10.2026 | Claude-Hauptsitzung mit Autostart ersetzt den Remote-Control-Spawn-Dienst |
 | 05.11.2026 | UniFi-AP (WLAN «homi», Controller `unifi/`), Infrarotheizung lokal in homi: Zeitplan, Solarwärme bei Überschuss/Minuspreis, Kuschel-Knopf (Retro, App, Home Assistant, homi.solar) |
+| 06.11.2026 | Pi-hole (`pihole/`) als DNS-Werbeblocker fürs Heimnetz, nur aus dem LAN erreichbar |
 | 04.11.2026 | Nach dem Solar-Manager-Webinar: Abregel-Übersicht ab 2027 (Retro, App, Home Assistant), Herkunftsnachweise nach Sommer/Winter und ohne Zuschlag bei Minuspreisen |
 
 ## 8. Offene Punkte

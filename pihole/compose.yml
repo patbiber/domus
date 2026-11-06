@@ -1,0 +1,34 @@
+# Pi-hole (https://pi-hole.net): DNS-Server fürs Heimnetz, der Werbung und Tracker für alle Geräte blockiert (06.11.2026).
+# DNS: 192.168.1.23:53 (nur im Heimnetz; Router leitet nichts weiter, Firewall erlaubt nur 192.168.1.0/24).
+# Oberfläche: http://192.168.1.23:8053/admin, Passwort PIHOLE_PASSWORT in ../.env.
+# Nach oben fragt Pi-hole Cloudflare (1.1.1.1/1.0.0.1) – wie der NUC selbst. Der NUC fragt bewusst weiter direkt
+# Cloudflare, damit Updates und Zertifikate nicht von Pi-hole abhängen.
+# Bridge-Netz mit fester IP statt host: Port 53 auf dem NUC belegt systemd-resolved (127.0.0.53). Docker leitet per
+# NAT weiter, Pi-hole sieht trotzdem die echten Geräte-IPs.
+# Daten (Einstellungen, Listen, Abfrage-Statistik): ./data (nicht im Repo).
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    restart: unless-stopped
+    ports:
+      - "192.168.1.23:53:53/tcp"
+      - "192.168.1.23:53:53/udp"
+      - "192.168.1.23:8053:80/tcp"
+    environment:
+      TZ: Europe/Zurich
+      FTLCONF_webserver_api_password: ${PIHOLE_PASSWORT}
+      FTLCONF_dns_listeningMode: all           # Anfragen kommen über die Docker-Brücke, nicht aus dem eigenen Netz
+      FTLCONF_dns_upstreams: "1.1.1.1;1.0.0.1"
+      FTLCONF_dns_dnssec: "true"
+      FTLCONF_ntp_sync_active: "false"         # Uhrzeit stellt der NUC selbst
+      FTLCONF_ntp_ipv4_active: "false"         # kein NTP-Server
+      FTLCONF_ntp_ipv6_active: "false"
+      FTLCONF_misc_nice: "-999"                # Priorität nicht ändern (bräuchte zusätzliche Rechte)
+    volumes:
+      - ./data:/etc/pihole
+    logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
