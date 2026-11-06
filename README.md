@@ -546,6 +546,10 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   Infrarotheizung im Dachstock. Oberfläche https://192.168.1.23:8443, nur im Heimnetz (Firewall: 8080/8443/3478/10001
   nur aus 192.168.1.0/24). Daten in `unifi/data` (nicht im Repo). Der AP läuft auch ohne Controller weiter.
   Wöchentliches Image-Update inkl. Prüfung `/status`.
+- **LG-Kühlschrank** (seit 06.11.2026, 192.168.1.61, Modell 2RES1VE61NFWC): lokal alle Ports zu, darum über die
+  offizielle HA-Integration **LG ThinQ** (Cloud, Land CH, persönlicher Schlüssel von connect-pat.lgthinq.com, nur in
+  `homeassistant/config/.storage`). Liefert Tür offen/zu, Soll-Temperatur Kühl/Gefrier (änderbar), Express-Modus und
+  Benachrichtigungen – keine Ist-Temperatur, keinen Verbrauch.
 - **Pi-hole** (`pihole/`, seit 06.11.2026): DNS- und DHCP-Server fürs Heimnetz, blockiert Werbung und Tracker für alle
   Geräte. Die Sunrise-Box lässt den DNS-Server nicht ändern, darum ist **ihr DHCP aus** und Pi-hole verteilt die Adressen
   (Pool .50–.250, 24 h, Gateway .1, DNS 192.168.1.23). Feste Adressen (Fronius .221, myStrom .211, Heizung .103,
