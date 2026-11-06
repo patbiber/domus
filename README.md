@@ -457,7 +457,7 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   - **Container mit wenig Rechten (seit 22.10.2026):** `energie` und `energy` mit `no-new-privileges`, `cap_drop: ALL`,
     nur `CAP_DAC_OVERRIDE` (Schreiben in Datenordner von claude); Formular homi.solar: einzeilige Felder ohne
     Zeilenumbrüche (`zeile()`/`einzeilig()` in `energy/server.py`), Mail-Betreff immer einzeilig.
-  - **Schutz gegen gefälschte Anfragen (CSRF, seit 21.10.2026):** POST auf `/api/steuerung`, `/api/geraete`, `/api/push`
+  - **Schutz gegen gefälschte Anfragen (CSRF, seit 21.10.2026):** POST auf `/api/steuerung`, `/api/geraete`, `/api/heizung`, `/api/push`
     nur mit `Content-Type: application/json` und – falls der Browser sie schickt – `Origin` = eigene Seite und
     `Sec-Fetch-Site` same-origin; sonst 403 und Eintrag «Abgewiesen (fremde Herkunft)» im Log. Grund: bei
     home.biber.solar schickt der Browser das Basic-Auth-Passwort auch bei heimlich abgesendeten fremden Formularen mit.
@@ -489,6 +489,19 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   Viertelstundenpreise pro Stunde. Überall: App-Karte «Vergütung ab 2027» (Tab Strompreis), Retro-Kachel, HA
   `sensor.vergutung_abregelschwelle_2027` und `sensor.vergutung_referenz_marktpreis_quartal`.
   Offen bei der GWS: intelligenter Zähler (Lastgang)? Rückliefertarif 2027?
+- **Infrarotheizung** (`energie/homi/heizung.py` + `tuya.py`, `/api/heizung`, seit 05.11.2026): «Yoga-Heizung
+  Dachstock» (Tuya «Smart XL», 650 W, im WLAN «homi» des UniFi-AP, 192.168.1.103, MAC 2c:f4:32:6c:eb:f0 – bei
+  Adresswechsel sucht homi die MAC in der ARP-Tabelle). homi spricht sie **lokal** an (Tuya 3.3, Port 6668, AES in reinem
+  Python, keine Cloud, keine Zusatzbibliothek); Local Key in `.env` (`TUYA_HEIZUNG_KEY`, ausgelesen einmalig mit tinytuya
+  über das Tuya-IoT-Projekt). Nicht zusätzlich mit Tuya Local in HA einbinden – die Heizung erlaubt nur eine lokale
+  Verbindung. Konfiguration `anlage.json` → `heizung`: Zeitplan (Patrick 05.11.2026: 05:15 18 °C, 06:10 aus, 17:00 18 °C,
+  21:00 15 °C, jeden Tag), **Solarwärme** (Überschuss ≥ 800 W im 2-Minuten-Mittel, Heizung herausgerechnet, oder
+  negativer Börsenpreis → 20 °C, wenn der Plan weniger vorsieht; aus unter 200 W; mind. 10 min zwischen Wechseln) und
+  **Kuschel-Knopf** (22 °C für 2 h, nochmals drücken = beenden). Vorrang Kuscheln > Solarwärme > Plan. homi schreibt nur
+  bei einem Wechsel der Vorgabe – von Hand oder in Smart Life Verstelltes bleibt bis zum nächsten Wechsel; fällt homi
+  aus, bleibt die letzte Einstellung. Protokoll/Kuscheln in `data/heizung.json`. Überall: Retro-Kachel, App-Karte
+  (Übersicht), HA `sensor.heizung`, `sensor.heizung_raumtemperatur`, `sensor.heizung_solltemperatur`,
+  `switch.heizung_kuscheln`; nginx erlaubt `POST /api/heizung` (nur angemeldet).
 - **Smarte Steckdosen** (`energie/homi/geraete.py`, `/api/geraete`, seit 18.10.2026): myStrom WiFi Switch v2
   (MAC FCF5C419ED7C, zuletzt 192.168.1.211 per DHCP – homi sucht sie bei Adresswechsel über die MAC; WLAN-Aussetzer
   werden erst nach 30 s als «nicht erreichbar» gemeldet). Konfiguration in `energie/anlage.json` → `geraete`,
