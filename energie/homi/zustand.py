@@ -17,4 +17,6 @@ geraete = None                     # smarte Steckdosen (geraete.py)
 
 heizung = None                     # Infrarotheizung (heizung.py)
 
+kuehlschrank = {"tuer": None, "seit": None}   # Tür des LG-Kühlschranks, meldet Home Assistant (LG ThinQ)
+
 steuerung = None                   # Wechselrichter-Steuerung (Testmodus), siehe steuerung.py

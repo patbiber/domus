@@ -151,6 +151,9 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/heizung":
             with lock:
                 return self.send_json(zustand.heizung.report())
+        if path == "/api/kuehlschrank":
+            k = zustand.kuehlschrank
+            return self.send_json({**k, "offen_s": round(time.time() - k["seit"]) if k["tuer"] == "offen" else 0})
         if path == "/api/steuerung":
             with lock:
                 return self.send_json(zustand.steuerung.report(state["status"], state["modbus"]))
@@ -198,7 +201,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         """App-Push: {"aktion": "anmelden"|"abmelden"|"lesen"|"test", "abo": PushSubscription, "themen": [...]}"""
-        if self.path in ("/api/steuerung", "/api/geraete", "/api/heizung", "/api/push") and not self.eigene_herkunft():
+        if self.path in ("/api/steuerung", "/api/geraete", "/api/heizung", "/api/kuehlschrank", "/api/push") and not self.eigene_herkunft():
             print(f"Abgewiesen (fremde Herkunft): {self.path} Origin={self.headers.get('Origin')} "
                   f"Sec-Fetch-Site={self.headers.get('Sec-Fetch-Site')} Content-Type={self.headers.get('Content-Type')}", flush=True)
             return self.send_error(403)
@@ -208,6 +211,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.post_geraete()
         if self.path == "/api/heizung":
             return self.post_heizung()
+        if self.path == "/api/kuehlschrank":
+            return self.post_kuehlschrank()
         if self.path != "/api/push":
             return self.send_error(405)
         try:
@@ -315,6 +320,23 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_error(400)
         print(f"Heizung: {d} von {von}", flush=True)
         return self.send_json(antwort)
+
+    def post_kuehlschrank(self):
+        """Tür des Kühlschranks: {"tuer": "offen"|"zu"} – nur von Home Assistant (LG ThinQ), nicht über die Webseiten.
+        Die Push-Warnung (Tür länger als 2 min offen) schickt push.py kuehlschrank (Timer, jede Minute)."""
+        if self.schalt_von() != "Home Assistant":
+            return self.send_error(403)
+        try:
+            tuer = self.json_body().get("tuer")
+            if tuer not in ("offen", "zu"):
+                raise ValueError
+        except (ValueError, AttributeError):
+            return self.send_error(400)
+        k = zustand.kuehlschrank
+        if k["tuer"] != tuer:
+            k.update(tuer=tuer, seit=time.time())
+            print(f"Kühlschrank: Tür {tuer}", flush=True)
+        return self.send_json(k)
 
     def post_steuerung(self):
         """Wechselrichter-Schalter: {"wr": "ein"|"aus"} und/oder {"regel": true|false} (Berechtigung: schalt_von)."""

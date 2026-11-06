@@ -10,6 +10,7 @@ Aufruf:
   push.py prognose                    19:00 (homi-prognose.service): Solarprognose für morgen, Minuspreise morgen
   push.py ausfall                     alle 5 min (Timer homi-push-ausfall): homi, Fronius oder Dienste ausgefallen?
                                       Server: RAM/Disk ab 85 %, CPU 10 min über 95 %
+  push.py kuehlschrank                jede Minute (Timer homi-push-kuehlschrank): Kühlschranktür seit 2 min offen?
   push.py wochenbericht               Montag 08:00 (homi-wochenbericht.service): die letzte Woche in einem Satz
   push.py test                        Testnachricht an die Geräte, die auf der Seite «Test» gedrückt haben
   push.py senden <thema> <titel> <text>   beliebige Nachricht an alle Geräte mit diesem Thema
@@ -128,7 +129,7 @@ def senden_an(datei, abo, nachricht, schluessel, ttl=6 * 3600):
     req = urllib.request.Request(abo["endpoint"], data=daten, method="POST", headers={
         "Authorization": vapid_header(schluessel, abo["endpoint"]), "Content-Encoding": "aes128gcm",
         "Content-Type": "application/octet-stream", "TTL": str(ttl),
-        "Urgency": "high" if nachricht.get("thema") in ("minuspreis", "ausfall", "test") else "normal"})
+        "Urgency": "high" if nachricht.get("thema") in ("minuspreis", "ausfall", "kuehlschrank", "test") else "normal"})
     try:
         with urllib.request.urlopen(req, timeout=20):
             return True
@@ -264,6 +265,31 @@ def ausfall():
     os.replace(tmp, datei)
 
 
+def kuehlschrank():
+    """Tür des Kühlschranks (Home Assistant → homi) länger als 2 min offen: einmal warnen, beim Schliessen Entwarnung."""
+    datei = os.path.join(PUSH, "kuehlschrank.json")
+    try:
+        with open(datei, encoding="utf-8") as f:
+            gemeldet = json.load(f).get("gemeldet", False)
+    except (OSError, ValueError):
+        gemeldet = False
+    try:
+        k = api("kuehlschrank")
+    except (OSError, ValueError):
+        return                                   # homi weg: meldet push.py ausfall
+    offen_s = k.get("offen_s") or 0
+    if not gemeldet and offen_s >= 120:
+        an_alle("kuehlschrank", "🧊 Kühlschrank offen", f"Die Kühlschranktür ist seit {offen_s // 60} Minuten offen.", ttl=600)
+        gemeldet = True
+    elif gemeldet and k.get("tuer") == "zu":
+        an_alle("kuehlschrank", "✅ Kühlschrank zu", "Die Kühlschranktür ist wieder geschlossen.", ttl=600)
+        gemeldet = False
+    tmp = datei + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump({"gemeldet": gemeldet}, f)
+    os.replace(tmp, datei)
+
+
 def test():
     ordner = os.path.join(PUSH, "test")
     schluessel = vapid()
@@ -298,6 +324,8 @@ if __name__ == "__main__":
         ausfall()
     elif befehl == "wochenbericht":
         wochenbericht()
+    elif befehl == "kuehlschrank":
+        kuehlschrank()
     elif befehl == "test":
         test()
     elif befehl == "senden" and len(sys.argv) == 5:

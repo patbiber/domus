@@ -1,0 +1,11 @@
+# Jede Minute: Kühlschranktür seit 2 min offen? (Tür meldet Home Assistant über LG ThinQ an homi)
+[Unit]
+Description=homi: Kühlschrank-Push prüfen (jede Minute)
+
+[Timer]
+OnCalendar=*:*:30
+AccuracySec=5s
+Unit=homi-push@kuehlschrank.service
+
+[Install]
+WantedBy=timers.target

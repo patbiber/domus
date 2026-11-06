@@ -55,7 +55,7 @@ PROGNOSE_REFRESH_S = 3600
 
 PUSH_DIR = os.environ.get("PUSH_DIR", "/data/push")     # Push-Abos der App; Versand macht push.py auf dem Host
 
-PUSH_THEMEN = ["minuspreis", "prognose", "ausfall", "wochenbericht"]
+PUSH_THEMEN = ["minuspreis", "prognose", "ausfall", "wochenbericht", "kuehlschrank"]
 
 # Nur Adressen der bekannten Push-Dienste annehmen (Chrome/Android, Firefox, Safari/iOS, Edge)
 PUSH_HOSTS = re.compile(r"^(fcm\.googleapis\.com|[a-z0-9.-]+\.push\.services\.mozilla\.com|web\.push\.apple\.com"

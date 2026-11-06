@@ -550,6 +550,10 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   offizielle HA-Integration **LG ThinQ** (Cloud, Land CH, persönlicher Schlüssel von connect-pat.lgthinq.com, nur in
   `homeassistant/config/.storage`). Liefert Tür offen/zu, Soll-Temperatur Kühl/Gefrier (änderbar), Express-Modus und
   Benachrichtigungen – keine Ist-Temperatur, keinen Verbrauch.
+  **Tür-Warnung:** Automation `homi_kuehlschrank_tuer` (configuration.yaml, bei jeder Änderung und alle 5 min) meldet
+  die Tür per `rest_command.homi_kuehlschrank` an homi (`POST /api/kuehlschrank`, nur von HA auf 127.0.0.1;
+  `GET` zeigt Zustand und `offen_s`). Timer `homi-push-kuehlschrank` (jede Minute, `push.py kuehlschrank`) schickt nach
+  2 min offen einen Push «🧊 Kühlschrank offen» (Thema `kuehlschrank`, in der App abwählbar) und beim Schliessen «✅ zu».
 - **Pi-hole** (`pihole/`, seit 06.11.2026): DNS- und DHCP-Server fürs Heimnetz, blockiert Werbung und Tracker für alle
   Geräte. Die Sunrise-Box lässt den DNS-Server nicht ändern, darum ist **ihr DHCP aus** und Pi-hole verteilt die Adressen
   (Pool .50–.250, 24 h, Gateway .1, DNS 192.168.1.23). Feste Adressen (Fronius .221, myStrom .211, Heizung .103,
