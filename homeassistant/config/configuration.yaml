@@ -381,6 +381,32 @@ rest:
         value_template: "{{ value_json.geraete[0].heute.kwh }}"
         unit_of_measurement: kWh
         icon: mdi:counter
+  # Infrarotheizung (homi steuert sie lokal über Tuya: Zeitplan, Solarwärme, Kuscheln) – nicht zusätzlich mit Tuya Local
+  # einbinden, die Heizung erlaubt nur eine lokale Verbindung
+  - resource: http://127.0.0.1:8099/api/heizung
+    scan_interval: 60
+    sensor:
+      - name: Heizung
+        unique_id: homi_heizung
+        value_template: >-
+          {{ 'nicht erreichbar' if value_json.live.erreichbar == false else
+             ('Kuscheln' if value_json.kuscheln.aktiv else ((value_json.live.soll_c | string + ' °C') if value_json.live.an else 'aus')) }}
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false)) }}"
+        icon: mdi:radiator
+        json_attributes: [name, vorgabe, kuscheln, plan, naechster, regel, aktionen]
+      - name: Heizung Raumtemperatur
+        unique_id: homi_heizung_ist
+        value_template: "{{ value_json.live.ist_c }}"
+        availability: "{{ value_json is defined and (value_json.live.erreichbar | default(false)) }}"
+        unit_of_measurement: °C
+        device_class: temperature
+        state_class: measurement
+      - name: Heizung Solltemperatur
+        unique_id: homi_heizung_soll
+        value_template: "{{ value_json.live.soll_c if value_json.live.an else 0 }}"
+        availability: "{{ value_json is defined and (value_json.live.erreichbar | default(false)) }}"
+        unit_of_measurement: °C
+        device_class: temperature
   - resource: http://127.0.0.1:8099/api/berater
     scan_interval: 3600
     sensor:
@@ -458,6 +484,11 @@ rest_command:
     method: POST
     content_type: application/json
     payload: '{"regel": {{ "true" if an else "false" }}}'
+  homi_kuscheln:
+    url: http://127.0.0.1:8099/api/heizung
+    method: POST
+    content_type: application/json
+    payload: '{"kuscheln": {{ "true" if an else "false" }}}'
 
 template:
   - select:
@@ -475,6 +506,21 @@ template:
           - action: homeassistant.update_entity
             target: {entity_id: sensor.ladestation_handy}
   - switch:
+      - name: Heizung Kuscheln
+        unique_id: homi_heizung_kuscheln
+        icon: mdi:heart
+        state: "{{ (state_attr('sensor.heizung', 'kuscheln') or {}).aktiv | default(false) }}"
+        availability: "{{ state_attr('sensor.heizung', 'kuscheln') is not none }}"
+        turn_on:
+          - action: rest_command.homi_kuscheln
+            data: {an: true}
+          - action: homeassistant.update_entity
+            target: {entity_id: sensor.heizung}
+        turn_off:
+          - action: rest_command.homi_kuscheln
+            data: {an: false}
+          - action: homeassistant.update_entity
+            target: {entity_id: sensor.heizung}
       - name: Wechselrichter
         unique_id: homi_wechselrichter_schalter
         icon: mdi:solar-power-variant
