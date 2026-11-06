@@ -631,12 +631,15 @@ function heizungZeichnen() {
   if (!d || !d.aktiv) return;
   const l = d.live || {}, v = d.vorgabe || {}, k = d.kuscheln || {}, n = d.naechster || {};
   const grad = c => c == null ? "aus" : `${zahl(c, c % 1 ? 1 : 0)} °C`;
-  $("heizung").classList.toggle("an", !!l.an); $("heizung").classList.toggle("kuschel", !!k.aktiv);
+  $("heizung").classList.toggle("an", !!l.heizt); $("heizung").classList.toggle("kuschel", !!k.aktiv);
   $("hz-name").textContent = d.name;
   $("hz-plan").textContent = (d.plan || []).map(p => `${p.ab} ${grad(p.soll_c)}`).join(" · ");
   $("hz-ist").textContent = l.erreichbar === false ? "Heizung nicht erreichbar" : l.ist_c != null ? `${zahl(l.ist_c, 1)} °C im Raum` : "–";
   $("hz-grund").textContent = v.grund || "\u00a0";
-  $("hz-soll").textContent = l.erreichbar ? (l.an ? grad(l.soll_c) : "aus") : "–";
+  $("hz-soll").textContent = l.erreichbar ? (l.an ? grad(l.soll_c) + (l.heizt ? ` · heizt ~${watt(l.leistung_w)}` : " · heizt nicht") : "aus") : "–";
+  const h = d.heute || {}, w = d.woche || {};
+  $("hz-heute").textContent = `${zahl(h.kwh, 2)} kWh · ${h.kwh ? Math.round(100 * h.solar_kwh / h.kwh) : 0} % Solar`;
+  $("hz-woche").textContent = `${zahl(w.kwh, 1)} kWh · ${zahl(w.heiz_h, 1)} h geheizt`;
   $("hz-naechst").textContent = k.aktiv ? `Kuscheln bis ${k.bis.slice(11, 16)}` : n.zeit ? `${n.zeit.slice(11, 16)} → ${grad(n.soll_c)}` : "–";
   $("hz-kuscheln").textContent = k.aktiv ? `Kuscheln beenden (läuft bis ${k.bis.slice(11, 16)})` : `Kuscheln · ${k.soll_c} °C für ${k.stunden} Stunden`;
   $("hz-regel").textContent = d.regel;

@@ -12,6 +12,9 @@ aus_unter_w. Zwischen zwei Wechseln mindestens SPERRE_S.
 homi schreibt nur, wenn sich die Vorgabe ändert (und beim Start). Wer die Heizung von Hand oder in Smart Life
 verstellt, behält das bis zum nächsten Wechsel. Fällt homi aus, bleibt die Heizung bei der letzten Einstellung.
 Datenpunkte: 1 an/aus, 2 Soll (°C × 10), 3 Ist (°C × 10), 4 Modus («manual»).
+Verbrauch: Die Heizung meldet keine Leistung. homi nimmt an, dass sie heizt, wenn sie an ist und der Raum unter der
+Soll-Temperatur liegt (eingebauter Thermostat), und rechnet dann mit ihrer Nennleistung (w, am Zähler gemessen 650 W).
+Daraus kWh und Solaranteil pro Tag (wie bei den Steckdosen) – eine Schätzung, keine Messung.
 """
 import json
 import os
@@ -84,6 +87,7 @@ class Heizung:
             self.data = {}
         self.data.setdefault("aktionen", [])
         self.data.setdefault("kuscheln_bis", None)
+        self.data.setdefault("tage", {})
         self.live = {"erreichbar": None}
         self.vorgabe = None                                       # (an, °C, Grund) – was homi gerade will
         self.solar = False
@@ -143,7 +147,7 @@ class Heizung:
         return c is not None, c if c is not None else 0, f"Plan ab {ab}"
 
     def regeln(self):
-        werte, fehler, geschrieben = deque(), 0, None
+        werte, fehler, geschrieben, letzt_ts = deque(), 0, None, None
         while True:
             h = konfig()
             key = os.environ.get("TUYA_HEIZUNG_KEY", "")
@@ -176,10 +180,11 @@ class Heizung:
                 self.wecken.clear()
                 continue
             fehler = 0
-            an, soll_c = bool(dps.get("1")), (dps.get("2") or 0) / 10
+            an, soll_c, ist_c = bool(dps.get("1")), (dps.get("2") or 0) / 10, (dps.get("3") or 0) / 10
+            heizt = an and ist_c < soll_c
             # Überschuss ohne die Heizung selbst (läuft sie wegen Solarwärme, zählt ihre Leistung dazu)
             if status.get("fronius_ok"):
-                werte.append((jetzt_ts, -status["netz_w"] + (h.get("w", 650) if self.solar and an else 0)))
+                werte.append((jetzt_ts, -status["netz_w"] + (h.get("w", 650) if heizt else 0)))
             while werte and werte[0][0] < jetzt_ts - MITTEL_S:
                 werte.popleft()
             ueberschuss = sum(x for _, x in werte) / len(werte) if len(werte) >= 3 else None
@@ -202,10 +207,28 @@ class Heizung:
                         self.save()
                 except (OSError, ValueError) as e:
                     print("Heizung: Schalten fehlgeschlagen:", e, flush=True)
+            heizt = an and ist_c < soll_c                        # nach einem Schaltbefehl neu beurteilen
+            leistung = h.get("w", 650) if heizt else 0
+            dt = jetzt_ts - letzt_ts if letzt_ts else 0
+            letzt_ts = jetzt_ts
             with lock:
+                if 0 < dt <= 120:                                 # kWh und Solaranteil aufsummieren (geschätzt)
+                    tag = self.data["tage"].setdefault(jetzt.date().isoformat(), {"kwh": 0.0, "solar_kwh": 0.0, "heiz_h": 0.0})
+                    kwh = leistung * dt / 3.6e6
+                    bezug = max(status.get("netz_w") or 0, 0) if status.get("fronius_ok") else leistung
+                    tag["kwh"] += kwh
+                    tag["solar_kwh"] += kwh * (max(0.0, leistung - bezug) / leistung if leistung else 0)
+                    tag["heiz_h"] += dt / 3600 if heizt else 0
+                    for alt in sorted(self.data["tage"])[:-400]:
+                        del self.data["tage"][alt]
+                    if int(jetzt_ts) // 600 != int(jetzt_ts - dt) // 600:   # alle 10 Minuten sichern
+                        try:
+                            self.save()
+                        except OSError as e:
+                            print("Heizung nicht gespeichert:", e, flush=True)
                 self.vorgabe = (v_an, v_c, grund)
                 self.live = {"erreichbar": True, "ip": ip, "an": an, "soll_c": soll_c,
-                             "ist_c": (dps.get("3") or 0) / 10, "modus": dps.get("4"),
+                             "ist_c": ist_c, "modus": dps.get("4"), "heizt": heizt, "leistung_w": leistung,
                              "ueberschuss_w": None if ueberschuss is None else round(ueberschuss),
                              "zeit": jetzt.isoformat(timespec="seconds")}
             self.wecken.wait(TAKT_S)
@@ -226,9 +249,15 @@ class Heizung:
                     f"oder ist der Börsenpreis negativ, heizt homi auf {s.get('temp_c', 20)} °C, wenn der Plan weniger "
                     f"vorsieht; aus unter {s.get('aus_unter_w', 200)} W" if s else "")
                  + f". Kuscheln: {h.get('kuscheln_c', 22)} °C für {h.get('kuscheln_h', 2):g} Stunden, dann wieder nach Plan. "
-                   "homi stellt die Heizung nur bei einem Wechsel um – von Hand Verstelltes bleibt bis zum nächsten Wechsel.")
+                   "homi stellt die Heizung nur bei einem Wechsel um – von Hand Verstelltes bleibt bis zum nächsten Wechsel. "
+                   f"Verbrauch geschätzt: Die Heizung meldet keine Leistung; liegt der Raum unter der Soll-Temperatur, "
+                   f"rechnet homi mit {h.get('w', 650)} W.")
         v = self.vorgabe
-        return {"aktiv": True, "name": h["name"], "live": self.live,
+        tage = sorted(self.data["tage"].items())
+        rund = lambda t: {k: round(x, 3) for k, x in t.items()}
+        return {"aktiv": True, "name": h["name"], "live": self.live, "w": h.get("w", 650),
+                "heute": rund(self.data["tage"].get(jetzt.date().isoformat(), {"kwh": 0, "solar_kwh": 0, "heiz_h": 0})),
+                "woche": rund({k: sum(t[k] for _, t in tage[-7:]) for k in ("kwh", "solar_kwh", "heiz_h")}),
                 "vorgabe": {"an": v[0], "soll_c": v[1], "grund": v[2]} if v else None,
                 "kuscheln": {"aktiv": bool(kb and datetime.fromisoformat(kb) > jetzt), "bis": kb,
                              "soll_c": h.get("kuscheln_c", 22), "stunden": h.get("kuscheln_h", 2)},

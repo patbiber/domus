@@ -407,6 +407,21 @@ rest:
         availability: "{{ value_json is defined and (value_json.live.erreichbar | default(false)) }}"
         unit_of_measurement: °C
         device_class: temperature
+      - name: Heizung Leistung
+        unique_id: homi_heizung_w
+        value_template: "{{ value_json.live.leistung_w | default(0) }}"
+        availability: "{{ value_json is defined and (value_json.live.erreichbar | default(false)) }}"
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+      - name: Heizung heute
+        unique_id: homi_heizung_kwh
+        value_template: "{{ value_json.heute.kwh }}"
+        availability: "{{ value_json is defined and (value_json.aktiv | default(false)) }}"
+        unit_of_measurement: kWh
+        icon: mdi:counter
+        json_attributes_path: "$.heute"
+        json_attributes: [solar_kwh, heiz_h]
   - resource: http://127.0.0.1:8099/api/berater
     scan_interval: 3600
     sensor:

@@ -309,6 +309,7 @@ let hist = [];              // /api/history
 let boerse = null;          // /api/boerse
 let devices = [];           // aktive Geräte {..., slot, w}
 let lastTarget = -1, lastRoll = 0;
+let heiz = null, heizW = 0;   // /api/heizung, geschätzte Heizleistung (0 = heizt nicht)
 let verb = "Gehe zu";
 const shown = { pv: 0, haus: 0, netz: 0, zahle: 0, bekomme: 0 };
 let session = 0, sessionStart = performance.now();
@@ -325,11 +326,14 @@ function rollDevices(target) {
   const srvW = S && S.server && S.server.leistung_w ? Math.round(S.server.leistung_w) : 0;
   if (srvW && srvW <= target) add({ ...SERVER, w: srvW });
   if (ladeW > 1 && sum + ladeW <= target) add({ ...LADE, w: Math.round(ladeW) });
+  // Heizung: echter Zustand von homi (/api/heizung) statt Schätzung nach Tageszeit
+  const ir = CATALOG.find(c => c.id === "infrarot");
+  if (heizW > 0) add({ ...ir, w: Math.round(Math.min(heizW, Math.max(target - sum, 1))), q: heizQ() });
   for (const d of CATALOG.filter(c => c.dauer)) if (sum + d.w <= target) add({ ...d });
   // Grössere Verbraucher: was zur Tageszeit passt und in den Rest «hineinpasst» (wie die Zuordnung im Berater)
   const h = new Date().getHours() + new Date().getMinutes() / 60;
   const passt = c => c.zeit.some(([a, b]) => h >= a && h < b);
-  const kand = CATALOG.filter(c => !c.dauer && passt(c)).map(c => [c, c.w + Math.random() * 400]).sort((a, b) => b[1] - a[1]).map(x => x[0]);
+  const kand = CATALOG.filter(c => !c.dauer && passt(c) && !(c.id === "infrarot" && heiz && heiz.aktiv)).map(c => [c, c.w + Math.random() * 400]).sort((a, b) => b[1] - a[1]).map(x => x[0]);
   for (const d of kand) {
     if (chosen.filter(d => !d.fest).length >= SLOTS.length - 1) break;
     const rest = target - sum;
@@ -338,8 +342,9 @@ function rollDevices(target) {
   const remain = Math.round(target - sum);
   if (remain >= 1) chosen.push({ ...GHOST, w: remain });
   const slots = [...SLOTS].sort(() => Math.random() - .5);
+  const dach = slots.splice(slots.findIndex(x => x.f === 1), 1)[0];   // Heizung immer oben im Dachstock
   let si = 0;
-  devices = chosen.map(d => ({ ...d, slot: d.fest ? NUC_SLOT : slots[si++], wob: Math.random() * 6 }));
+  devices = chosen.map(d => ({ ...d, slot: d.fest ? NUC_SLOT : d.id === "infrarot" ? dach : slots[si++] || dach, wob: Math.random() * 6 }));
   renderInventory();
 }
 
@@ -553,17 +558,23 @@ $("geraete").addEventListener("click", async e => {
 });
 
 // Infrarotheizung (Tuya, lokal): Ist-Temperatur, Vorgabe von homi, Kuschel-Knopf – wie in der Kunden-Oberfläche
-let heiz = null;
+function heizQ() {
+  const l = (heiz && heiz.live) || {}, v = (heiz && heiz.vorgabe) || {};
+  return `Die Dachstock-Heizung bollert! ${l.ist_c} °C im Raum, Ziel ${l.soll_c} °C${v.grund ? " – " + v.grund : ""}.`;
+}
 async function pollHeizung() {
   try { heiz = await (await fetch("api/heizung", { cache: "no-store" })).json(); } catch { return; }
+  const neu = heiz.aktiv && heiz.live && heiz.live.heizt ? heiz.live.leistung_w || 0 : 0;
+  if (neu !== heizW) { heizW = neu; lastTarget = -1; }      // Haus sofort neu einrichten
   const t = $("t-heiz"); t.hidden = !heiz.aktiv; if (!heiz.aktiv) return;
   const l = heiz.live || {}, v = heiz.vorgabe || {}, k = heiz.kuscheln || {}, n = heiz.naechster || {};
-  t.classList.toggle("an", !!l.an); t.classList.toggle("kuschel", !!k.aktiv);
+  t.classList.toggle("an", !!l.heizt); t.classList.toggle("kuschel", !!k.aktiv);
   t.title = heiz.regel;
   $("s-heiz0").textContent = `${heiz.name} · Ist`;
   $("s-heiz").textContent = l.erreichbar === false ? "nicht erreichbar" : l.ist_c != null ? `${l.ist_c.toFixed(1)} °C` : "–";
-  $("s-heiz2").textContent = (l.erreichbar ? (l.an ? `Soll ${l.soll_c} °C` : "aus") : "") + (v.grund ? ` · ${v.grund}` : "")
-    + (!k.aktiv && n.zeit ? ` · ${n.zeit.slice(11, 16)} → ${n.soll_c == null ? "aus" : n.soll_c + " °C"}` : "");
+  $("s-heiz2").textContent = (l.erreichbar ? (l.an ? `Soll ${l.soll_c} °C${l.heizt ? ` · heizt ~${l.leistung_w} W` : ""}` : "aus") : "") + (v.grund ? ` · ${v.grund}` : "")
+    + (!k.aktiv && n.zeit ? ` · ${n.zeit.slice(11, 16)} → ${n.soll_c == null ? "aus" : n.soll_c + " °C"}` : "")
+    + (heiz.heute ? ` · heute ${heiz.heute.kwh.toFixed(2)} kWh` : "");
   const b = $("b-kuscheln"); b.classList.toggle("an", !!k.aktiv);
   b.textContent = k.aktiv ? `KUSCHELN BIS ${k.bis.slice(11, 16)} · BEENDEN` : `KUSCHELN ${k.soll_c} °C · ${k.stunden} H`;
 }

@@ -501,7 +501,10 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   bei einem Wechsel der Vorgabe – von Hand oder in Smart Life Verstelltes bleibt bis zum nächsten Wechsel; fällt homi
   aus, bleibt die letzte Einstellung. Protokoll/Kuscheln in `data/heizung.json`. Überall: Retro-Kachel, App-Karte
   (Übersicht), HA `sensor.heizung`, `sensor.heizung_raumtemperatur`, `sensor.heizung_solltemperatur`,
-  `switch.heizung_kuscheln`; nginx erlaubt `POST /api/heizung` (nur angemeldet).
+  `switch.heizung_kuscheln`, `sensor.heizung_leistung`, `sensor.heizung_heute`; nginx erlaubt `POST /api/heizung` (nur angemeldet).
+  **Verbrauch geschätzt:** Die Heizung meldet keine Leistung – liegt der Raum unter der Soll-Temperatur, rechnet homi
+  mit 650 W (kWh, Solaranteil, Heizstunden pro Tag in `data/heizung.json`). Im Pixelhaus der Retro-Seite steht die
+  Heizung dann mit diesem Wert fest im Dachstock (statt der Schätzung nach Tageszeit).
 - **Smarte Steckdosen** (`energie/homi/geraete.py`, `/api/geraete`, seit 18.10.2026): myStrom WiFi Switch v2
   (MAC FCF5C419ED7C, zuletzt 192.168.1.211 per DHCP – homi sucht sie bei Adresswechsel über die MAC; WLAN-Aussetzer
   werden erst nach 30 s als «nicht erreichbar» gemeldet). Konfiguration in `energie/anlage.json` → `geraete`,
