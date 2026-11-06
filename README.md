@@ -552,7 +552,8 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   UniFi-AP .94, Ubiquiti .196, Kühlschrank .61, Chromecast .26, Belkin .141) stehen in `pihole/compose.yml`
   (`FTLCONF_dhcp_hosts`). Oberfläche http://192.168.1.23:8053/admin (Passwort `PIHOLE_PASSWORT` in `.env`), nur aus
   192.168.1.0/24 (Firewall). Netz host (DHCP braucht Broadcasts), DNS nur auf eno1 gebunden, weil systemd-resolved
-  127.0.0.53 hält. Nach oben Cloudflare mit DNSSEC. Der NUC hat seit 06.11.2026 **feste Adressen** .20/.23 (Netplan,
+  127.0.0.53 hält. Blocklisten: Standard (Werbung/Tracker) + Erwachsenen-Seiten (StevenBlack porn-only, Wunsch
+  Patrick 06.11.2026; liegen in `pihole/data`, Pflege über die Oberfläche → Lists). Nach oben Cloudflare mit DNSSEC. Der NUC hat seit 06.11.2026 **feste Adressen** .20/.23 (Netplan,
   Gateway .1) und fragt direkt Cloudflare – er hängt nicht an Pi-hole. **Fällt der NUC aus, in der Sunrise-Box DHCP
   wieder einschalten.** Daten in `pihole/data` (nicht im Repo). Wöchentliches Image-Update inkl. Prüfung per `dig`.
 - **Datenschutzerklärung homi** (`energy/www/datenschutz.html`, https://homi.solar/datenschutz.html): gilt für

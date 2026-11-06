@@ -2,6 +2,7 @@
 # Seit 06.11.2026. Die Sunrise-Box lässt den DNS-Server nicht ändern, darum ist ihr DHCP aus und Pi-hole verteilt
 # Adressen (Pool .50–.250, Gateway 192.168.1.1, DNS 192.168.1.23). Der NUC selbst hat feste Adressen (.20/.23, Netplan)
 # und fragt weiter direkt Cloudflare, damit er nicht von Pi-hole abhängt.
+# Blocklisten (in ./data, über die Oberfläche): Standard + Erwachsenen-Seiten (StevenBlack porn-only, 06.11.2026).
 # Feste Adressen (Reservierungen) unten bei FTLCONF_dhcp_hosts: MAC,IP,Name – neue Geräte dort eintragen.
 # Fällt der NUC aus: in der Sunrise-Box DHCP wieder einschalten.
 # Oberfläche: http://192.168.1.23:8053/admin, Passwort PIHOLE_PASSWORT in ../.env.
