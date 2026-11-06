@@ -21,7 +21,7 @@ table inet domus {
         tcp dport { 22, 80, 443, 8123 } accept
         udp dport { 5353, 1900 } accept                           # mDNS/SSDP (Home Assistant: Cast, UPnP)
         udp sport { 5353, 1900 } accept                           # Antworten auf Geräte-Suchen
-        udp dport { 67, 68, 546, 547 } accept                     # DHCP
+        udp dport { 67, 68, 546, 547 } accept                     # DHCP (Pi-hole ist DHCP-Server)
         ip saddr 192.168.1.0/24 tcp dport { 8080, 8443 } accept   # UniFi-Controller (unifi/)
         ip saddr 192.168.1.0/24 udp dport { 3478, 10001 } accept  # UniFi STUN, AP-Suche
         udp sport 10001 accept                                    # Antworten der APs auf die Suche

@@ -546,13 +546,15 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   Infrarotheizung im Dachstock. Oberfläche https://192.168.1.23:8443, nur im Heimnetz (Firewall: 8080/8443/3478/10001
   nur aus 192.168.1.0/24). Daten in `unifi/data` (nicht im Repo). Der AP läuft auch ohne Controller weiter.
   Wöchentliches Image-Update inkl. Prüfung `/status`.
-- **Pi-hole** (`pihole/`, seit 06.11.2026): DNS-Server fürs Heimnetz, blockiert Werbung und Tracker für alle Geräte.
-  DNS 192.168.1.23:53, Oberfläche http://192.168.1.23:8053/admin (Passwort `PIHOLE_PASSWORT` in `.env`), beides nur aus
-  192.168.1.0/24 (Firewall). Bridge-Netz mit Ports auf 192.168.1.23, weil systemd-resolved Port 53 auf 127.0.0.53 hält.
-  Nach oben Cloudflare 1.1.1.1/1.0.0.1 mit DNSSEC. Der NUC selbst fragt weiter direkt Cloudflare (Updates, Zertifikate
-  hängen nicht an Pi-hole). Wirkt erst, wenn der Router per DHCP 192.168.1.23 als DNS verteilt (oder ein Gerät ihn von
-  Hand einträgt). Fällt der NUC aus, haben diese Geräte kein DNS mehr. Daten in `pihole/data` (nicht im Repo).
-  Wöchentliches Image-Update inkl. Prüfung per `dig`.
+- **Pi-hole** (`pihole/`, seit 06.11.2026): DNS- und DHCP-Server fürs Heimnetz, blockiert Werbung und Tracker für alle
+  Geräte. Die Sunrise-Box lässt den DNS-Server nicht ändern, darum ist **ihr DHCP aus** und Pi-hole verteilt die Adressen
+  (Pool .50–.250, 24 h, Gateway .1, DNS 192.168.1.23). Feste Adressen (Fronius .221, myStrom .211, Heizung .103,
+  UniFi-AP .94, Ubiquiti .196, Kühlschrank .61, Chromecast .26, Belkin .141) stehen in `pihole/compose.yml`
+  (`FTLCONF_dhcp_hosts`). Oberfläche http://192.168.1.23:8053/admin (Passwort `PIHOLE_PASSWORT` in `.env`), nur aus
+  192.168.1.0/24 (Firewall). Netz host (DHCP braucht Broadcasts), DNS nur auf eno1 gebunden, weil systemd-resolved
+  127.0.0.53 hält. Nach oben Cloudflare mit DNSSEC. Der NUC hat seit 06.11.2026 **feste Adressen** .20/.23 (Netplan,
+  Gateway .1) und fragt direkt Cloudflare – er hängt nicht an Pi-hole. **Fällt der NUC aus, in der Sunrise-Box DHCP
+  wieder einschalten.** Daten in `pihole/data` (nicht im Repo). Wöchentliches Image-Update inkl. Prüfung per `dig`.
 - **Datenschutzerklärung homi** (`energy/www/datenschutz.html`, https://homi.solar/datenschutz.html): gilt für
   homi.solar, biber.solar und alle Seiten mit Anmeldung; verlinkt aus Formularen, Fuss von homi.solar, Login-Seite,
   App (Tab «Mehr») und Retro-Seite. biber.solar hat eine eigene, verweist für homi hierher.

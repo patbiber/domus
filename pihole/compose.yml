@@ -1,26 +1,41 @@
-# Pi-hole (https://pi-hole.net): DNS-Server fürs Heimnetz, der Werbung und Tracker für alle Geräte blockiert (06.11.2026).
-# DNS: 192.168.1.23:53 (nur im Heimnetz; Router leitet nichts weiter, Firewall erlaubt nur 192.168.1.0/24).
+# Pi-hole (https://pi-hole.net): DNS- und DHCP-Server fürs Heimnetz, blockiert Werbung und Tracker für alle Geräte.
+# Seit 06.11.2026. Die Sunrise-Box lässt den DNS-Server nicht ändern, darum ist ihr DHCP aus und Pi-hole verteilt
+# Adressen (Pool .50–.250, Gateway 192.168.1.1, DNS 192.168.1.23). Der NUC selbst hat feste Adressen (.20/.23, Netplan)
+# und fragt weiter direkt Cloudflare, damit er nicht von Pi-hole abhängt.
+# Feste Adressen (Reservierungen) unten bei FTLCONF_dhcp_hosts: MAC,IP,Name – neue Geräte dort eintragen.
+# Fällt der NUC aus: in der Sunrise-Box DHCP wieder einschalten.
 # Oberfläche: http://192.168.1.23:8053/admin, Passwort PIHOLE_PASSWORT in ../.env.
-# Nach oben fragt Pi-hole Cloudflare (1.1.1.1/1.0.0.1) – wie der NUC selbst. Der NUC fragt bewusst weiter direkt
-# Cloudflare, damit Updates und Zertifikate nicht von Pi-hole abhängen.
-# Bridge-Netz mit fester IP statt host: Port 53 auf dem NUC belegt systemd-resolved (127.0.0.53). Docker leitet per
-# NAT weiter, Pi-hole sieht trotzdem die echten Geräte-IPs.
-# Daten (Einstellungen, Listen, Abfrage-Statistik): ./data (nicht im Repo).
+# Netz host (DHCP braucht Broadcasts). Port 53 nur auf eno1 (listeningMode BIND), weil systemd-resolved 127.0.0.53 hält.
+# Firewall: 53 und 8053 nur aus 192.168.1.0/24, DHCP 67 offen. Daten: ./data (nicht im Repo).
 services:
   pihole:
     container_name: pihole
     image: pihole/pihole:latest
     restart: unless-stopped
-    ports:
-      - "192.168.1.23:53:53/tcp"
-      - "192.168.1.23:53:53/udp"
-      - "192.168.1.23:8053:80/tcp"
+    network_mode: host
+    cap_add:
+      - NET_ADMIN                      # DHCP
+      - NET_RAW
+      - NET_BIND_SERVICE
     environment:
       TZ: Europe/Zurich
       FTLCONF_webserver_api_password: ${PIHOLE_PASSWORT}
-      FTLCONF_dns_listeningMode: all           # Anfragen kommen über die Docker-Brücke, nicht aus dem eigenen Netz
+      FTLCONF_webserver_port: "192.168.1.23:8053"
+      FTLCONF_dns_listeningMode: BIND
+      FTLCONF_dns_interface: eno1
       FTLCONF_dns_upstreams: "1.1.1.1;1.0.0.1"
       FTLCONF_dns_dnssec: "true"
+      FTLCONF_dns_domain_name: lan
+      FTLCONF_dhcp_active: "true"
+      FTLCONF_dhcp_start: 192.168.1.50
+      FTLCONF_dhcp_end: 192.168.1.250
+      FTLCONF_dhcp_router: 192.168.1.1
+      FTLCONF_dhcp_netmask: 255.255.255.0
+      FTLCONF_dhcp_leaseTime: 24h
+      FTLCONF_dhcp_ipv6: "false"
+      FTLCONF_dhcp_rapidCommit: "false"
+      FTLCONF_misc_dnsmasq_lines: "dhcp-option=option:dns-server,192.168.1.23"
+      FTLCONF_dhcp_hosts: "00:03:ac:43:00:94,192.168.1.221,fronius;fc:f5:c4:19:ed:7c,192.168.1.211,mystrom-solarladestation;2c:f4:32:6c:eb:f0,192.168.1.103,dachstock-heizung;44:d9:e7:f2:03:11,192.168.1.94,unifi-ap;80:2a:a8:83:dc:a6,192.168.1.196,ubiquiti;44:cb:8b:bc:be:37,192.168.1.61,lg-kuehlschrank;54:60:09:e8:4f:00,192.168.1.26,chromecast-audio;24:f5:a2:0b:ed:10,192.168.1.141,belkin"
       FTLCONF_ntp_sync_active: "false"         # Uhrzeit stellt der NUC selbst
       FTLCONF_ntp_ipv4_active: "false"         # kein NTP-Server
       FTLCONF_ntp_ipv6_active: "false"
