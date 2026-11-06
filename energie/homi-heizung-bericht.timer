@@ -1,0 +1,10 @@
+# Einmalig am Sonntag 08.11.2026 (Patrick: ab Sonntag 3 Tage auswerten); war der NUC aus, wird nachgeholt
+[Unit]
+Description=homi: Auswertung Betriebszeit Heizung am 08.11.2026
+
+[Timer]
+OnCalendar=2026-11-08 18:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

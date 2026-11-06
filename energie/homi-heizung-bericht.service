@@ -1,0 +1,8 @@
+# Auswertung: Betriebszeit-Zähler der Heizung = echte Heizzeit? (Mail an Patrick)
+[Unit]
+Description=homi: Auswertung Betriebszeit Heizung
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/domus/energie/heizung-betrieb-bericht.py
