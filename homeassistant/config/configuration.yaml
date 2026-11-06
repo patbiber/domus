@@ -7,6 +7,25 @@ frontend:
   themes: !include_dir_merge_named themes
 
 automation: !include automations.yaml
+automation homi:                         # fest im YAML (nicht über die Oberfläche änderbar)
+  - id: homi_kuehlschrank_tuer
+    alias: Kühlschranktür an homi melden
+    description: LG ThinQ meldet die Tür; homi warnt per Push, wenn sie länger als 2 Minuten offen ist.
+    mode: queued
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.kuhlschrank_tur
+      - trigger: homeassistant
+        event: start
+      - trigger: time_pattern
+        minutes: /5                      # falls homi neu gestartet wurde
+    conditions:
+      - condition: template
+        value_template: "{{ states('binary_sensor.kuhlschrank_tur') in ('on', 'off') }}"
+    actions:
+      - action: rest_command.homi_kuehlschrank
+        data:
+          tuer: "{{ 'offen' if is_state('binary_sensor.kuhlschrank_tur', 'on') else 'zu' }}"
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
@@ -484,6 +503,11 @@ sensor:
 
 # Wechselrichter-Steuerung (homi, Modbus): Schalter schreiben über /api/steuerung (nur von 127.0.0.1 erlaubt)
 rest_command:
+  homi_kuehlschrank:                     # Kühlschranktür an homi melden (Push-Warnung nach 2 min, push.py kuehlschrank)
+    url: http://127.0.0.1:8099/api/kuehlschrank
+    method: POST
+    content_type: application/json
+    payload: '{"tuer": "{{ tuer }}"}'
   homi_wechselrichter:
     url: http://127.0.0.1:8099/api/steuerung
     method: POST
