@@ -489,8 +489,8 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   Viertelstundenpreise pro Stunde. Überall: App-Karte «Vergütung ab 2027» (Tab Strompreis), Retro-Kachel, HA
   `sensor.vergutung_abregelschwelle_2027` und `sensor.vergutung_referenz_marktpreis_quartal`.
   Offen bei der GWS: intelligenter Zähler (Lastgang)? Rückliefertarif 2027?
-- **Infrarotheizung** (`energie/homi/heizung.py` + `tuya.py`, `/api/heizung`, seit 05.11.2026): «Yoga-Heizung
-  Dachstock» (Tuya «Smart XL», 650 W, im WLAN «homi» des UniFi-AP, 192.168.1.103, MAC 2c:f4:32:6c:eb:f0 – bei
+- **Infrarotheizung** (`energie/homi/heizung.py` + `tuya.py`, `/api/heizung`, seit 05.11.2026): «Dachstock-Heizung»
+  (Tuya «Smart XL», 650 W, im WLAN «homi» des UniFi-AP, 192.168.1.103, MAC 2c:f4:32:6c:eb:f0 – bei
   Adresswechsel sucht homi die MAC in der ARP-Tabelle). homi spricht sie **lokal** an (Tuya 3.3, Port 6668, AES in reinem
   Python, keine Cloud, keine Zusatzbibliothek); Local Key in `.env` (`TUYA_HEIZUNG_KEY`, ausgelesen einmalig mit tinytuya
   über das Tuya-IoT-Projekt). Nicht zusätzlich mit Tuya Local in HA einbinden – die Heizung erlaubt nur eine lokale

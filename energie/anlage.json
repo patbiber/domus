@@ -41,7 +41,7 @@
   ],
   "verguetung": {"modell": "fix", "minimal_rp": null, "ausgleich_bei_minuspreis": true, "rmp_offiziell": {}, "hkn_rp": 0, "hkn_bei_minuspreis": false, "eigenverbrauch": true,
     "_kommentar": "Abnahmevergütung (homi/verguetung.py). modell: fix (GWS heute 15 Rp.) | referenzmarkt (Quartalsdurchschnitt, ohne intelligenten Zähler bis Ende 2027) | boerse (ab 2027: Spotpreis + Ausgleich der Minimalvergütung). minimal_rp null = automatisch aus max_kw (bis 30 kW: 6 Rp.). rmp_offiziell: nur zum Übersteuern (BFE-Werte lädt homi selbst), z. B. {\"2026-Q4\": 4.2}. hkn_rp: Herkunftsnachweis-Vergütung des Netzbetreibers in Rp./kWh, Zahl oder {\"sommer\": 0.1, \"winter\": 1} (Winter = Okt–März; GWS: unbekannt, in den 15 Rp. vermutlich enthalten). hkn_bei_minuspreis: true nur, wenn der Netzbetreiber HKN auch in Stunden mit negativem Preis bezahlt (CKW 2027: nein). eigenverbrauch: false = Minimalvergütung 6.2 Rp. für 30–150 kW. Offen bei der GWS (Stand 19.10.2026): intelligenter Zähler? Tarif 2027?"},
-  "heizung": {"name": "Yoga-Heizung Dachstock", "dev_id": "337365132cf4326cebf0", "ip": "192.168.1.103", "mac": "2c:f4:32:6c:eb:f0", "w": 650,
+  "heizung": {"name": "Dachstock-Heizung", "dev_id": "337365132cf4326cebf0", "ip": "192.168.1.103", "mac": "2c:f4:32:6c:eb:f0", "w": 650,
     "plan": [["05:15", 18], ["06:10", null], ["17:00", 18], ["21:00", 15]],
     "kuscheln_c": 22, "kuscheln_h": 2,
     "solar": {"temp_c": 20, "ein_ab_w": 800, "aus_unter_w": 200, "bei_minuspreis": true},
