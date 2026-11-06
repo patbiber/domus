@@ -33,6 +33,10 @@ MITTEL_S = 120
 FEHLER_MAX = 3
 AKTIONEN_MAX = 100
 ARP = "/proc/net/arp"
+# Versuch (05.11.2026): Ist Datenpunkt 105 («worktime», laut Tuya-Modell Einheit «Stunden (vorläufig)») die Heizzeit?
+# Dann könnte homi den Verbrauch messen statt schätzen. Bis zur Auswertung jede Abfrage mitschreiben.
+BETRIEB_LOG = os.environ.get("HEIZUNG_BETRIEB_LOG", "/data/heizung-betrieb.csv")
+BETRIEB_MAX = 5_000_000
 
 
 def konfig():
@@ -182,6 +186,16 @@ class Heizung:
             fehler = 0
             an, soll_c, ist_c = bool(dps.get("1")), (dps.get("2") or 0) / 10, (dps.get("3") or 0) / 10
             heizt = an and ist_c < soll_c
+            try:
+                if not os.path.exists(BETRIEB_LOG) or os.path.getsize(BETRIEB_LOG) < BETRIEB_MAX:
+                    neu_datei = not os.path.exists(BETRIEB_LOG)
+                    with open(BETRIEB_LOG, "a", encoding="utf-8") as f:
+                        if neu_datei:
+                            f.write("zeit,worktime,an,soll_c,ist_c,heizt_schaetzung,verbrauch_w\n")
+                        f.write(f"{datetime.now().isoformat(timespec='seconds')},{dps.get('105')},{int(an)},{soll_c},"
+                                f"{ist_c},{int(heizt)},{status.get('verbrauch_w') if status.get('fronius_ok') else ''}\n")
+            except OSError as e:
+                print("Heizung: Betriebszeit nicht protokolliert:", e, flush=True)
             # Überschuss ohne die Heizung selbst (läuft sie wegen Solarwärme, zählt ihre Leistung dazu)
             if status.get("fronius_ok"):
                 werte.append((jetzt_ts, -status["netz_w"] + (h.get("w", 650) if heizt else 0)))
