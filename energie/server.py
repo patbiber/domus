@@ -15,6 +15,7 @@ Endpunkte:
   /api/steuerung  Wechselrichter-Steuerung über Modbus: Verbindung, Begrenzung, Testmodus-Auswertung (Minuspreis →
                 Nulleinspeisung: was homi getan hätte und was es gekostet/gebracht hätte)
   /api/geraete  smarte Steckdosen (myStrom): Zustand, Regel, Verbrauch heute/7 Tage; POST {"id", "modus": auto|ein|aus}
+  /api/heizung  Infrarotheizung (Tuya): Ist/Soll, Zeitplan, Solarwärme, nächster Wechsel; POST {"kuscheln": true|false}
   /api/verguetung  Abnahmevergütung ab 2027: Vergütungsmodelle je Quartal, Referenz-Marktpreis, Ausgleich der
                 Minimalvergütung, Abregelschwelle
   /api/zuordnung  Verbraucher-Zuordnung: welche Geräte wie viel brauchen (14 Tage, Schätzung aus dem Zähler) und was
@@ -47,11 +48,12 @@ from homi.boerse import boerse_now, poll_boerse
 from homi.abregelung import abregelung
 from homi.einspeisung import einspeise_plan
 from homi.erfassung import poll
-from homi.konfig import ANLAGE_CFG, ARCHIV_DIR, ARCHIV_TAGE, KUNDE_HOST, PORT, PUSH_DIR, PUSH_HOSTS, PUSH_THEMEN, SPEICHER_FILE, STEUERUNG_FILE, GERAETE_FILE, WWW, WWW_KUNDE
+from homi.konfig import ANLAGE_CFG, ARCHIV_DIR, ARCHIV_TAGE, KUNDE_HOST, PORT, PUSH_DIR, PUSH_HOSTS, PUSH_THEMEN, SPEICHER_FILE, STEUERUNG_FILE, GERAETE_FILE, HEIZUNG_FILE, WWW, WWW_KUNDE
 from homi.prognose import poll_prognose
 from homi.push_abo import push_lesen, push_schluessel, push_schreiben
 from homi.speicher import SpeicherSimulation
 from homi.geraete import starten as geraete_starten
+from homi.heizung import starten as heizung_starten
 from homi.steuerung import Steuerung, regeln
 from homi.verguetung import poll_verguetung, verguetung
 from homi.zuordnung import zuordnung
@@ -146,6 +148,9 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/geraete":
             with lock:
                 return self.send_json(zustand.geraete.report())
+        if path == "/api/heizung":
+            with lock:
+                return self.send_json(zustand.heizung.report())
         if path == "/api/steuerung":
             with lock:
                 return self.send_json(zustand.steuerung.report(state["status"], state["modbus"]))
@@ -193,7 +198,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         """App-Push: {"aktion": "anmelden"|"abmelden"|"lesen"|"test", "abo": PushSubscription, "themen": [...]}"""
-        if self.path in ("/api/steuerung", "/api/geraete", "/api/push") and not self.eigene_herkunft():
+        if self.path in ("/api/steuerung", "/api/geraete", "/api/heizung", "/api/push") and not self.eigene_herkunft():
             print(f"Abgewiesen (fremde Herkunft): {self.path} Origin={self.headers.get('Origin')} "
                   f"Sec-Fetch-Site={self.headers.get('Sec-Fetch-Site')} Content-Type={self.headers.get('Content-Type')}", flush=True)
             return self.send_error(403)
@@ -201,6 +206,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.post_steuerung()
         if self.path == "/api/geraete":
             return self.post_geraete()
+        if self.path == "/api/heizung":
+            return self.post_heizung()
         if self.path != "/api/push":
             return self.send_error(405)
         try:
@@ -292,6 +299,23 @@ class Handler(SimpleHTTPRequestHandler):
         print(f"Gerät: {d} von {von}", flush=True)
         return self.send_json(antwort)
 
+    def post_heizung(self):
+        """Kuschel-Knopf: {"kuscheln": true|false} (Berechtigung: schalt_von)."""
+        von = self.schalt_von()
+        if not von:
+            return self.send_error(403)
+        try:
+            d = self.json_body()
+            if d.get("kuscheln") not in (True, False):
+                raise ValueError
+            with lock:
+                zustand.heizung.kuscheln(d["kuscheln"], von)
+                antwort = zustand.heizung.report()
+        except (ValueError, AttributeError):
+            return self.send_error(400)
+        print(f"Heizung: {d} von {von}", flush=True)
+        return self.send_json(antwort)
+
     def post_steuerung(self):
         """Wechselrichter-Schalter: {"wr": "ein"|"aus"} und/oder {"regel": true|false} (Berechtigung: schalt_von)."""
         von = self.schalt_von()
@@ -323,6 +347,7 @@ if __name__ == "__main__":
     threading.Thread(target=poll_verguetung, daemon=True).start()
     threading.Thread(target=regeln, daemon=True).start()
     zustand.geraete = geraete_starten(GERAETE_FILE)
+    zustand.heizung = heizung_starten(HEIZUNG_FILE)
     threading.Thread(target=poll_boerse, daemon=True).start()
     threading.Thread(target=poll_prognose, daemon=True).start()
     threading.Thread(target=poll, daemon=True).start()

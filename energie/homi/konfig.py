@@ -43,6 +43,8 @@ NUC_NETZTEIL_WG = float(os.environ.get("NUC_NETZTEIL_WG", "0.8"))
 
 GERAETE_FILE = os.environ.get("GERAETE_FILE", "/data/geraete.json")
 
+HEIZUNG_FILE = os.environ.get("HEIZUNG_FILE", "/data/heizung.json")
+
 STEUERUNG_FILE = os.environ.get("STEUERUNG_FILE", "/data/steuerung.json")
 
 ANLAGE_CFG = os.environ.get("ANLAGE_CFG", "/app/anlage.json")

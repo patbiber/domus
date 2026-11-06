@@ -15,4 +15,6 @@ archiv = None
 
 geraete = None                     # smarte Steckdosen (geraete.py)
 
+heizung = None                     # Infrarotheizung (heizung.py)
+
 steuerung = None                   # Wechselrichter-Steuerung (Testmodus), siehe steuerung.py
