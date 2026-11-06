@@ -198,13 +198,17 @@ class Heizung:
                     neu["2"] = round(v_c * 10)
                     if dps.get("4") not in (None, "manual"):
                         neu["4"] = "manual"
+                # nur senden, was sich ändert: die Heizung piepst bei jedem Befehl (Piepser lässt sich nicht abschalten)
+                neu = {k: x for k, x in neu.items() if dps.get(k) != x}
                 try:
-                    g.setzen(neu)
+                    if neu:
+                        g.setzen(neu)
                     geschrieben = ziel
                     an, soll_c = v_an, v_c if v_an else soll_c
-                    with lock:
-                        self.aktion(f"{h['name']}: {text_soll(v_an, v_c)} – {grund}", "homi")
-                        self.save()
+                    if neu:
+                        with lock:
+                            self.aktion(f"{h['name']}: {text_soll(v_an, v_c)} – {grund}", "homi")
+                            self.save()
                 except (OSError, ValueError) as e:
                     print("Heizung: Schalten fehlgeschlagen:", e, flush=True)
             heizt = an and ist_c < soll_c                        # nach einem Schaltbefehl neu beurteilen
