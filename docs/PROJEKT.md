@@ -253,6 +253,7 @@ Details zu Einrichtung und Wiederherstellung stehen im [README](../README.md).
 | 25.10.2026 | Claude-Hauptsitzung mit Autostart ersetzt den Remote-Control-Spawn-Dienst |
 | 05.11.2026 | UniFi-AP (WLAN «homi», Controller `unifi/`), Infrarotheizung lokal in homi: Zeitplan, Solarwärme bei Überschuss/Minuspreis, Kuschel-Knopf (Retro, App, Home Assistant, homi.solar) |
 | 06.11.2026 | EnergyHub Academy (academy.biber.solar, eigenes Repo): Login, Mitgliedschaft mit Fähigkeiten, Track 1 EN/FR, Admin-Übersicht |
+| 06.11.2026 | Academy: Push-Meldungen (News, Antworten, Freigabe; Admins bei Fragen und Bewerbungen) |
 | 06.11.2026 | Academy: Track 2 Verkauf C&I und Track 3 Technik EN/FR, Fragen pro Lektion, Themen-Voting |
 | 06.11.2026 | Pi-hole (`pihole/`) als DNS-Werbeblocker und DHCP-Server fürs Heimnetz (Router-DHCP aus), NUC mit festen Adressen |
 | 04.11.2026 | Nach dem Solar-Manager-Webinar: Abregel-Übersicht ab 2027 (Retro, App, Home Assistant), Herkunftsnachweise nach Sommer/Winter und ohne Zuschlag bei Minuspreisen |

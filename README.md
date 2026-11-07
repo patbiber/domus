@@ -553,7 +553,8 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   `academy/update.sh`. Login per Mail-Code, Beitritt mit Profil und Fähigkeiten, Freigabe durch Admin
   (`ACADEMY_ADMINS` in `.env`), Lektionen EN/FR als Markdown (`repo/content`), Quiz, Bestätigung der Präsenzteile,
   Admin-Übersicht mit Filtern und CSV, News mit «Share on WhatsApp» (Kanal-Link `ACADEMY_WHATSAPP_CHANNEL`),
-  Fragen pro Lektion (Trainer antwortet), Themen-Voting (`/topics`). Alle drei Tracks EN/FR (Track 2 aus dem
+  Fragen pro Lektion (Trainer antwortet), Themen-Voting (`/topics`), Push-Meldungen ans Handy (Web Push, Schlüssel
+  `academy/data/vapid_private.pem`, im Backup). Alle drei Tracks EN/FR (Track 2 aus dem
   Verkaufsleitfaden, Track 3 aus solartech). Mails: die App legt sie in `academy/data/outbox`, `academy-mail.path` (systemd --user) startet `academy-mail.py`
   (msmtp, Konto proton, Absender «EnergyHub Academy <domus@biber.solar>», Antwort an patrick@). Datenbank-Kopie
   jede Nacht ins Gesamt-Backup. Eigene Datenschutzerklärung `/privacy` (EN/FR). Bis zu Patricks «ok»: noindex.
