@@ -294,6 +294,18 @@ const LADE = { id: "laden", name: "Solarladestation", spr: "lader", q: "Die Sola
 const SERVER = { id: "nuc", name: "homi-Server (NUC)", spr: "nuc", fest: true, q: "Psst. Hier unten wohne ich." };
 const NUC_SLOT = { x: 66, f: 0 };
 const GHOST = { id: "ghost", name: "Standby-Gespenster", spr: "ghost", q: "Buuuh! Wir sind die Standby-Lämpchen. Wir sind überall." };
+// Standby ist klein: Boxen, Beamer, Computer, Hue zusammen ~16 W (Ausschalttest 24.10.2026). Mehr Rest = unbekannter Verbraucher
+const GHOST_MAX = 20;
+const UNBEKANNT = { id: "unbekannt", name: "Unbekannter Verbraucher", spr: "unbekannt", q: "Hmm. Etwas zieht hier Strom, das homi noch nicht kennt. Ein Gerät, das gerade läuft?" };
+// Rest auf Gespenster (höchstens GHOST_MAX) und Unbekanntes verteilen
+function restGeraete(rest) {
+  const out = [];
+  const g = Math.min(rest, GHOST_MAX);
+  if (g >= 1) out.push({ ...GHOST, w: Math.round(g) });
+  if (rest - g >= 1) out.push({ ...UNBEKANNT, w: Math.round(rest - g) });
+  return out;
+}
+const REST_IDS = ["ghost", "unbekannt"];
 
 // Plätze im Haus (x = Mitte, f = Stockwerk)
 const FLOOR = [117, 79];
@@ -335,12 +347,12 @@ function rollDevices(target) {
   const passt = c => c.zeit.some(([a, b]) => h >= a && h < b);
   const kand = CATALOG.filter(c => !c.dauer && passt(c) && !(c.id === "infrarot" && heiz && heiz.aktiv)).map(c => [c, c.w + Math.random() * 400]).sort((a, b) => b[1] - a[1]).map(x => x[0]);
   for (const d of kand) {
-    if (chosen.filter(d => !d.fest).length >= SLOTS.length - 1) break;
+    if (chosen.filter(d => !d.fest).length >= SLOTS.length - 2) break;   // Platz für Gespenster und Unbekanntes
     const rest = target - sum;
     if (rest >= d.ab) add({ ...d, w: Math.min(d.w, Math.round(rest)) });
   }
   const remain = Math.round(target - sum);
-  if (remain >= 1) chosen.push({ ...GHOST, w: remain });
+  chosen.push(...restGeraete(remain));
   const slots = [...SLOTS].sort(() => Math.random() - .5);
   const dach = slots.splice(slots.findIndex(x => x.f === 1), 1)[0];   // Heizung immer oben im Dachstock
   let si = 0;
@@ -417,7 +429,7 @@ function interact(d, v = verb) {
       return;
     }
     const T = {
-      "Was ist": `Das ist ${d.id === "ghost" ? "eine Horde" : "ein(e)"} ${d.name}. Zieht gerade ${w} Watt.`,
+      "Was ist": d.id === "unbekannt" ? `Keine Ahnung, was das ist. ${w} Watt, die homi keinem Gerät zuordnen kann.` : `Das ist ${d.id === "ghost" ? "eine Horde" : "ein(e)"} ${d.name}. Zieht gerade ${w} Watt.`,
       "Schalte aus": `Geht nicht. ${d.name} ist Teil des Messwerts. Physik!`,
       "Schalte ein": `Ist schon an. ${w} Watt, damit das klar ist.`,
       "Nimm": `Zu schwer. Und zu ${w} Watt.`,
@@ -699,10 +711,12 @@ function onData() {
     } else {
       const nuc = devices.find(d => d.id === "nuc");
       if (nuc && S.server && S.server.leistung_w) nuc.w = Math.round(S.server.leistung_w);
-      const ghost = devices.find(d => d.id === "ghost");
-      const other = devices.filter(d => d.id !== "ghost").reduce((a, d) => a + d.w, 0);
-      if (ghost && t - other >= 1) ghost.w = Math.round(t - other);
-      else if (!ghost && t - other >= 1) rollDevices(t);
+      const other = devices.filter(d => !REST_IDS.includes(d.id)).reduce((a, d) => a + d.w, 0);
+      const neu = restGeraete(t - other);
+      const alt = devices.filter(d => REST_IDS.includes(d.id));
+      if (neu.length && neu.every(n => alt.some(a => a.id === n.id)) && alt.length === neu.length) {
+        for (const n of neu) alt.find(a => a.id === n.id).w = n.w;
+      } else if (neu.length || alt.length) rollDevices(t);
       renderInventory();
     }
   } else {
@@ -782,7 +796,7 @@ function chatter() {
   if (performance.now() < talkUntil || hero.path.length) return;
   if (!S || !S.fronius_ok) { if (Math.random() < .3) say(pick(["Zzz…", "Zzz… Kilowattstunden… Zzz…", "Träume von Sonnenschein… Zzz"]), "#aaaaff"); return; }
   const rp = S.tarif && S.tarif.rueckliefer_chf_kwh != null ? (S.tarif.rueckliefer_chf_kwh * 100).toFixed(0) : "?";
-  const big = devices.filter(d => d.id !== "ghost").sort((a, b) => b.w - a.w)[0];
+  const big = devices.filter(d => !REST_IDS.includes(d.id)).sort((a, b) => b.w - a.w)[0];
   const lines = [];
   if (S.einspeisung_w > 200) lines.push(
     [`Wir exportieren Sonne! Die GWS zahlt ${rp} Rappen pro kWh.`], [`Ha! Der Zähler dreht rückwärts.`],
@@ -1044,6 +1058,11 @@ const SPR = {
     R(x + 6, y - 2, 4, 1, "#444444");                                       // Netzwerkkabel
     ptext(g, "HOMI", x - 7, y - 13, "#55ffff");
     if ((sv.temp_c || 0) > 60) for (let i = 0; i < 3; i++) R(x - 4 + i * 4 + Math.sin(t * 3 + i), y - 9 - ((t * 6 + i * 2) % 4), 1, 1, "#ff9966");
+  },
+  unbekannt(x, y, t) {   // Kiste mit blinkendem Fragezeichen
+    R(x - 6, y - 10, 12, 10, "#8a5a2b"); R(x - 6, y - 10, 12, 1, "#b07a40"); R(x - 6, y - 5, 12, 1, "#6e4520");
+    const c = Math.sin(t * 3) > 0 ? "#ffff55" : "#ffaa00";
+    R(x - 2, y - 17, 4, 1, c); R(x + 2, y - 16, 1, 2, c); R(x, y - 14, 2, 1, c); R(x, y - 13, 1, 1, c); R(x, y - 11, 1, 1, c);
   },
   ghost(x, y, t, w) { const n = clamp(Math.ceil(Math.log10((w || 1) + 1) * 1.5), 1, 5); for (let i = 0; i < n; i++) { const gx = x - 6 + i * 3 + Math.sin(t * 2 + i) * 2, gy = y - 12 - i % 2 * 3 + Math.sin(t * 3 + i * 2) * 2; R(gx, gy, 5, 6, "#ffffff"); R(gx, gy + 6, 1, 1, "#ffffff"); R(gx + 2, gy + 6, 1, 1, "#ffffff"); R(gx + 4, gy + 6, 1, 1, "#ffffff"); R(gx + 1, gy + 2, 1, 1, "#000"); R(gx + 3, gy + 2, 1, 1, "#000"); } },
 };
