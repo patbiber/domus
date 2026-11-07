@@ -26,6 +26,7 @@ REPOS = [
     {"name": "domus", "pfad": f"{HOME}/domus", "branch": "main", "vorschau": None, "env": {}},
     {"name": "biber-solar", "pfad": f"{HOME}/domus/biber-solar-test/site", "branch": "freigegeben", "vorschau": "main",
      "env": {"GIT_SSH_COMMAND": BIBER_SSH}},
+    {"name": "energyhub-academy", "pfad": f"{HOME}/domus/academy/repo", "branch": "main", "vorschau": None, "env": {}},
 ]
 TROCKEN = "--trocken" in sys.argv
 
