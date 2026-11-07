@@ -2,7 +2,7 @@
 # Ghana, Kamerun und Togo (Auftrag MPower Ventures / REPIC 2025.16). Code und Inhalte: ./repo = eigenes Git-Repo
 # (github.com/patbiber/energyhub-academy, nicht Teil von domus). Bauen und starten: ./update.sh
 # Daten (SQLite, Mail-Ausgang): ./data (nicht im Repo, im Gesamt-Backup). Mails verschickt der Host: academy-mail.path
-# beobachtet data/outbox, academy-mail.py sendet über msmtp (Konto proton, domus@biber.solar) – keine SMTP-Daten im Container.
+# beobachtet data/outbox, academy-mail.py sendet über msmtp (Konto academy, academy@biber.solar) – keine SMTP-Daten im Container.
 # Admins (sehen alle Mitglieder): ACADEMY_ADMINS in ../.env. WhatsApp-Kanal-Link: ACADEMY_WHATSAPP_CHANNEL in ../.env.
 services:
   academy:

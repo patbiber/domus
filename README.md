@@ -557,7 +557,7 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   `academy/data/vapid_private.pem`, im Backup), Zertifikate pro Track (prüfbar unter `/verify`), Assessment-Report
   pro Markt (`/admin/report`). Alle drei Tracks EN/FR (Track 2 aus dem
   Verkaufsleitfaden, Track 3 aus solartech). Mails: die App legt sie in `academy/data/outbox`, `academy-mail.path` (systemd --user) startet `academy-mail.py`
-  (msmtp, Konto proton, Absender «EnergyHub Academy <domus@biber.solar>», Antwort an patrick@). Datenbank-Kopie
+  (msmtp, eigenes Konto academy mit Proton-SMTP-Token nur für academy@biber.solar, Absender und Antwort «EnergyHub Academy <academy@biber.solar>»). Datenbank-Kopie
   jede Nacht ins Gesamt-Backup. Eigene Datenschutzerklärung `/privacy` (EN/FR). Bis zu Patricks «ok»: noindex.
 - **LG-Kühlschrank** (seit 06.11.2026, 192.168.1.61, Modell 2RES1VE61NFWC): lokal alle Ports zu, darum über die
   offizielle HA-Integration **LG ThinQ** (Cloud, Land CH, persönlicher Schlüssel von connect-pat.lgthinq.com, nur in

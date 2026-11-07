@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Mails der EnergyHub Academy verschicken: data/outbox/*.json ({to, subject, text}) → msmtp (Konto proton).
+"""Mails der EnergyHub Academy verschicken: data/outbox/*.json ({to, subject, text}) → msmtp (Konto academy).
+Absender academy@biber.solar (eigenes msmtp-Konto «academy», Proton-SMTP-Token nur für diese Adresse).
 Gestartet von academy-mail.path, sobald eine Datei im Ausgang liegt. Fehlgeschlagene Mails landen in outbox/failed/."""
 import glob
 import json
@@ -11,14 +12,14 @@ sys.path.insert(0, os.path.join(HIER, "..", "energy"))
 from mailer import senden  # noqa: E402
 
 AUSGANG = os.path.join(HIER, "data", "outbox")
-ABSENDER = "EnergyHub Academy <domus@biber.solar>"
-ANTWORT = "patrick@biber.solar"
+ABSENDER = "EnergyHub Academy <academy@biber.solar>"
+ANTWORT = "academy@biber.solar"
 
 for datei in sorted(glob.glob(os.path.join(AUSGANG, "*.json"))):
     try:
         with open(datei, encoding="utf-8") as f:
             m = json.load(f)
-        senden(m["to"], m["subject"], m["text"], absender=ABSENDER, reply_to=ANTWORT, konto="proton")
+        senden(m["to"], m["subject"], m["text"], absender=ABSENDER, reply_to=ANTWORT, konto="academy")
         os.remove(datei)
         print(f"gesendet an {m['to']}: {m['subject'][:60]}")
     except Exception as e:                                   # nicht endlos neu versuchen
