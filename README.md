@@ -552,8 +552,9 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   SQLite, Container `academy` (gebaut aus `./repo`, read-only, als uid 1000, nur im Netz proxy_default), neu bauen mit
   `academy/update.sh`. Login per Mail-Code, Beitritt mit Profil und Fähigkeiten, Freigabe durch Admin
   (`ACADEMY_ADMINS` in `.env`), Lektionen EN/FR als Markdown (`repo/content`), Quiz, Bestätigung der Präsenzteile,
-  Admin-Übersicht mit Filtern und CSV, News mit «Share on WhatsApp» (Kanal-Link `ACADEMY_WHATSAPP_CHANNEL`).
-  Mails: die App legt sie in `academy/data/outbox`, `academy-mail.path` (systemd --user) startet `academy-mail.py`
+  Admin-Übersicht mit Filtern und CSV, News mit «Share on WhatsApp» (Kanal-Link `ACADEMY_WHATSAPP_CHANNEL`),
+  Fragen pro Lektion (Trainer antwortet), Themen-Voting (`/topics`). Alle drei Tracks EN/FR (Track 2 aus dem
+  Verkaufsleitfaden, Track 3 aus solartech). Mails: die App legt sie in `academy/data/outbox`, `academy-mail.path` (systemd --user) startet `academy-mail.py`
   (msmtp, Konto proton, Absender «EnergyHub Academy <domus@biber.solar>», Antwort an patrick@). Datenbank-Kopie
   jede Nacht ins Gesamt-Backup. Eigene Datenschutzerklärung `/privacy` (EN/FR). Bis zu Patricks «ok»: noindex.
 - **LG-Kühlschrank** (seit 06.11.2026, 192.168.1.61, Modell 2RES1VE61NFWC): lokal alle Ports zu, darum über die
