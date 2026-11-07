@@ -4,7 +4,7 @@ Home-System auf einem Intel NUC (Ubuntu Server). Jeder Dienst hat einen eigenen 
 
 ## Arbeitsweise
 - Nach jeder funktionierenden Änderung **lokal committen, aber nicht selbst pushen**. Patricks Wunsch (21.10.2026): GitHub bekommt die Commits nur gesammelt einmal am Abend, zu einer zufälligen Zeit zwischen 20:00 und 22:00 – das macht der Timer `github-abend` (`system/github-abend.py`, setzt die Zeitstempel ins Abendfenster). Kein `git push` von Hand, auch nicht bei biber.solar.
-- EnergyHub Academy: eigenes Repo in `academy/repo` (nicht in domus committen), nach Änderungen `academy/update.sh`. Inhalte immer Englisch und Französisch. Unter jeder Formel mit Abkürzungen oder Symbolen eine Legende: jedes Kürzel ausgeschrieben und erklärt, mit Einheit (Patricks Wunsch, 06.11.2026).
+- EnergyHub Academy: eigenes Repo in `academy/repo` (nicht in domus committen), nach Änderungen `academy/update.sh`. Inhalte immer Englisch, Französisch und Deutsch (Deutsch seit 07.11.2026, Schweizer Schreibweise mit «ss», Anrede «Sie»). Unter jeder Formel mit Abkürzungen oder Symbolen eine Legende: jedes Kürzel ausgeschrieben und erklärt, mit Einheit (Patricks Wunsch, 06.11.2026).
 - biber.solar: Änderungen in `biber-solar-test/site` (Vorschau test.biber.solar) committen; nach Patricks «ok» mit `git -C biber-solar-test/site branch -f freigegeben main` freigeben und `biber-solar/update.sh` ausführen – live geht es sofort vom NUC, GitHub bekommt es am Abend.
 - Commit-Messages auf Deutsch.
 - Antworten an den Nutzer auf Deutsch.
