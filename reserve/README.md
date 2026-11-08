@@ -13,6 +13,7 @@ feste Adresse **192.168.1.24** (Netzwerkkarte wie beim NUC auf `eno1` umbenannt)
 | Rücktritt im Betrieb (Reserve aktiv, NUC taucht auf) | NUC, `abgleich.sh` → `vorrang.sh zuruecktreten` | alle 10 min |
 | Zurückwechseln | NUC, `zurueck-zum-nuc.sh` | **nur von Hand** |
 | Versionierte Sicherung auf `/srv/backup/domus/<Datum>` (30 Tage, dann Monatserste 24 Monate), Images vorab holen | Reserve, `sicherung.sh`, Timer `domus-reserve-sicherung` | täglich 04:30 |
+| Claude Code: Programm, `~/.claude` (Gedächtnis, Unterhaltungen, Anmeldung) und `~/.claude.json` auf die Reserve; dort startet es nur bei der Übernahme (tmux «claude», dieselbe Unterhaltung als Abzweigung, Remote Control «domus-reserve»); der Rückwechsel holt neuere Unterhaltungen und die Anmeldung zurück | NUC `abgleich.sh` / Reserve `uebernehmen.sh` | alle 10 min / im Ausfall |
 | Zweiter Pi-hole, nur DNS, 192.168.1.24 (`pihole-zweit/`) | Reserve | dauernd |
 
 Zustand der Reserve: `/var/lib/domus/rolle` (`reserve` oder `aktiv`), Protokoll der Übernahme `/var/lib/domus/uebernahme.log`.

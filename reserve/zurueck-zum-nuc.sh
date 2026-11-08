@@ -24,6 +24,7 @@ R 'set -e
      systemctl --user disable --now "$u" >/dev/null 2>&1 || true
    done
    systemctl --user reset-failed || true
+   tmux kill-session -t claude 2>/dev/null || true
    docker ps --format "{{.Names}}" | grep -vx pihole-zweit | xargs -r docker stop -t 60 >/dev/null'
 
 echo "3/5 Daten Reserve → NUC"
@@ -32,6 +33,10 @@ sudo rsync -aHAX --numeric-ids --delete -e "ssh ${SSHO[*]}" --rsync-path="sudo r
   --exclude='/reserve/' \
   "$RESERVE:/home/claude/domus/" "$DOMUS/"
 sudo rsync -a -e "ssh ${SSHO[*]}" --rsync-path="sudo rsync" "$RESERVE:/home/claude/domus/backups/reserve-stand/umami.sql.gz" "$DOMUS/backups/reserve-stand/umami.sql.gz" || true
+
+# Claude: Unterhaltungen, Gedächtnis und (falls dort erneuert) die Anmeldung zurück – nur neuere Dateien
+rsync -a --update -e "ssh ${SSHO[*]}" "$RESERVE:/home/claude/.claude/projects/" "$HOME/.claude/projects/" || echo "Hinweis: Claude-Unterhaltungen nicht zurückkopiert"
+rsync -a --update -e "ssh ${SSHO[*]}" "$RESERVE:/home/claude/.claude/.credentials.json" "$HOME/.claude/.credentials.json" || true
 
 echo "4/5 Reserve gibt 192.168.1.23 ab"
 R 'sudo ip addr del 192.168.1.23/24 dev eno1 2>/dev/null || true

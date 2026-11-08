@@ -59,12 +59,21 @@ if [ -s "$STAND/units-aktiv.txt" ]; then
   done
 fi
 
+# --- Claude Code: dieselbe Unterhaltung wie auf dem NUC als Abzweigung (neue Sitzungs-ID), Remote Control «domus-reserve»
+SITZUNG=$(sed -n 's/^Environment=SITZUNG=//p' /home/claude/.config/systemd/user/claude-sitzung.service 2>/dev/null)
+if [ -x /home/claude/.local/bin/claude ] && ! runuser -u claude -- tmux has-session -t claude 2>/dev/null; then
+  runuser -u claude -- env HOME=/home/claude PATH=/home/claude/.local/bin:/usr/local/bin:/usr/bin:/bin \
+    tmux new-session -d -s claude -c /home/claude/domus \
+    "claude --dangerously-skip-permissions ${SITZUNG:+--resume $SITZUNG --fork-session} --remote-control domus-reserve" \
+    || fehler+=("Claude")
+fi
 laufend=$(docker ps --format '{{.Names}}' | sort | tr '\n' ' ')
 echo "Laufende Container: $laufend"
 [ ${#fehler[@]} -gt 0 ] && echo "Fehler bei: ${fehler[*]}"
 
 printf '%s\n' "Der NUC hat mehr als 3 Minuten nicht geantwortet. Der Reserve-PC (192.168.1.24) hat um $(date '+%H:%M') übernommen
 und hält jetzt die Adresse 192.168.1.23: Webseiten, Home Assistant, homi, Pi-hole (DNS + DHCP) und die Academy laufen dort.
+Claude ist in der App als «domus-reserve» erreichbar.
 
 Datenstand: letzter Abgleich $(cat /var/lib/domus/abgleich-zeit 2>/dev/null || echo unbekannt) (was danach auf dem NUC passiert ist, fehlt).
 Laufende Container: $laufend

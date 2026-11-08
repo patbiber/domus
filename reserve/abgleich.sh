@@ -74,6 +74,13 @@ RSYNC=(sudo rsync -aHAX --numeric-ids --delete --partial --mkpath -e "$SSH" --rs
 "${RSYNC[@]}" /etc/msmtprc /etc/aliases "$RESERVE:/etc/" || fehler "rsync Mail-Konfiguration fehlgeschlagen"
 "${RSYNC[@]}" "$HOME/.config/domus/" "$RESERVE:/home/claude/.config/domus/" || fehler "rsync ~/.config/domus fehlgeschlagen"
 "${RSYNC[@]}" --exclude='*.wants/' "$HOME/.config/systemd/user/" "$RESERVE:/home/claude/.config/systemd/user/" || fehler "rsync systemd-Units fehlgeschlagen"
+# Claude Code: Programm (aktuelle Version), Einstellungen, Gedächtnis, Unterhaltungen und Anmeldung – damit Claude
+# nach einer Übernahme auf der Reserve weiterarbeiten kann (gestartet wird es dort nur im Ausfall, uebernehmen.sh)
+CLAUDE_BIN=$(readlink -f "$HOME/.local/bin/claude")
+rsync -a -e "$SSH" --mkpath "$CLAUDE_BIN" "$RESERVE:$CLAUDE_BIN" \
+  && $SSH "$RESERVE" "ln -sfn '$CLAUDE_BIN' ~/.local/bin/claude" || fehler "rsync Claude-Programm fehlgeschlagen"
+rsync -a --delete -e "$SSH" --exclude='*.lock' "$HOME/.claude/" "$RESERVE:/home/claude/.claude/" \
+  && rsync -a -e "$SSH" "$HOME/.claude.json" "$RESERVE:/home/claude/.claude.json" || fehler "rsync ~/.claude fehlgeschlagen"
 if ls "$DOMUS"/backups/extern/*.gpg >/dev/null 2>&1; then
   sudo rsync -a -e "$SSH" --rsync-path="sudo rsync" "$DOMUS"/backups/extern/ "$RESERVE:/srv/backup/extern/" \
     || fehler "rsync verschlüsselte Backups fehlgeschlagen"
