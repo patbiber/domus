@@ -1,0 +1,10 @@
+[Unit]
+Description=domus: Vorrang alle 30 Sekunden prüfen
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec=30s
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

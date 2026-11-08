@@ -14,7 +14,8 @@ LOG=/var/lib/domus/uebernahme.log
 mkdir -p /var/lib/domus
 exec > >(tee -a "$LOG") 2>&1
 echo "=== Übernahme $(date -Iseconds)"
-[ "$(cat /var/lib/domus/rolle 2>/dev/null)" = "aktiv" ] && echo "(war schon aktiv – starte nur fehlende Dienste)"
+WAR_AKTIV=0
+[ "$(cat /var/lib/domus/rolle 2>/dev/null)" = "aktiv" ] && { WAR_AKTIV=1; echo "(war schon aktiv, z. B. nach Neustart – starte nur fehlende Dienste)"; }
 echo aktiv > /var/lib/domus/rolle
 
 als_claude() { runuser -u claude -- env XDG_RUNTIME_DIR=/run/user/1000 "$@"; }
@@ -41,12 +42,13 @@ done
 # Zweiter Durchgang für Dienste, die beim ersten Mal scheitern (z. B. Netz proxy_default noch nicht da)
 if [ ${#fehler[@]} -gt 0 ]; then
   nochmals=("${fehler[@]}"); fehler=()
-  for d in "${nochmals[@]}"; do (cd "$DOMUS/$d" && docker compose up -d --remove-orphans) || fehler+=("$d"); done
+  for d in "${nochmals[@]}"; do (cd "$DOMUS/$d" && docker compose up -d --remove-orphans --force-recreate) || fehler+=("$d"); done   # neu erstellen: alte Container können auf nicht mehr vorhandene Netze zeigen
   docker restart nginx >/dev/null 2>&1 || true
 fi
 docker restart nginx >/dev/null 2>&1 || true
 # Anmeldung (home.biber.solar, Kundenseiten) läuft ausserhalb von Docker auf 172.18.0.1 (proxy_default)
 systemctl daemon-reload; systemctl start homi-login || fehler+=("homi-login")
+docker rm -f pihole-zweit >/dev/null 2>&1 || true   # falls er nach einem Neustart wieder lief
 # Umami: frische Datenbank aus dem Auszug füllen
 if [ "${UMAMI_NEU:-0}" = 1 ] && [ -s "$STAND/umami.sql.gz" ]; then
   for _ in $(seq 1 30); do docker exec umami-db pg_isready -U umami -d umami >/dev/null 2>&1 && break; sleep 2; done
@@ -74,6 +76,7 @@ fi
 laufend=$(docker ps --format '{{.Names}}' | sort | tr '\n' ' ')
 echo "Laufende Container: $laufend"
 [ ${#fehler[@]} -gt 0 ] && echo "Fehler bei: ${fehler[*]}"
+if [ "$WAR_AKTIV" = 1 ]; then echo "=== Dienste nach Neustart geprüft (keine Mail)"; exit 0; fi
 
 printf '%s\n' "Der NUC hat mehr als 3 Minuten nicht geantwortet. Der Reserve-PC ($RESERVE_IP) hat um $(date '+%H:%M') übernommen
 und hält jetzt die Adresse $VIP: Webseiten, Home Assistant, homi, Pi-hole (DNS + DHCP) und die Academy laufen dort.

@@ -57,7 +57,9 @@ case "$ROLLE" in
     sudo mkdir -p /etc/systemd/system/docker.service.d
     sudo cp "$HIER/docker-vorrang.conf" /etc/systemd/system/docker.service.d/domus-vorrang.conf
     [ -f "$DOMUS/system/domus-firewall.service" ] && sudo cp "$DOMUS/system/domus-firewall.service" /etc/systemd/system/
+    sudo ln -sf "$HIER/domus-vorrang-pruefen.service" "$HIER/domus-vorrang-pruefen.timer" /etc/systemd/system/
     sudo systemctl daemon-reload; sudo systemctl enable domus-vorrang.service domus-firewall.service
+    sudo systemctl enable --now domus-vorrang-pruefen.timer
     docker rm -f pihole-zweit >/dev/null 2>&1 || true
     ln -sf "$HIER/domus-reserve-abgleich.service" "$HIER/domus-reserve-abgleich.timer" ~/.config/systemd/user/
     systemctl --user daemon-reload
@@ -85,6 +87,7 @@ case "$ROLLE" in
     netplan_vip del
     sudo rm -f /etc/systemd/system/docker.service.d/domus-vorrang.conf
     sudo systemctl disable domus-vorrang.service 2>/dev/null || true
+    sudo systemctl disable --now domus-vorrang-pruefen.timer 2>/dev/null || true
     sudo cp "$HIER/domus-waechter.service" "$HIER/domus-reserve-sicherung.service" "$HIER/domus-reserve-sicherung.timer" /etc/systemd/system/
     [ -f "$DOMUS/system/domus-firewall.service" ] && sudo cp "$DOMUS/system/domus-firewall.service" /etc/systemd/system/
     sudo systemctl daemon-reload

@@ -56,8 +56,12 @@ sudo systemctl start domus-vorrang.service docker.service
 for d in pihole homeassistant energie umami proxy energy academy biber-solar biber-solar-test training unifi; do
   [ -f "$DOMUS/$d/compose.yml" ] && { (cd "$DOMUS/$d" && docker compose up -d) >/dev/null 2>&1 || nochmals+=("$d"); }
 done
-for d in "${nochmals[@]}"; do (cd "$DOMUS/$d" && docker compose up -d) >/dev/null || echo "FEHLER: $d startet nicht"; done
+for d in "${nochmals[@]}"; do (cd "$DOMUS/$d" && docker compose up -d --force-recreate) >/dev/null || echo "FEHLER: $d startet nicht"; done
 if [ ${#nochmals[@]} -gt 0 ]; then docker restart nginx >/dev/null; fi
+# Timer, die beim Zurücktreten angehalten wurden, wieder starten
+sudo rm -f /run/domus-timer-gestoppt
+systemctl --user list-unit-files --state=enabled --no-legend | awk '{print $1}' | grep -E '\.(timer|path)$' \
+  | while read -r u; do systemctl --user start "$u" 2>/dev/null || echo "Hinweis: $u startet nicht"; done
 if [ -s "$DOMUS/backups/reserve-stand/umami.sql.gz" ]; then
   for _ in $(seq 1 30); do docker exec umami-db pg_isready -U umami -d umami >/dev/null 2>&1 && break; sleep 2; done
   gunzip -c "$DOMUS/backups/reserve-stand/umami.sql.gz" | docker exec -i umami-db psql -q -U umami -d umami >/dev/null 2>&1 || echo "Hinweis: Umami-Auszug nicht eingespielt"

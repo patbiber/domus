@@ -40,12 +40,12 @@ Protokoll: journalctl --user -u domus-reserve-abgleich"
 # --- 1. Hat die Reserve übernommen?
 ANTWORT=$($SSH "$RESERVE" 'cat /var/lib/domus/rolle 2>/dev/null || echo reserve') || fehler "Reserve-PC per SSH nicht erreichbar"
 if [ "$ANTWORT" = "aktiv" ]; then
-  if ip -4 addr show "$DEV" | grep -q "$VIP/"; then
-    "$DOMUS/reserve/vorrang.sh" zuruecktreten
-  fi
+  "$DOMUS/reserve/vorrang.sh" pruefen
   echo "Reserve ist aktiv – kein Abgleich (zurück zum NUC: reserve/zurueck-zum-nuc.sh)"
   exit 0
 fi
+# Nur auf eine echte Reserve kopieren (nie auf einen Rechner, der selbst Hauptrechner ist)
+[ "$ANTWORT" = "reserve" ] || fehler "Rechner $RESERVE_IP meldet Rolle «$ANTWORT» statt «reserve» – kein Abgleich (rollen.conf prüfen)"
 
 # --- 2. Stimmige Kopien der Datenbanken
 sudo python3 -c "import sqlite3,sys; s=sqlite3.connect('file:'+sys.argv[1]+'?mode=ro',uri=True); d=sqlite3.connect(sys.argv[2]); s.backup(d); d.close()" \

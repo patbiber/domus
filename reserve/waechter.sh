@@ -27,6 +27,9 @@ router_da() {   # der Router (Sunrise) verschluckt einzelne Pings – darum mehr
 }
 melden() { printf '%s\n' "$2" | runuser -u claude -- mail -s "$1" root 2>/dev/null || true; }
 
+# Neustart im Zustand «aktiv»: fehlende Dienste (homi-login, Claude, Container) wieder starten, ohne neue Mail
+if [ "$(cat "$ROLLE")" = "aktiv" ]; then "$DOMUS/reserve/uebernehmen.sh" || true; fi
+
 weg_seit=0
 gemeldet_alt=0
 grund=""

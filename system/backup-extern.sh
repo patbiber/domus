@@ -82,6 +82,9 @@ if [ -e "/dev/disk/by-label/$USB_LABEL" ]; then
     sync; sudo umount "$USB_MNT" || true
     fehler "Kopie auf den USB-Stick $USB_LABEL fehlgeschlagen (voll oder defekt?)"
   fi
+elif mountpoint -q /srv/backup 2>/dev/null; then
+  # Reserve-PC nach einer Übernahme: kein Stick, dafür die 6-TB-Platte (reserve/README.md)
+  cp "$LOKAL/$NAME" /srv/backup/extern/ && echo "Kopie auf /srv/backup/extern (Reserve-PC)" || fehler "Kopie auf /srv/backup fehlgeschlagen"
 else
   printf 'Der USB-Stick «%s» steckt nicht am NUC – das heutige Backup liegt nur auf dem NUC.\nBitte wieder einstecken.\n' \
     "$USB_LABEL" | mail -s "domus: Backup-Stick fehlt" root || true

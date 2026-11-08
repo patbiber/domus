@@ -10,7 +10,8 @@ feste Adresse **192.168.1.24** (Netzwerkkarte wie beim NUC auf `eno1` umbenannt)
 | Wächter: Übernahme, wenn NUC (.20 und .23) 3 min weg, Router erreichbar, Abgleich < 24 h | Reserve, `waechter.sh`, `domus-waechter.service` | dauernd |
 | Übernahme: Rolle `aktiv`, Adresse .23, Datenbanken einsetzen, Container + Timer starten, Mail | Reserve, `uebernehmen.sh` | im Ausfall |
 | Vorrang: NUC startet Docker nicht, solange die Reserve aktiv ist | NUC, `vorrang.sh`, `domus-vorrang.service` + Drop-in `docker.service.d/domus-vorrang.conf` | beim Start |
-| Rücktritt im Betrieb (Reserve aktiv, NUC taucht auf) | NUC, `abgleich.sh` → `vorrang.sh zuruecktreten` | alle 10 min |
+| Rücktritt im Betrieb (Reserve aktiv, NUC hält noch .23): Container + Timer stoppen, .23 abgeben | NUC, `vorrang.sh pruefen`, System-Timer `domus-vorrang-pruefen` | alle 30 s |
+| Neustart der Reserve im Zustand «aktiv»: fehlende Dienste nachstarten (ohne Mail) | Reserve, `waechter.sh` → `uebernehmen.sh` | beim Start |
 | Zurückwechseln | NUC, `zurueck-zum-nuc.sh` | **nur von Hand** |
 | Versionierte Sicherung auf `/srv/backup/domus/<Datum>` (30 Tage, dann Monatserste 24 Monate), Images vorab holen | Reserve, `sicherung.sh`, Timer `domus-reserve-sicherung` | täglich 04:30 |
 | Claude Code: Programm, `~/.claude` (Gedächtnis, Unterhaltungen, Anmeldung) und `~/.claude.json` auf die Reserve; dort startet es nur bei der Übernahme (tmux «claude», dieselbe Unterhaltung als Abzweigung, Remote Control «domus-reserve»); der Rückwechsel holt neuere Unterhaltungen und die Anmeldung zurück | NUC `abgleich.sh` / Reserve `uebernehmen.sh` | alle 10 min / im Ausfall |

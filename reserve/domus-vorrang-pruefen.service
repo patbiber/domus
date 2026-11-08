@@ -1,0 +1,10 @@
+# Hauptrechner: alle 30 s prüfen, ob die Reserve übernommen hat, während dieser Rechner noch die VIP hält
+# (z. B. Netzwerk war ein paar Minuten weg, der Rechner lief weiter) → sofort zurücktreten (reserve/vorrang.sh).
+[Unit]
+Description=domus: Vorrang im Betrieb prüfen (Reserve aktiv? dann zurücktreten)
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/claude/domus/reserve/vorrang.sh pruefen
+TimeoutStartSec=120
