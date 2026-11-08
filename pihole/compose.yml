@@ -4,7 +4,7 @@
 # und fragt weiter direkt Cloudflare, damit er nicht von Pi-hole abhängt.
 # Blocklisten (in ./data, über die Oberfläche): Standard + Erwachsenen-Seiten (StevenBlack porn-only, 06.11.2026).
 # Feste Adressen (Reservierungen) unten bei FTLCONF_dhcp_hosts: MAC,IP,Name – neue Geräte dort eintragen.
-# Fällt der NUC aus: in der Sunrise-Box DHCP wieder einschalten.
+# Fällt der NUC aus, übernimmt der Reserve-PC (reserve/); als zweiter DNS läuft dort immer pihole-zweit (.24).
 # Oberfläche: http://192.168.1.23:8053/admin, Passwort PIHOLE_PASSWORT in ../.env.
 # Netz host (DHCP braucht Broadcasts). Port 53 nur auf eno1 (listeningMode BIND), weil systemd-resolved 127.0.0.53 hält.
 # Firewall: 53 und 8053 nur aus 192.168.1.0/24, DHCP 67 offen. Daten: ./data (nicht im Repo).
@@ -35,7 +35,7 @@ services:
       FTLCONF_dhcp_leaseTime: 24h
       FTLCONF_dhcp_ipv6: "false"
       FTLCONF_dhcp_rapidCommit: "false"
-      FTLCONF_misc_dnsmasq_lines: "dhcp-option=option:dns-server,192.168.1.23"
+      FTLCONF_misc_dnsmasq_lines: "dhcp-option=option:dns-server,192.168.1.23,192.168.1.24"   # .24 = pihole-zweit auf dem Reserve-PC
       FTLCONF_dhcp_hosts: "00:03:ac:43:00:94,192.168.1.221,fronius;fc:f5:c4:19:ed:7c,192.168.1.211,mystrom-solarladestation;2c:f4:32:6c:eb:f0,192.168.1.103,dachstock-heizung;44:d9:e7:f2:03:11,192.168.1.94,unifi-ap;80:2a:a8:83:dc:a6,192.168.1.196,ubiquiti;44:cb:8b:bc:be:37,192.168.1.61,lg-kuehlschrank;54:60:09:e8:4f:00,192.168.1.26,chromecast-audio;24:f5:a2:0b:ed:10,192.168.1.141,belkin;00:17:88:b3:34:2f,192.168.1.229,hue-bridge"
       FTLCONF_ntp_sync_active: "false"         # Uhrzeit stellt der NUC selbst
       FTLCONF_ntp_ipv4_active: "false"         # kein NTP-Server

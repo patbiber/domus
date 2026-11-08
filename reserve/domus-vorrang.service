@@ -1,0 +1,17 @@
+# NUC: vor Docker prüfen, ob der Reserve-PC übernommen hat (reserve/vorrang.sh). Wenn ja, scheitert diese Unit und
+# Docker startet nicht (Drop-in /etc/systemd/system/docker.service.d/domus-vorrang.conf: Requires + After).
+# Ist die Reserve nicht erreichbar oder nicht aktiv, startet alles normal.
+[Unit]
+Description=domus: Vorrang-Prüfung (hat der Reserve-PC übernommen?)
+After=network-online.target
+Wants=network-online.target
+Before=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/home/claude/domus/reserve/vorrang.sh boot
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+# Reserve-PC: beobachtet den NUC und übernimmt bei einem Ausfall (reserve/waechter.sh). Nur auf domus-reserve.
+[Unit]
+Description=domus-reserve: Wächter (Übernahme, wenn der NUC 3 Minuten weg ist)
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+ExecStart=/home/claude/domus/reserve/waechter.sh
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

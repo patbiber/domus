@@ -1,0 +1,9 @@
+# NUC: Abgleich auf den Reserve-PC (reserve/abgleich.sh). User-Unit von claude.
+[Unit]
+Description=domus: Abgleich NUC → Reserve-PC
+
+[Service]
+Type=oneshot
+ExecStart=/home/claude/domus/reserve/abgleich.sh
+Nice=10
+IOSchedulingClass=idle

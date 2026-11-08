@@ -64,5 +64,6 @@ film/out/
 # UniFi-Controller: Konfiguration, Datenbank, Backups
 unifi/data/
 pihole/data/
+pihole-zweit/data/
 academy/repo/
 academy/data/

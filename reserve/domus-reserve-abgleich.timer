@@ -1,0 +1,9 @@
+[Unit]
+Description=domus: Abgleich mit dem Reserve-PC alle 10 Minuten
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=10min
+
+[Install]
+WantedBy=timers.target

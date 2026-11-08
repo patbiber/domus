@@ -1,0 +1,35 @@
+# Zweiter Pi-hole – läuft NUR auf dem Reserve-PC (192.168.1.24), immer mit, nur DNS (kein DHCP).
+# Der Haupt-Pi-hole auf dem NUC verteilt beide als DNS (192.168.1.23 und .24): fällt einer aus, fragen die
+# Geräte den anderen. Bei einer Übernahme stoppt reserve/uebernehmen.sh diesen Container, der Haupt-Pi-hole
+# (pihole/) läuft dann auf der Reserve und beantwortet .23 und .24.
+# Blocklisten: einmal aus pihole/data übernommen, danach aktualisiert er sie selbst. Oberfläche: http://192.168.1.24:8053/admin
+services:
+  pihole-zweit:
+    container_name: pihole-zweit
+    image: pihole/pihole:latest
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - NET_BIND_SERVICE
+    environment:
+      TZ: Europe/Zurich
+      FTLCONF_webserver_api_password: ${PIHOLE_PASSWORT}
+      FTLCONF_webserver_port: "192.168.1.24:8053"
+      FTLCONF_dns_listeningMode: BIND
+      FTLCONF_dns_interface: eno1
+      FTLCONF_dns_upstreams: "1.1.1.1;1.0.0.1"
+      FTLCONF_dns_dnssec: "true"
+      FTLCONF_dns_domain_name: lan
+      FTLCONF_dhcp_active: "false"
+      FTLCONF_misc_dnsmasq_lines: ""
+      FTLCONF_ntp_sync_active: "false"
+      FTLCONF_ntp_ipv4_active: "false"
+      FTLCONF_ntp_ipv6_active: "false"
+      FTLCONF_misc_nice: "-999"
+    volumes:
+      - ./data:/etc/pihole
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

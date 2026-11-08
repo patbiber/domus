@@ -1,0 +1,10 @@
+# Reserve-PC: tägliche versionierte Sicherung auf die 6-TB-Platte, Images vorab holen (reserve/sicherung.sh).
+[Unit]
+Description=domus-reserve: Sicherung auf /srv/backup und Images vorbereiten
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/claude/domus/reserve/sicherung.sh
+Nice=10
+IOSchedulingClass=idle

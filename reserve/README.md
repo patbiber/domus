@@ -1,0 +1,21 @@
+# Reserve-PC (Ausfallsicherung des NUC)
+
+Seit 08.11.2026. Lenovo ThinkCentre 10NM (4 Kerne, 8 GB RAM, 256 GB NVMe), Ubuntu 26.04, Hostname `domus2`,
+feste Adresse **192.168.1.24** (Netzwerkkarte wie beim NUC auf `eno1` umbenannt), SSH vom NUC mit `~/.ssh/domus_reserve`.
+6-TB-Platte (WD60EZRX) als `/srv/backup` (ext4, Label `backup`).
+
+| Was | Wo | Wie oft |
+|---|---|---|
+| Abgleich NUC → Reserve (`~/domus` ohne backups/, Datenbank-Kopien, Mail-Konfig, Units ohne `*.wants`) | NUC, `abgleich.sh`, User-Timer `domus-reserve-abgleich` | alle 10 min |
+| Wächter: Übernahme, wenn NUC (.20 und .23) 3 min weg, Router erreichbar, Abgleich < 24 h | Reserve, `waechter.sh`, `domus-waechter.service` | dauernd |
+| Übernahme: Rolle `aktiv`, Adresse .23, Datenbanken einsetzen, Container + Timer starten, Mail | Reserve, `uebernehmen.sh` | im Ausfall |
+| Vorrang: NUC startet Docker nicht, solange die Reserve aktiv ist | NUC, `vorrang.sh`, `domus-vorrang.service` + Drop-in `docker.service.d/domus-vorrang.conf` | beim Start |
+| Rücktritt im Betrieb (Reserve aktiv, NUC taucht auf) | NUC, `abgleich.sh` → `vorrang.sh zuruecktreten` | alle 10 min |
+| Zurückwechseln | NUC, `zurueck-zum-nuc.sh` | **nur von Hand** |
+| Versionierte Sicherung auf `/srv/backup/domus/<Datum>` (30 Tage, dann Monatserste 24 Monate), Images vorab holen | Reserve, `sicherung.sh`, Timer `domus-reserve-sicherung` | täglich 04:30 |
+| Zweiter Pi-hole, nur DNS, 192.168.1.24 (`pihole-zweit/`) | Reserve | dauernd |
+
+Zustand der Reserve: `/var/lib/domus/rolle` (`reserve` oder `aktiv`), Protokoll der Übernahme `/var/lib/domus/uebernahme.log`.
+Neuer Dienst mit `compose.yml`: in die Listen in `uebernehmen.sh`, `zurueck-zum-nuc.sh` und `sicherung.sh` eintragen.
+`autoinstall-vorlage.yaml` / `usb-erzeugen.py`: Stick-Dateien für eine Neuinstallation (wurde am 08.11. nicht verwendet,
+Patrick hat von Hand installiert).
