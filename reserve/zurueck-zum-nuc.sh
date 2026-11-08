@@ -16,6 +16,7 @@ ZEIT=$(date +%F-%H%M)
 [ "$(R 'cat /var/lib/domus/rolle 2>/dev/null')" = "aktiv" ] || { echo "Die Reserve ist nicht aktiv – nichts zu tun."; exit 0; }
 echo "1/5 Sicherung des alten NUC-Stands"
 sudo tar czf "$DOMUS/backups/vor-rueckwechsel-$ZEIT.tar.gz" --exclude='./backups' --exclude='./umami/data/postgres' -C "$DOMUS" . || [ $? -eq 1 ]
+ls -1t "$DOMUS"/backups/vor-rueckwechsel-*.tar.gz | tail -n +4 | xargs -r sudo rm -f --   # die letzten 3 behalten
 
 echo "2/5 Reserve anhalten"
 R 'set -e
