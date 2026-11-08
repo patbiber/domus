@@ -7,6 +7,7 @@
 # Zurückgewechselt wird nur von Hand (reserve/zurueck-zum-nuc.sh auf dem NUC).
 # Nach einem Neustart der Reserve im Zustand «aktiv» holt sie sich die Adresse .23 zurück.
 set -uo pipefail
+. "$(dirname "$(readlink -f "$0")")/rollen.conf"
 DOMUS=/home/claude/domus
 ROLLE=/var/lib/domus/rolle
 SCHWELLE=180
@@ -20,8 +21,8 @@ lebt() {   # $1 = Adresse; zwei Pings und TCP 443 – erst wenn alles ausbleibt,
   return 1
 }
 router_da() {   # der Router (Sunrise) verschluckt einzelne Pings – darum mehrere Wege
-  ping -c3 -W2 192.168.1.1 >/dev/null 2>&1 && return 0
-  timeout 3 bash -c "</dev/tcp/192.168.1.1/80" 2>/dev/null && return 0
+  ping -c3 -W2 "$ROUTER_IP" >/dev/null 2>&1 && return 0
+  timeout 3 bash -c "</dev/tcp/$ROUTER_IP/80" 2>/dev/null && return 0
   return 1
 }
 melden() { printf '%s\n' "$2" | runuser -u claude -- mail -s "$1" root 2>/dev/null || true; }
@@ -31,10 +32,10 @@ gemeldet_alt=0
 grund=""
 while true; do
   if [ "$(cat "$ROLLE")" = "aktiv" ]; then
-    ip -4 addr show eno1 | grep -q '192.168.1.23/' || { ip addr add 192.168.1.23/24 dev eno1; arping -q -U -c 3 -I eno1 192.168.1.23 || true; }
+    ip -4 addr show "$DEV" | grep -q "$VIP/" || { ip addr add "$VIP/24" dev "$DEV"; arping -q -U -c 3 -I "$DEV" "$VIP" || true; }
     sleep 60; continue
   fi
-  if lebt 192.168.1.20 || lebt 192.168.1.23; then
+  if lebt "$HAUPT_IP" || lebt "$VIP"; then
     [ "$weg_seit" -ne 0 ] && echo "NUC wieder erreichbar ($grund)"
     weg_seit=0; gemeldet_alt=0
   elif ! router_da; then

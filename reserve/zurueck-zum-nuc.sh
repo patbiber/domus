@@ -6,8 +6,9 @@
 # 4. Reserve gibt 192.168.1.23 ab, wird wieder «reserve», zweiter Pi-hole startet
 # 5. NUC übernimmt .23, Docker und Container starten, Umami-Datenbank aus dem Auszug
 set -euo pipefail
+. "$(dirname "$(readlink -f "$0")")/rollen.conf"
 DOMUS="$HOME/domus"
-RESERVE=claude@192.168.1.24
+RESERVE=claude@$RESERVE_IP
 SSHO=(-i "$HOME/.ssh/domus_reserve" -o BatchMode=yes -o ConnectTimeout=10 -o UserKnownHostsFile="$HOME/.ssh/known_hosts")
 R() { ssh "${SSHO[@]}" "$RESERVE" "$@"; }
 ZEIT=$(date +%F-%H%M)
@@ -21,16 +22,17 @@ R 'set -e
    d=/home/claude/domus/backups/reserve-stand; mkdir -p $d
    docker exec umami-db pg_dump -U umami --clean --if-exists umami | gzip > $d/umami.sql.gz || echo "Umami-Auszug fehlgeschlagen"
    for u in $(grep -E "\.(timer|path)\$" $d/units-aktiv.txt); do
-     systemctl --user disable --now "$u" >/dev/null 2>&1 || true
+     systemctl --user stop "$u" >/dev/null 2>&1 || true
+     rm -f ~/.config/systemd/user/*.wants/"$u"
    done
-   systemctl --user reset-failed || true
+   systemctl --user daemon-reload; systemctl --user reset-failed || true
    tmux kill-session -t claude 2>/dev/null || true
    sudo systemctl stop homi-login
-   docker ps --format "{{.Names}}" | grep -vx pihole-zweit | xargs -r docker stop -t 60 >/dev/null'
+   docker ps --format "{{.Names}}" | { grep -vx pihole-zweit || true; } | xargs -r docker stop -t 60 >/dev/null'
 
 echo "3/5 Daten Reserve → NUC"
 sudo rsync -aHAX --numeric-ids --delete -e "ssh ${SSHO[*]}" --rsync-path="sudo rsync" \
-  --exclude='/backups/' --exclude='/.git/' --exclude='*.tmp' --exclude='/umami/data/postgres/' --exclude='/pihole-zweit/' \
+  --exclude='/backups/' --exclude='*.tmp' --exclude='/umami/data/postgres/' --exclude='/pihole-zweit/' \
   --exclude='/reserve/' \
   "$RESERVE:/home/claude/domus/" "$DOMUS/"
 sudo rsync -a -e "ssh ${SSHO[*]}" --rsync-path="sudo rsync" "$RESERVE:/home/claude/domus/backups/reserve-stand/umami.sql.gz" "$DOMUS/backups/reserve-stand/umami.sql.gz" || true
@@ -39,15 +41,16 @@ sudo rsync -a -e "ssh ${SSHO[*]}" --rsync-path="sudo rsync" "$RESERVE:/home/clau
 rsync -a --update -e "ssh ${SSHO[*]}" "$RESERVE:/home/claude/.claude/projects/" "$HOME/.claude/projects/" || echo "Hinweis: Claude-Unterhaltungen nicht zurückkopiert"
 rsync -a --update -e "ssh ${SSHO[*]}" "$RESERVE:/home/claude/.claude/.credentials.json" "$HOME/.claude/.credentials.json" || true
 
-echo "4/5 Reserve gibt 192.168.1.23 ab"
-R 'sudo ip addr del 192.168.1.23/24 dev eno1 2>/dev/null || true
+echo "4/5 Reserve gibt $VIP ab"
+R "sudo ip addr del $VIP/24 dev $DEV 2>/dev/null || true"
+R '
    echo reserve | sudo tee /var/lib/domus/rolle >/dev/null; sudo rm -f /var/lib/domus/datenbanken-eingesetzt
    cd /home/claude/domus/pihole-zweit && docker compose up -d >/dev/null'
 
 echo "5/5 NUC übernimmt"
 nochmals=()
-sudo ip addr add 192.168.1.23/24 dev eno1 2>/dev/null || true
-sudo arping -q -U -c 3 -I eno1 192.168.1.23 2>/dev/null || true
+sudo ip addr add "$VIP/24" dev "$DEV" 2>/dev/null || true
+sudo arping -q -U -c 3 -I "$DEV" "$VIP" 2>/dev/null || true
 sudo systemctl reset-failed domus-vorrang.service docker.service 2>/dev/null || true
 sudo systemctl start domus-vorrang.service docker.service
 for d in pihole homeassistant energie umami proxy energy academy biber-solar biber-solar-test training unifi; do

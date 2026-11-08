@@ -6,6 +6,7 @@
 #   fragen dort DNS), Datenbanken aus den Kopien des letzten Abgleichs einsetzen, Container und Timer starten,
 #   Mail an Patrick.
 set -uo pipefail
+. "$(dirname "$(readlink -f "$0")")/rollen.conf"
 [ "$(id -u)" -eq 0 ] || exec sudo "$0" "$@"
 DOMUS=/home/claude/domus
 STAND=$DOMUS/backups/reserve-stand
@@ -21,8 +22,8 @@ fehler=()
 
 # --- Netz
 docker rm -f pihole-zweit >/dev/null 2>&1 || true
-ip -4 addr show eno1 | grep -q '192.168.1.23/' || ip addr add 192.168.1.23/24 dev eno1
-arping -q -U -c 3 -I eno1 192.168.1.23 || true
+ip -4 addr show "$DEV" | grep -q "$VIP/" || ip addr add "$VIP/24" dev "$DEV"
+arping -q -U -c 3 -I "$DEV" "$VIP" || true
 
 # --- Datenbanken aus dem letzten Abgleich (nur beim ersten Mal, danach gehören sie der Reserve)
 if [ ! -f /var/lib/domus/datenbanken-eingesetzt ]; then
@@ -53,11 +54,11 @@ if [ "${UMAMI_NEU:-0}" = 1 ] && [ -s "$STAND/umami.sql.gz" ]; then
     || fehler+=("umami-Datenbank")
 fi
 
-# --- Timer und Pfad-Units wie auf dem NUC (ohne GitHub-Upload, Claude-Sitzung und den Abgleich selbst)
+# --- Timer und Pfad-Units wie auf dem NUC (ohne den Abgleich selbst; der GitHub-Upload läuft mit)
 loginctl enable-linger claude
 als_claude systemctl --user daemon-reload
 if [ -s "$STAND/units-aktiv.txt" ]; then
-  grep -E '\.(timer|path)$' "$STAND/units-aktiv.txt" | grep -vE '^(github-abend|domus-reserve-abgleich|launchpadlib)' | while read -r u; do
+  grep -E '\.(timer|path)$' "$STAND/units-aktiv.txt" | grep -vE '^(domus-reserve-abgleich|launchpadlib)' | while read -r u; do
     als_claude systemctl --user enable --now "$u" >/dev/null 2>&1 || echo "Timer $u nicht gestartet"
   done
 fi
@@ -74,8 +75,8 @@ laufend=$(docker ps --format '{{.Names}}' | sort | tr '\n' ' ')
 echo "Laufende Container: $laufend"
 [ ${#fehler[@]} -gt 0 ] && echo "Fehler bei: ${fehler[*]}"
 
-printf '%s\n' "Der NUC hat mehr als 3 Minuten nicht geantwortet. Der Reserve-PC (192.168.1.24) hat um $(date '+%H:%M') übernommen
-und hält jetzt die Adresse 192.168.1.23: Webseiten, Home Assistant, homi, Pi-hole (DNS + DHCP) und die Academy laufen dort.
+printf '%s\n' "Der NUC hat mehr als 3 Minuten nicht geantwortet. Der Reserve-PC ($RESERVE_IP) hat um $(date '+%H:%M') übernommen
+und hält jetzt die Adresse $VIP: Webseiten, Home Assistant, homi, Pi-hole (DNS + DHCP) und die Academy laufen dort.
 Claude ist in der App als «domus-reserve» erreichbar.
 
 Datenstand: letzter Abgleich $(cat /var/lib/domus/abgleich-zeit 2>/dev/null || echo unbekannt) (was danach auf dem NUC passiert ist, fehlt).

@@ -9,9 +9,10 @@
 #    (backups/extern/) kommen zusätzlich auf deren Backup-Platte /srv/backup/extern/.
 # Nach 3 Fehlversuchen in Folge gibt es eine Mail (und wieder eine, wenn es klappt).
 set -uo pipefail
+. "$(dirname "$(readlink -f "$0")")/rollen.conf"
 umask 077
 DOMUS="$HOME/domus"
-RESERVE=claude@192.168.1.24
+RESERVE=claude@$RESERVE_IP
 SCHL="$HOME/.ssh/domus_reserve"
 SSH="ssh -i $SCHL -o BatchMode=yes -o ConnectTimeout=10 -o UserKnownHostsFile=$HOME/.ssh/known_hosts"
 STAND="$DOMUS/backups/reserve-stand"
@@ -25,7 +26,7 @@ fehler() {
   echo "FEHLER: $*" >&2
   n=$(( $(cat "$ZUSTAND/fehler" 2>/dev/null || echo 0) + 1 )); echo "$n" > "$ZUSTAND/fehler"
   if [ "$n" -eq 3 ]; then
-    mail_an "domus: Abgleich mit dem Reserve-PC klappt nicht" "Der Abgleich NUC → Reserve-PC (192.168.1.24) ist 3-mal hintereinander fehlgeschlagen:
+    mail_an "domus: Abgleich mit dem Reserve-PC klappt nicht" "Der Abgleich NUC → Reserve-PC ($RESERVE_IP) ist 3-mal hintereinander fehlgeschlagen:
 
   $*
 
@@ -39,7 +40,7 @@ Protokoll: journalctl --user -u domus-reserve-abgleich"
 # --- 1. Hat die Reserve übernommen?
 ANTWORT=$($SSH "$RESERVE" 'cat /var/lib/domus/rolle 2>/dev/null || echo reserve') || fehler "Reserve-PC per SSH nicht erreichbar"
 if [ "$ANTWORT" = "aktiv" ]; then
-  if ip -4 addr show eno1 | grep -q '192.168.1.23/'; then
+  if ip -4 addr show "$DEV" | grep -q "$VIP/"; then
     "$DOMUS/reserve/vorrang.sh" zuruecktreten
   fi
   echo "Reserve ist aktiv – kein Abgleich (zurück zum NUC: reserve/zurueck-zum-nuc.sh)"
@@ -75,6 +76,10 @@ RSYNC=(sudo rsync -aHAX --numeric-ids --delete --partial --mkpath -e "$SSH" --rs
 "${RSYNC[@]}" /etc/systemd/system/homi-login.service "$RESERVE:/etc/systemd/system/" || fehler "rsync homi-login.service fehlgeschlagen"
 "${RSYNC[@]}" "$HOME/.config/domus/" "$RESERVE:/home/claude/.config/domus/" || fehler "rsync ~/.config/domus fehlgeschlagen"
 "${RSYNC[@]}" --exclude='*.wants/' "$HOME/.config/systemd/user/" "$RESERVE:/home/claude/.config/systemd/user/" || fehler "rsync systemd-Units fehlgeschlagen"
+# SSH-Schlüssel (GitHub-Deploy-Keys, Schlüssel für die Reserve) und Git-Einstellungen: damit der Abend-Upload
+# auch bei einer Übernahme läuft und die Reserve selbst Hauptrechner werden kann. authorized_keys bleibt je Rechner.
+rsync -a -e "$SSH" --exclude=authorized_keys --exclude='known_hosts.old' --exclude='*.bak' "$HOME/.ssh/" "$RESERVE:/home/claude/.ssh/" \
+  && rsync -a -e "$SSH" "$HOME/.gitconfig" "$RESERVE:/home/claude/.gitconfig" || fehler "rsync ~/.ssh fehlgeschlagen"
 # Claude Code: Programm (aktuelle Version), Einstellungen, Gedächtnis, Unterhaltungen und Anmeldung – damit Claude
 # nach einer Übernahme auf der Reserve weiterarbeiten kann (gestartet wird es dort nur im Ausfall, uebernehmen.sh)
 CLAUDE_BIN=$(readlink -f "$HOME/.local/bin/claude")
