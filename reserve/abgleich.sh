@@ -72,6 +72,7 @@ RSYNC=(sudo rsync -aHAX --numeric-ids --delete --partial --mkpath -e "$SSH" --rs
   "$DOMUS/" "$RESERVE:/home/claude/domus/" || fehler "rsync ~/domus fehlgeschlagen (Code $?)"
 "${RSYNC[@]}" --exclude='*-wal' --exclude='*-shm' --exclude='*.neu' "$STAND/" "$RESERVE:/home/claude/domus/backups/reserve-stand/" || fehler "rsync Datenbank-Kopien fehlgeschlagen"
 "${RSYNC[@]}" /etc/msmtprc /etc/aliases "$RESERVE:/etc/" || fehler "rsync Mail-Konfiguration fehlgeschlagen"
+"${RSYNC[@]}" /etc/systemd/system/homi-login.service "$RESERVE:/etc/systemd/system/" || fehler "rsync homi-login.service fehlgeschlagen"
 "${RSYNC[@]}" "$HOME/.config/domus/" "$RESERVE:/home/claude/.config/domus/" || fehler "rsync ~/.config/domus fehlgeschlagen"
 "${RSYNC[@]}" --exclude='*.wants/' "$HOME/.config/systemd/user/" "$RESERVE:/home/claude/.config/systemd/user/" || fehler "rsync systemd-Units fehlgeschlagen"
 # Claude Code: Programm (aktuelle Version), Einstellungen, Gedächtnis, Unterhaltungen und Anmeldung – damit Claude

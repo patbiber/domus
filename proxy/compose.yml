@@ -42,6 +42,10 @@ services:
         max-file: "3"
 
 networks:
+  default:                   # proxy_default – feste Adresse, gleich auf NUC und Reserve-PC: nginx-Konfiguration und
+    ipam:                    # homi (Schaltbefehle nur aus 172.18.x) verlassen sich auf 172.18.0.0/16 (172.18.0.1 = Host)
+      config:
+        - subnet: 172.18.0.0/16
   statistik:
     name: statistik
     external: true           # wird von umami/compose.yml angelegt

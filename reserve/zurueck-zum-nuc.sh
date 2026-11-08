@@ -25,6 +25,7 @@ R 'set -e
    done
    systemctl --user reset-failed || true
    tmux kill-session -t claude 2>/dev/null || true
+   sudo systemctl stop homi-login
    docker ps --format "{{.Names}}" | grep -vx pihole-zweit | xargs -r docker stop -t 60 >/dev/null'
 
 echo "3/5 Daten Reserve → NUC"
@@ -49,7 +50,7 @@ sudo ip addr add 192.168.1.23/24 dev eno1 2>/dev/null || true
 sudo arping -q -U -c 3 -I eno1 192.168.1.23 2>/dev/null || true
 sudo systemctl reset-failed domus-vorrang.service docker.service 2>/dev/null || true
 sudo systemctl start domus-vorrang.service docker.service
-for d in pihole homeassistant energie energy academy biber-solar biber-solar-test training unifi umami proxy; do
+for d in pihole homeassistant energie umami proxy energy academy biber-solar biber-solar-test training unifi; do
   [ -f "$DOMUS/$d/compose.yml" ] && { (cd "$DOMUS/$d" && docker compose up -d) >/dev/null 2>&1 || nochmals+=("$d"); }
 done
 for d in "${nochmals[@]}"; do (cd "$DOMUS/$d" && docker compose up -d) >/dev/null || echo "FEHLER: $d startet nicht"; done

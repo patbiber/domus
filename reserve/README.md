@@ -17,6 +17,7 @@ feste Adresse **192.168.1.24** (Netzwerkkarte wie beim NUC auf `eno1` umbenannt)
 | Zweiter Pi-hole, nur DNS, 192.168.1.24 (`pihole-zweit/`) | Reserve | dauernd |
 
 Zustand der Reserve: `/var/lib/domus/rolle` (`reserve` oder `aktiv`), Protokoll der Übernahme `/var/lib/domus/uebernahme.log`.
+Docker-Netze haben feste Adressen (proxy_default 172.18, umami_intern 172.19, statistik 172.20), damit nginx, homi und homi-login auf beiden Rechnern gleich funktionieren. homi-login (Systemdienst, Benutzer uid 999/gid 982 auf beiden) startet auf der Reserve nur bei der Übernahme.
 Neuer Dienst mit `compose.yml`: in die Listen in `uebernehmen.sh`, `zurueck-zum-nuc.sh` und `sicherung.sh` eintragen.
 `autoinstall-vorlage.yaml` / `usb-erzeugen.py`: Stick-Dateien für eine Neuinstallation (wurde am 08.11. nicht verwendet,
 Patrick hat von Hand installiert).

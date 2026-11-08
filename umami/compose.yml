@@ -58,4 +58,10 @@ networks:
   # Wechselrichter-Steuerung. nginx hängt an beiden Netzen (proxy/compose.yml).
   statistik:
     name: statistik
-  intern: {}
+    ipam:                    # feste Netze, gleich auf NUC und Reserve-PC (nie 172.18.x – das ist proxy_default)
+      config:
+        - subnet: 172.20.0.0/16
+  intern:
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
