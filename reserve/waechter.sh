@@ -14,21 +14,32 @@ TAKT=20
 mkdir -p /var/lib/domus
 [ -f "$ROLLE" ] || echo reserve > "$ROLLE"
 
-lebt() {   # $1 = Adresse
-  ping -c1 -W2 "$1" >/dev/null 2>&1 && return 0
-  timeout 3 bash -c "</dev/tcp/$1/443" 2>/dev/null && return 0
+lebt() {   # $1 = Adresse; zwei Pings und TCP 443 – erst wenn alles ausbleibt, gilt sie als weg
+  ping -c2 -W2 "$1" >/dev/null 2>&1 && { grund="Ping $1"; return 0; }
+  timeout 3 bash -c "</dev/tcp/$1/443" 2>/dev/null && { grund="TCP $1:443"; return 0; }
+  return 1
+}
+router_da() {   # der Router (Sunrise) verschluckt einzelne Pings – darum mehrere Wege
+  ping -c3 -W2 192.168.1.1 >/dev/null 2>&1 && return 0
+  timeout 3 bash -c "</dev/tcp/192.168.1.1/80" 2>/dev/null && return 0
   return 1
 }
 melden() { printf '%s\n' "$2" | runuser -u claude -- mail -s "$1" root 2>/dev/null || true; }
 
 weg_seit=0
 gemeldet_alt=0
+grund=""
 while true; do
   if [ "$(cat "$ROLLE")" = "aktiv" ]; then
     ip -4 addr show eno1 | grep -q '192.168.1.23/' || { ip addr add 192.168.1.23/24 dev eno1; arping -q -U -c 3 -I eno1 192.168.1.23 || true; }
     sleep 60; continue
   fi
-  if ! lebt 192.168.1.20 && ! lebt 192.168.1.23 && ping -c1 -W2 192.168.1.1 >/dev/null 2>&1; then
+  if lebt 192.168.1.20 || lebt 192.168.1.23; then
+    [ "$weg_seit" -ne 0 ] && echo "NUC wieder erreichbar ($grund)"
+    weg_seit=0; gemeldet_alt=0
+  elif ! router_da; then
+    echo "Router nicht erreichbar – Reserve selbst vom Netz? Zählung angehalten"
+  else
     [ "$weg_seit" -eq 0 ] && { weg_seit=$(date +%s); echo "NUC antwortet nicht – beobachte"; }
     dauer=$(( $(date +%s) - weg_seit ))
     if [ "$dauer" -ge "$SCHWELLE" ]; then
@@ -43,9 +54,6 @@ darum übernimmt der Reserve-PC nicht automatisch. Von Hand übernehmen: auf der
         gemeldet_alt=1
       fi
     fi
-  else
-    [ "$weg_seit" -ne 0 ] && echo "NUC wieder erreichbar"
-    weg_seit=0; gemeldet_alt=0
   fi
   sleep "$TAKT"
 done

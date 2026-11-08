@@ -17,6 +17,7 @@ SSH="ssh -i $SCHL -o BatchMode=yes -o ConnectTimeout=10 -o UserKnownHostsFile=$H
 STAND="$DOMUS/backups/reserve-stand"
 ZUSTAND="${XDG_STATE_HOME:-$HOME/.local/state}/domus/reserve-abgleich"
 mkdir -p "$STAND" "$ZUSTAND"
+exec 9>"$ZUSTAND/sperre"; flock -n 9 || { echo "Abgleich läuft schon"; exit 0; }
 
 mail_an() { printf '%s\n' "$2" | mail -s "$1" root || true; }
 
@@ -69,7 +70,7 @@ RSYNC=(sudo rsync -aHAX --numeric-ids --delete --partial --mkpath -e "$SSH" --rs
   --exclude='/pihole-zweit/data/' \
   --exclude='/unifi/data/logs/' \
   "$DOMUS/" "$RESERVE:/home/claude/domus/" || fehler "rsync ~/domus fehlgeschlagen (Code $?)"
-"${RSYNC[@]}" "$STAND/" "$RESERVE:/home/claude/domus/backups/reserve-stand/" || fehler "rsync Datenbank-Kopien fehlgeschlagen"
+"${RSYNC[@]}" --exclude='*-wal' --exclude='*-shm' --exclude='*.neu' "$STAND/" "$RESERVE:/home/claude/domus/backups/reserve-stand/" || fehler "rsync Datenbank-Kopien fehlgeschlagen"
 "${RSYNC[@]}" /etc/msmtprc /etc/aliases "$RESERVE:/etc/" || fehler "rsync Mail-Konfiguration fehlgeschlagen"
 "${RSYNC[@]}" "$HOME/.config/domus/" "$RESERVE:/home/claude/.config/domus/" || fehler "rsync ~/.config/domus fehlgeschlagen"
 "${RSYNC[@]}" --exclude='*.wants/' "$HOME/.config/systemd/user/" "$RESERVE:/home/claude/.config/systemd/user/" || fehler "rsync systemd-Units fehlgeschlagen"

@@ -20,9 +20,10 @@ echo "2/5 Reserve anhalten"
 R 'set -e
    d=/home/claude/domus/backups/reserve-stand; mkdir -p $d
    docker exec umami-db pg_dump -U umami --clean --if-exists umami | gzip > $d/umami.sql.gz || echo "Umami-Auszug fehlgeschlagen"
-   for u in $(systemctl --user list-units --type=timer,path --state=active --no-legend --plain | awk "{print \$1}"); do
+   for u in $(grep -E "\.(timer|path)\$" $d/units-aktiv.txt); do
      systemctl --user disable --now "$u" >/dev/null 2>&1 || true
    done
+   systemctl --user reset-failed || true
    docker ps --format "{{.Names}}" | grep -vx pihole-zweit | xargs -r docker stop -t 60 >/dev/null'
 
 echo "3/5 Daten Reserve → NUC"
@@ -38,13 +39,16 @@ R 'sudo ip addr del 192.168.1.23/24 dev eno1 2>/dev/null || true
    cd /home/claude/domus/pihole-zweit && docker compose up -d >/dev/null'
 
 echo "5/5 NUC übernimmt"
+nochmals=()
 sudo ip addr add 192.168.1.23/24 dev eno1 2>/dev/null || true
 sudo arping -q -U -c 3 -I eno1 192.168.1.23 2>/dev/null || true
 sudo systemctl reset-failed domus-vorrang.service docker.service 2>/dev/null || true
 sudo systemctl start domus-vorrang.service docker.service
 for d in pihole homeassistant energie energy academy biber-solar biber-solar-test training unifi umami proxy; do
-  [ -f "$DOMUS/$d/compose.yml" ] && (cd "$DOMUS/$d" && docker compose up -d) >/dev/null
+  [ -f "$DOMUS/$d/compose.yml" ] && { (cd "$DOMUS/$d" && docker compose up -d) >/dev/null 2>&1 || nochmals+=("$d"); }
 done
+for d in "${nochmals[@]}"; do (cd "$DOMUS/$d" && docker compose up -d) >/dev/null || echo "FEHLER: $d startet nicht"; done
+if [ ${#nochmals[@]} -gt 0 ]; then docker restart nginx >/dev/null; fi
 if [ -s "$DOMUS/backups/reserve-stand/umami.sql.gz" ]; then
   for _ in $(seq 1 30); do docker exec umami-db pg_isready -U umami -d umami >/dev/null 2>&1 && break; sleep 2; done
   gunzip -c "$DOMUS/backups/reserve-stand/umami.sql.gz" | docker exec -i umami-db psql -q -U umami -d umami >/dev/null 2>&1 || echo "Hinweis: Umami-Auszug nicht eingespielt"

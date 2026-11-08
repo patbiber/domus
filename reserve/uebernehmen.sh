@@ -37,6 +37,12 @@ for d in pihole homeassistant energie energy academy biber-solar biber-solar-tes
   [ -f "$DOMUS/$d/compose.yml" ] || continue
   (cd "$DOMUS/$d" && docker compose up -d --remove-orphans) || fehler+=("$d")
 done
+# Manche Dienste hängen am Netz von nginx (proxy_default), das erst mit proxy entsteht: zweiter Durchgang
+if [ ${#fehler[@]} -gt 0 ]; then
+  nochmals=("${fehler[@]}"); fehler=()
+  for d in "${nochmals[@]}"; do (cd "$DOMUS/$d" && docker compose up -d --remove-orphans) || fehler+=("$d"); done
+  docker restart nginx >/dev/null 2>&1 || true
+fi
 # Umami: frische Datenbank aus dem Auszug füllen
 if [ "${UMAMI_NEU:-0}" = 1 ] && [ -s "$STAND/umami.sql.gz" ]; then
   for _ in $(seq 1 30); do docker exec umami-db pg_isready -U umami -d umami >/dev/null 2>&1 && break; sleep 2; done
