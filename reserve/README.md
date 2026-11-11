@@ -12,7 +12,7 @@ feste Adresse **192.168.1.24** (Netzwerkkarte wie beim NUC auf `eno1` umbenannt)
 | Vorrang: NUC startet Docker nicht, solange die Reserve aktiv ist | NUC, `vorrang.sh`, `domus-vorrang.service` + Drop-in `docker.service.d/domus-vorrang.conf` | beim Start |
 | Rücktritt im Betrieb (Reserve aktiv, NUC hält noch .23): Container + Timer stoppen, .23 abgeben | NUC, `vorrang.sh pruefen`, System-Timer `domus-vorrang-pruefen` | alle 30 s |
 | Neustart der Reserve im Zustand «aktiv»: fehlende Dienste nachstarten (ohne Mail) | Reserve, `waechter.sh` → `uebernehmen.sh` | beim Start |
-| **Reserve nur über Mittag** (seit 11.11.2026): weckt die Reserve 12:00–12:30 per Wake-on-LAN, fährt sie danach herunter (nie wenn «aktiv», erst nach Abgleich/Sicherung), stellt vorher einen RTC-Wecker auf 12:00; Knopf **«Reserve Server On»** in homi (home.biber.solar, Retro) = dauernd an (`energie/data/reserve.json`, Zustand `reserve-status.json`) | NUC, `mittag.sh`, User-Timer `domus-reserve-mittag`; `homi/reserve.py` | jede Minute |
+| **Reserve nur über Mittag** (seit 11.11.2026): weckt die Reserve 12:00–12:30 per Wake-on-LAN, fährt sie danach herunter (nie wenn «aktiv», erst nach Abgleich/Sicherung); Knopf **«Reserve Server On»** in homi (home.biber.solar, Retro) = dauernd an (`energie/data/reserve.json`, Zustand `reserve-status.json`) | NUC, `mittag.sh`, User-Timer `domus-reserve-mittag`; `homi/reserve.py` | jede Minute |
 | Zurückwechseln | NUC, `zurueck-zum-nuc.sh` | **nur von Hand** |
 | Versionierte Sicherung auf `/srv/backup/domus/<Datum>` (30 Tage, dann Monatserste 24 Monate), Images vorab holen | Reserve, `sicherung.sh`, Timer `domus-reserve-sicherung` | täglich 04:30 |
 | Claude Code: Programm, `~/.claude` (Gedächtnis, Unterhaltungen, Anmeldung) und `~/.claude.json` auf die Reserve; dort startet es nur bei der Übernahme (tmux «claude», dieselbe Unterhaltung als Abzweigung, Remote Control «domus-reserve»); der Rückwechsel holt neuere Unterhaltungen und die Anmeldung zurück | NUC `abgleich.sh` / Reserve `uebernehmen.sh` | alle 10 min / im Ausfall |
@@ -36,7 +36,6 @@ Patrick hat von Hand installiert).
 **Reserve nur über Mittag** (11.11.2026, Wunsch Patrick): `FENSTER_VON/BIS` und `RESERVE_MAC` in `rollen.conf`. Ausserhalb des Fensters
 ist die Reserve aus – **dann gibt es keine automatische Übernahme** (nur mit dem Knopf «Reserve Server On» ist der Schutz durchgehend).
 Der Abgleich lässt die absichtlich ausgeschaltete Reserve in Ruhe (`.../reserve-abgleich/soll`), die Sicherung läuft um 12:05.
-Wake-on-LAN ist im Betriebssystem an (`wakeonlan: true` in `/etc/netplan/00-installer-config.yaml` der Reserve, Vorlage
-`~/00-installer-config.yaml.vor-wol`). **Stand 11.11. abends: Magic Packets (UDP 7/9, Ethernet 0x0842) weckten die Reserve nicht –
-im BIOS (Lenovo 10NM: Power → Automatic Power On → Wake on LAN, «Enhanced Power Saving» aus) prüfen.** Zusätzlich kann dort
-«Wake Up on Alarm» täglich 12:00 gesetzt werden; ohne beides bleibt die Reserve nach dem Herunterfahren aus, bis jemand den Schalter drückt.
+Einziger Weg zum Einschalten ist Wake-on-LAN (im Betriebssystem: `wakeonlan: true` in `/etc/netplan/00-installer-config.yaml`
+der Reserve, Vorlage `~/00-installer-config.yaml.vor-wol`; im BIOS «Wake on LAN» = Automatic, von Patrick am 11.11. eingestellt und
+getestet). Bewusst kein RTC-Wecker zusätzlich: Er würde die Reserve vor dem Fenster starten, und `mittag.sh` führe sie wieder herunter.

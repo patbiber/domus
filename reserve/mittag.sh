@@ -62,12 +62,8 @@ else   # soll aus
        || "${SSH[@]}" 'systemctl is-active --quiet domus-reserve-sicherung.service' 2>/dev/null; then
       aktion="Abgleich oder Sicherung läuft noch – Herunterfahren wartet"
     else
-      # Wecker (RTC) auf den nächsten Fensterbeginn minus 2 min stellen und ausschalten; klappt der Wecker im BIOS nicht,
-      # bleibt Wake-on-LAN (Knopf in homi) – und wer nur ausschalten will, bekommt einfach poweroff
-      von=$(min "$FENSTER_VON"); wecker=$(date -d "today $FENSTER_VON" +%s)
-      [ "$jetzt" -ge "$von" ] && wecker=$(date -d "tomorrow $FENSTER_VON" +%s)
-      "${SSH[@]}" "sudo rtcwake -m off -t $(( wecker - 120 )) || sudo systemctl poweroff" >/dev/null 2>&1 || true
-      aktion="heruntergefahren (Wecker ${FENSTER_VON} gestellt)"; erreichbar=0
+      "${SSH[@]}" 'sudo systemctl poweroff' >/dev/null 2>&1 || true
+      aktion="heruntergefahren"; erreichbar=0
     fi
   fi
 fi
