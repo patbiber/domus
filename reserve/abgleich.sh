@@ -37,6 +37,11 @@ Protokoll: journalctl --user -u domus-reserve-abgleich"
   exit 1
 }
 
+# --- 0. Reserve absichtlich aus (nur über Mittag in Betrieb, reserve/mittag.sh)? Dann ist nichts zu tun und kein Fehler.
+if [ "$(cat "$ZUSTAND/soll" 2>/dev/null)" = aus ] && ! ping -c1 -W2 "$RESERVE_IP" >/dev/null 2>&1; then
+  echo "Reserve ist ausserhalb des Mittagsfensters ausgeschaltet – kein Abgleich"; echo 0 > "$ZUSTAND/fehler"; exit 0
+fi
+
 # --- 1. Hat die Reserve übernommen?
 ANTWORT=$($SSH "$RESERVE" 'cat /var/lib/domus/rolle 2>/dev/null || echo reserve') || fehler "Reserve-PC per SSH nicht erreichbar"
 if [ "$ANTWORT" = "aktiv" ]; then

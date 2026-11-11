@@ -1,8 +1,8 @@
 [Unit]
-Description=domus-reserve: Sicherung täglich 04:30
+Description=domus-reserve: Sicherung täglich 12:05 (Reserve läuft nur über Mittag)
 
 [Timer]
-OnCalendar=*-*-* 04:30
+OnCalendar=*-*-* 12:05
 Persistent=true
 
 [Install]

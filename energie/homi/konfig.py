@@ -46,6 +46,8 @@ GERAETE_FILE = os.environ.get("GERAETE_FILE", "/data/geraete.json")
 HEIZUNG_FILE = os.environ.get("HEIZUNG_FILE", "/data/heizung.json")
 
 STEUERUNG_FILE = os.environ.get("STEUERUNG_FILE", "/data/steuerung.json")
+RESERVE_FILE = os.environ.get("RESERVE_FILE", "/data/reserve.json")
+RESERVE_STATUS_FILE = os.environ.get("RESERVE_STATUS_FILE", "/data/reserve-status.json")
 
 ANLAGE_CFG = os.environ.get("ANLAGE_CFG", "/app/anlage.json")
 

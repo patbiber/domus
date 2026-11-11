@@ -1,0 +1,8 @@
+# NUC: Reserve-PC nur über Mittag oder mit dem Knopf in homi (reserve/mittag.sh). User-Unit von claude.
+[Unit]
+Description=domus: Reserve-PC über Mittag ein-/ausschalten
+
+[Service]
+Type=oneshot
+ExecStart=/home/claude/domus/reserve/mittag.sh
+Nice=10

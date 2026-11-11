@@ -60,7 +60,7 @@ fi
 loginctl enable-linger claude
 als_claude systemctl --user daemon-reload
 if [ -s "$STAND/units-aktiv.txt" ]; then
-  grep -E '\.(timer|path)$' "$STAND/units-aktiv.txt" | grep -vE '^(domus-reserve-abgleich|launchpadlib)' | while read -r u; do
+  grep -E '\.(timer|path)$' "$STAND/units-aktiv.txt" | grep -vE '^(domus-reserve-abgleich|domus-reserve-mittag|launchpadlib)' | while read -r u; do
     als_claude systemctl --user enable --now "$u" >/dev/null 2>&1 || echo "Timer $u nicht gestartet"
   done
 fi

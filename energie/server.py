@@ -15,6 +15,7 @@ Endpunkte:
   /api/steuerung  Wechselrichter-Steuerung über Modbus: Verbindung, Begrenzung, Testmodus-Auswertung (Minuspreis →
                 Nulleinspeisung: was homi getan hätte und was es gekostet/gebracht hätte)
   /api/geraete  smarte Steckdosen (myStrom): Zustand, Regel, Verbrauch heute/7 Tage; POST {"id", "modus": auto|ein|aus}
+  /api/reserve  Reserve-PC: Knopf «Reserve Server On» (dauerhaft an statt nur über Mittag); nur home.biber.solar; POST {"dauerhaft": true|false}
   /api/heizung  Infrarotheizung (Tuya): Ist/Soll, Zeitplan, Solarwärme, nächster Wechsel; POST {"kuscheln": true|false}
   /api/verguetung  Abnahmevergütung ab 2027: Vergütungsmodelle je Quartal, Referenz-Marktpreis, Ausgleich der
                 Minimalvergütung, Abregelschwelle
@@ -40,7 +41,7 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
-from homi import zustand
+from homi import reserve, zustand
 from homi.amortisation import amort_cache, amortisation
 from homi.archiv import Archiv, archiv_aggregat
 from homi.berater import berater, berater_cache
@@ -148,6 +149,10 @@ class Handler(SimpleHTTPRequestHandler):
         if path == "/api/geraete":
             with lock:
                 return self.send_json(zustand.geraete.report())
+        if path == "/api/reserve":
+            if self.host_name() != "home.biber.solar":      # nur in der Retro-Webseite (home.biber.solar)
+                return self.send_error(404)
+            return self.send_json(reserve.bericht())
         if path == "/api/heizung":
             with lock:
                 return self.send_json(zustand.heizung.report())
@@ -201,7 +206,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         """App-Push: {"aktion": "anmelden"|"abmelden"|"lesen"|"test", "abo": PushSubscription, "themen": [...]}"""
-        if self.path in ("/api/steuerung", "/api/geraete", "/api/heizung", "/api/kuehlschrank", "/api/push") and not self.eigene_herkunft():
+        if self.path in ("/api/steuerung", "/api/geraete", "/api/heizung", "/api/kuehlschrank", "/api/reserve", "/api/push") and not self.eigene_herkunft():
             print(f"Abgewiesen (fremde Herkunft): {self.path} Origin={self.headers.get('Origin')} "
                   f"Sec-Fetch-Site={self.headers.get('Sec-Fetch-Site')} Content-Type={self.headers.get('Content-Type')}", flush=True)
             return self.send_error(403)
@@ -213,6 +218,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.post_heizung()
         if self.path == "/api/kuehlschrank":
             return self.post_kuehlschrank()
+        if self.path == "/api/reserve":
+            return self.post_reserve()
         if self.path != "/api/push":
             return self.send_error(405)
         try:
@@ -319,6 +326,26 @@ class Handler(SimpleHTTPRequestHandler):
         except (ValueError, AttributeError):
             return self.send_error(400)
         print(f"Heizung: {d} von {von}", flush=True)
+        return self.send_json(antwort)
+
+    def host_name(self):
+        return (self.headers.get("Host") or "").split(":")[0].lower()
+
+    def post_reserve(self):
+        """Knopf «Reserve Server On»: {"dauerhaft": true|false} – nur Retro (home.biber.solar, mit Passwort)."""
+        if self.schalt_von() != "Retro":
+            return self.send_error(403)
+        try:
+            d = self.json_body()
+            if d.get("dauerhaft") not in (True, False):
+                raise ValueError
+            antwort = reserve.setzen(d["dauerhaft"], "Retro")
+        except (ValueError, AttributeError):
+            return self.send_error(400)
+        except OSError as e:
+            print("Reserve:", e, flush=True)
+            return self.send_error(503)
+        print(f"Reserve: {d}", flush=True)
         return self.send_json(antwort)
 
     def post_kuehlschrank(self):

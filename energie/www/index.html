@@ -126,6 +126,7 @@
   .gerat .v { color: var(--yellow); } .gerat.an { border-color: var(--yellow); } .gerat.an .v { animation: blink 1.4s steps(2) infinite; }
   .g-knoepfe { display: flex; gap: 4px; margin-top: 6px; }
   .g-knoepfe button { flex: 1; font: bold 12px "Courier New", Courier, monospace; padding: 4px 0; background: #000; color: var(--grey); border: 2px solid #333; cursor: pointer; }
+  .res .v { color: var(--grey); } .res.an .v { color: var(--green, #66ff66); } #b-reserve.an { color: #000; background: #66ff66; border-color: #66ff66; }
   .g-knoepfe button.an { color: #000; background: var(--yellow); border-color: var(--yellow); }
   /* Infrarotheizung: Ist-Temperatur, Kuschel-Knopf */
   .heiz .v { color: var(--cyan); } .heiz.an .v { color: #ff9944; } .heiz.kuschel { border-color: #ff66aa; }
@@ -193,6 +194,8 @@
       <div id="geraete"></div>
       <div class="stat heiz" id="t-heiz" hidden title="Infrarotheizung: Zeitplan, Solarwärme und Kuschel-Knopf"><div class="k" id="s-heiz0">Heizung</div><div class="v" id="s-heiz">–</div><div class="s" id="s-heiz2">&nbsp;</div>
         <div class="g-knoepfe"><button type="button" id="b-kuscheln">KUSCHELN 22 °C</button></div></div>
+      <div class="stat res" id="t-res" hidden title="Reserve-PC (domus2): läuft normal nur 30 Minuten über Mittag. Knopf an = läuft dauernd und übernimmt bei einem Ausfall des NUC."><div class="k">Reserve-Server</div><div class="v" id="s-res">–</div><div class="s" id="s-res2">&nbsp;</div>
+        <div class="g-knoepfe"><button type="button" id="b-reserve">RESERVE SERVER ON</button></div></div>
       <div class="stat batt"><div class="k">Batterie-Simulation</div><div class="v" id="s-batt">–</div><div class="s" id="s-batt2">&nbsp;</div></div>
       <div class="stat amort" title="Investition minus bisheriger Ertrag (selbst verbraucht × Bezugstarif + eingespeist × Rücklieferung), heutige Tarife"><div class="k">Anlage abbezahlt</div><div class="v" id="s-amort">–</div><div class="s" id="s-amort2">&nbsp;</div><span class="balken8"><i id="s-amort3" style="width:0"></i></span></div>
     </div>
@@ -598,6 +601,26 @@ $("b-kuscheln").addEventListener("click", async () => {
     if (!r.ok) throw new Error();
   } catch { b.textContent = "nur mit Passwort"; setTimeout(pollHeizung, 2500); return; }
   pollHeizung(); setTimeout(pollHeizung, 4000);
+});
+
+// Reserve-Server (domus2): normal nur über Mittag, mit dem Knopf «Reserve Server On» dauernd (reserve/mittag.sh auf dem NUC)
+let reserve = null;
+async function pollReserve() {
+  try { const r = await fetch("api/reserve", { cache: "no-store" }); if (!r.ok) return; reserve = await r.json(); } catch { return; }
+  const t = $("t-res"); t.hidden = false; t.classList.toggle("an", !!reserve.dauerhaft);
+  $("s-res").textContent = !reserve.bekannt ? "–" : reserve.rolle === "aktiv" ? "hat übernommen" : reserve.an ? "läuft" : "aus";
+  $("s-res2").textContent = reserve.dauerhaft ? "dauernd an – schützt bei einem Ausfall des NUC" : `nur über Mittag (${reserve.fenster}) – sonst aus, kein Schutz bei einem Ausfall`;
+  const b = $("b-reserve"); b.classList.toggle("an", !!reserve.dauerhaft); b.textContent = "RESERVE SERVER ON";
+  b.title = reserve.dauerhaft ? "Antippen: wieder nur über Mittag" : "Antippen: Reserve dauernd einschalten";
+}
+$("b-reserve").addEventListener("click", async () => {
+  const b = $("b-reserve"), an = !(reserve && reserve.dauerhaft);
+  b.textContent = "…";
+  try {
+    const r = await fetch("api/reserve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dauerhaft: an }) });
+    if (!r.ok) throw new Error();
+  } catch { b.textContent = "nur mit Passwort"; setTimeout(pollReserve, 2500); return; }
+  pollReserve(); setTimeout(pollReserve, 5000); setTimeout(pollReserve, 70000);
 });
 
 // Verbraucher-Zuordnung (Schätzung aus dem Zähler): erkannte Heizleistung übernehmen, alle 30 Minuten
@@ -1378,6 +1401,7 @@ try { sessionStorage.removeItem("homi-neuladen"); } catch {}   // Neuladen-Seite
 pollSteuerung(); setInterval(pollSteuerung, 15000);
 pollGeraete(); setInterval(pollGeraete, 15000);
 pollHeizung(); setInterval(pollHeizung, 30000);
+pollReserve(); setInterval(pollReserve, 30000);
 pollZuordnung(); setInterval(pollZuordnung, 1800000);
 pollVerguetung(); setInterval(pollVerguetung, 10 * 60000);
 pollWoche(); setInterval(pollWoche, 60 * 60000);
