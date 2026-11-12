@@ -1,7 +1,6 @@
 # Webstatistik Umami (https://umami.is): ohne Cookies, ohne gespeicherte IP-Adressen, Daten nur auf dem NUC.
 # Netz: eigenes Netz «statistik» (nur Umami + nginx), nicht proxy_default.
-# Dashboard: https://stats.biber.solar (eigener Login). Zählt biber.solar, homi.solar und academy.biber.solar (seit 11.11.2026,
-# ohne /admin, /certificate, /verify) – bewusst NICHT die privaten Seiten mit Anmeldung (home.biber.solar, <name>.homi.solar).
+# Dashboard: https://stats.biber.solar (eigener Login). Zählt biber.solar, homi.solar und academy.biber.solar (seit 11.11.2026, alle Seiten) – bewusst NICHT die privaten Seiten mit Anmeldung (home.biber.solar, <name>.homi.solar).
 # Zählskript: https://stats.biber.solar/s.js (eigener Name, wird von Werbeblockern seltener blockiert).
 # Geheimnisse in ../.env: UMAMI_DB_PASSWORT, UMAMI_APP_SECRET. Daten: ./data/postgres (nicht im Repo).
 # Backup: system/backup-extern.sh legt jede Nacht einen Datenbank-Auszug ins Gesamt-Backup.
