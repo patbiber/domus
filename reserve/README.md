@@ -41,4 +41,6 @@ darf aus sein, `rtcwake` stellt ihn; am 11.11. mit Probefenster 20:50 getestet),
 Bewusst kein Wake-on-LAN als Notweckung im Fenster (Patrick: Wake-on-LAN nur für die App), damit klar ist, was gewirkt hat.
 nginx: `POST:/api/reserve` steht in der Methoden-Liste von `proxy/conf.d/home.biber.solar.conf` (sonst 405 → «nur mit Passwort»).
 Der Abgleich lässt die absichtlich ausgeschaltete Reserve in Ruhe (`.../reserve-abgleich/soll`), die Sicherung läuft um 12:05.
+Die Retro-Kachel «Reserve-Server» zeigt «Backup: <Zeit>» der letzten Sicherung: `sicherung.sh` schreibt `/var/lib/domus/sicherung` («Zeit ok|fehler»), `mittag.sh` holt den Wert beim Start der Reserve und merkt ihn auf dem NUC (`~/.local/state/domus/reserve-abgleich/sicherung`, Fallback: Zeit des neuesten Sicherungsordners).
+
 Port 8099 des NUC ist für die Reserve gesperrt – deshalb meldet der NUC den Knopf-Zustand per SSH statt dass die Reserve ihn abfragt.

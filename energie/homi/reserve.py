@@ -28,7 +28,8 @@ def bericht():
     frisch = alter is not None and alter < 240          # das Skript meldet sich jede Minute
     return {"dauerhaft": k.get("dauerhaft") is True, "bekannt": frisch,
             "an": bool(s.get("an")) if frisch else None, "rolle": s.get("rolle") if frisch else None,
-            "fenster": s.get("fenster", "12:00–12:30"), "hinweis": s.get("hinweis") if frisch else None}
+            "fenster": s.get("fenster", "12:00–12:30"), "hinweis": s.get("hinweis") if frisch else None,
+            "sicherung": s.get("sicherung")}
 
 
 def setzen(dauerhaft, von):

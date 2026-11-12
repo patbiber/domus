@@ -78,6 +78,8 @@
   #push-status.an { color: var(--green); }
   #app-meldung { color: var(--yellow); font-size: 13px; min-height: 1.2em; margin-top: 6px; }
   .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+  .gruppe { grid-column: 1 / -1; margin: 8px 0 0; font-size: 13px; color: var(--cyan); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #222; padding-bottom: 2px; }
+  .gruppe:first-child { margin-top: 0; } .gruppe span { color: var(--grey); text-transform: none; letter-spacing: 0; }
   .stat { background: #0a0a0a; border: 2px solid #222; padding: 6px 8px; }
   .stat .k { color: var(--grey); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
   .stat .v { font-size: clamp(18px, 3vw, 26px); }
@@ -177,27 +179,32 @@
   <section class="panel">
     <h2>Kassenbuch – live · <a href="logbuch.html" style="color:var(--green-dim)">Logbuch (Archiv) →</a></h2>
     <div class="stats">
+      <h3 class="gruppe">Jetzt <span>· Was gerade fliesst</span></h3>
       <div class="stat pv"><div class="k">Solaranlage (Fronius)</div><div class="v" id="s-pv">–</div><div class="s" id="s-pvday">&nbsp;</div></div>
       <div class="stat haus"><div class="k">Haus verbraucht</div><div class="v" id="s-haus">–</div><div class="s" id="s-autark">&nbsp;</div></div>
       <div class="stat netz"><div class="k">Netz GWS</div><div class="v" id="s-netz">–</div><div class="s" id="s-netzdir">&nbsp;</div></div>
       <div class="stat zahle"><div class="k">Ich bezahle gerade</div><div class="v" id="s-zahle">–</div><div class="s" id="s-tarif">&nbsp;</div></div>
       <div class="stat bekomme"><div class="k">Ich bekomme gerade</div><div class="v" id="s-bekomme">–</div><div class="s" id="s-rueck">&nbsp;</div></div>
       <div class="stat session"><div class="k">Seit du zuschaust</div><div class="v" id="s-session">0.0000 CHF</div><div class="s" id="s-sessiont">&nbsp;</div></div>
-      <div class="stat ein"><div class="k">Einspeisung dynamisch heute</div><div class="v" id="s-ein">–</div><div class="s" id="s-ein2">&nbsp;</div><div class="fahrplan" id="s-ein3"></div></div>
-      <div class="stat prog"><div class="k">Solarprognose morgen</div><div class="v" id="s-prog">–</div><div class="s" id="s-prog2">&nbsp;</div></div>
-      <div class="stat srv"><div class="k">homi-Server (unter der Treppe)</div><div class="v" id="s-srv">–</div><div class="s" id="s-srv2">&nbsp;</div></div>
+      <h3 class="gruppe">Heute und morgen <span>· Börse, Prognose und Einspeisung</span></h3>
       <div class="stat boerse" id="t-boerse"><div class="k">Strombörse Day-Ahead CH</div><div class="v" id="s-boerse">–</div><div class="s" id="s-boerse2">&nbsp;</div></div>
+      <div class="stat prog"><div class="k">Solarprognose morgen</div><div class="v" id="s-prog">–</div><div class="s" id="s-prog2">&nbsp;</div></div>
+      <div class="stat ein"><div class="k">Einspeisung dynamisch heute</div><div class="v" id="s-ein">–</div><div class="s" id="s-ein2">&nbsp;</div><div class="fahrplan" id="s-ein3"></div></div>
+      <h3 class="gruppe">Geräte <span>· Steckdosen und Heizung</span></h3>
+      <div id="geraete"></div>
+      <div class="stat heiz" id="t-heiz" hidden title="Infrarotheizung: Zeitplan, Solarwärme und Kuschel-Knopf"><div class="k" id="s-heiz0">Heizung</div><div class="v" id="s-heiz">–</div><div class="s" id="s-heiz2">&nbsp;</div>
+        <div class="g-knoepfe"><button type="button" id="b-kuscheln">KUSCHELN 22 °C</button></div></div>
+      <h3 class="gruppe">Auswertung <span>· Bericht, Tipps und Rechnung</span></h3>
       <div class="stat woche" title="Wochenbericht: kommt jeden Montag um 08:00 auch als Mail und Push"><div class="k" id="s-woche0">Letzte Woche</div><div class="v" id="s-woche">–</div><div class="s" id="s-woche2">&nbsp;</div></div>
       <div class="stat rat" title="Energieberater: drei Tipps aus den Messwerten der letzten 14 Tage"><div class="k">Energieberater · Tipp antippen = Warum</div><div class="v" id="s-rat">–</div><ol id="s-rat2"></ol><div class="s" id="s-rat3">&nbsp;</div></div>
       <div class="stat abreg" id="t-abreg" title="Abregelung nach dem Modell ab 2027: Stunden, in denen der Börsenpreis unter der Abregelschwelle liegt"><div class="k">Abregelung ab 2027 · Stopps</div><div class="v" id="s-abreg">–</div><div class="s" id="s-abreg2">&nbsp;</div><div class="fahrplan" id="s-abreg3"></div></div>
       <div class="stat verg" id="t-verg" title="Abnahmevergütung ab 2027: Wert deiner Einspeisung je Modell im laufenden Quartal"><div class="k">Vergütung ab 2027 · Quartal</div><div class="v" id="s-verg">–</div><div class="s" id="s-verg2">&nbsp;</div></div>
-      <div id="geraete"></div>
-      <div class="stat heiz" id="t-heiz" hidden title="Infrarotheizung: Zeitplan, Solarwärme und Kuschel-Knopf"><div class="k" id="s-heiz0">Heizung</div><div class="v" id="s-heiz">–</div><div class="s" id="s-heiz2">&nbsp;</div>
-        <div class="g-knoepfe"><button type="button" id="b-kuscheln">KUSCHELN 22 °C</button></div></div>
-      <div class="stat res" id="t-res" hidden title="Reserve-PC (domus2): läuft normal nur 30 Minuten über Mittag. Knopf an = läuft dauernd und übernimmt bei einem Ausfall des NUC."><div class="k">Reserve-Server</div><div class="v" id="s-res">–</div><div class="s" id="s-res2">&nbsp;</div>
-        <div class="g-knoepfe"><button type="button" id="b-reserve">RESERVE SERVER ON</button></div></div>
       <div class="stat batt"><div class="k">Batterie-Simulation</div><div class="v" id="s-batt">–</div><div class="s" id="s-batt2">&nbsp;</div></div>
       <div class="stat amort" title="Investition minus bisheriger Ertrag (selbst verbraucht × Bezugstarif + eingespeist × Rücklieferung), heutige Tarife"><div class="k">Anlage abbezahlt</div><div class="v" id="s-amort">–</div><div class="s" id="s-amort2">&nbsp;</div><span class="balken8"><i id="s-amort3" style="width:0"></i></span></div>
+      <h3 class="gruppe">System <span>· Die Server hinter homi</span></h3>
+      <div class="stat srv"><div class="k">homi-Server (unter der Treppe)</div><div class="v" id="s-srv">–</div><div class="s" id="s-srv2">&nbsp;</div></div>
+      <div class="stat res" id="t-res" hidden title="Reserve-PC (domus2): läuft normal nur 30 Minuten über Mittag. Knopf an = läuft dauernd und übernimmt bei einem Ausfall des NUC."><div class="k">Reserve-Server</div><div class="v" id="s-res">–</div><div class="s" id="s-res2">&nbsp;</div><div class="s" id="s-res3">&nbsp;</div>
+        <div class="g-knoepfe"><button type="button" id="b-reserve">RESERVE SERVER ON</button></div></div>
     </div>
     <div class="charts">
       <div class="legend"><span><i style="background:#ffdd33"></i>Solar</span><span><i style="background:#ff5555"></i>Verbrauch</span><span>Leistung, letzte 24 h</span></div>
@@ -610,6 +617,13 @@ async function pollReserve() {
   const t = $("t-res"); t.hidden = false; t.classList.toggle("an", !!reserve.dauerhaft);
   $("s-res").textContent = !reserve.bekannt ? "–" : reserve.rolle === "aktiv" ? "hat übernommen" : reserve.an ? "läuft" : "aus";
   $("s-res2").textContent = reserve.dauerhaft ? "dauernd an – schützt bei einem Ausfall des NUC" : `nur über Mittag (${reserve.fenster}) – sonst aus, kein Schutz bei einem Ausfall`;
+  const sc = reserve.sicherung, e3 = $("s-res3");
+  if (sc && sc.zeit) {
+    const t = new Date(sc.zeit), h = new Date(), gest = new Date(h.getFullYear(), h.getMonth(), h.getDate() - 1);
+    const hm = t.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
+    const tag = t.toDateString() === h.toDateString() ? "heute" : t.toDateString() === gest.toDateString() ? "gestern" : t.toLocaleDateString("de-CH", { day: "numeric", month: "numeric" });
+    e3.textContent = `${sc.ok ? "Backup" : "⚠ Backup FEHLGESCHLAGEN"}: ${tag} ${hm}`; e3.style.color = sc.ok ? "" : "var(--red)";
+  } else { e3.textContent = "Backup: noch keine Meldung"; e3.style.color = ""; }
   const b = $("b-reserve"); b.classList.toggle("an", !!reserve.dauerhaft); b.textContent = "RESERVE SERVER ON";
   b.title = reserve.dauerhaft ? "Antippen: wieder nur über Mittag" : "Antippen: Reserve dauernd einschalten";
 }

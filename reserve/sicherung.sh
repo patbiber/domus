@@ -7,18 +7,20 @@
 set -uo pipefail
 DOMUS=/home/claude/domus
 ZIEL=/srv/backup/domus
-mountpoint -q /srv/backup || { echo "Backup-Platte nicht eingehängt" | runuser -u claude -- mail -s "domus-reserve: Backup-Platte fehlt" root; exit 1; }
-mkdir -p "$ZIEL"
+mountpoint -q /srv/backup || { echo "Backup-Platte nicht eingehängt" | runuser -u claude -- mail -s "domus-reserve: Backup-Platte fehlt" root; melde fehler; exit 1; }
+mkdir -p "$ZIEL" /var/lib/domus
+melde() { echo "$(date +%s) $1" > /var/lib/domus/sicherung; }   # «Zeit ok|fehler»: homi zeigt die letzte Sicherung an (mittag.sh holt es)
 HEUTE=$(date +%F)
 LETZTE=$(ls -1d "$ZIEL"/20??-??-?? 2>/dev/null | grep -v "$HEUTE" | tail -1 || true)
 rsync -aHAX --numeric-ids --delete ${LETZTE:+--link-dest="$LETZTE"} --exclude='/backups/reserve-stand/*.neu' \
-  "$DOMUS/" "$ZIEL/$HEUTE/" || [ $? -eq 24 ] || { echo "rsync Code $?" | runuser -u claude -- mail -s "domus-reserve: Sicherung fehlgeschlagen" root; exit 1; }
+  "$DOMUS/" "$ZIEL/$HEUTE/" || [ $? -eq 24 ] || { echo "rsync Code $?" | runuser -u claude -- mail -s "domus-reserve: Sicherung fehlgeschlagen" root; melde fehler; exit 1; }
 for d in "$ZIEL"/20??-??-??; do
   tag=$(basename "$d")
   alter=$(( ( $(date +%s) - $(date -d "$tag" +%s) ) / 86400 ))
   if [ "$alter" -gt 30 ] && { [ "${tag:8:2}" != "01" ] || [ "$alter" -gt 730 ]; }; then rm -rf -- "$d"; fi
 done
 df -h /srv/backup | tail -1
+melde ok
 
 if [ "$(cat /var/lib/domus/rolle 2>/dev/null)" != "aktiv" ]; then
   for d in pihole homeassistant energie umami proxy energy academy biber-solar biber-solar-test training unifi pihole-zweit; do

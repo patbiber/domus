@@ -33,7 +33,12 @@ erreichbar=0; rolle=""
 if ping -c1 -W2 "$RESERVE_IP" >/dev/null 2>&1; then
   erreichbar=1   # läuft (auch wenn SSH beim Hochfahren noch nicht antwortet)
   # Lebenszeichen des NUC samt Knopf-Zustand auf die Reserve legen (schlafen.sh schaltet sie nur bei frischer Meldung aus)
-  rolle=$("${SSH[@]}" "echo $dauerhaft | sudo tee /var/lib/domus/nuc-knopf >/dev/null; cat /var/lib/domus/rolle 2>/dev/null || echo reserve" 2>/dev/null) || rolle=""
+  # Gleichzeitig die letzte Sicherung holen («Zeit ok|fehler»; fehlt die Datei: Zeit des neuesten Sicherungsordners) und hier merken,
+  # damit homi sie auch bei ausgeschalteter Reserve anzeigt.
+  antwort=$("${SSH[@]}" "echo $dauerhaft | sudo tee /var/lib/domus/nuc-knopf >/dev/null; echo \$(cat /var/lib/domus/rolle 2>/dev/null || echo reserve); cat /var/lib/domus/sicherung 2>/dev/null || { d=\$(ls -1d /srv/backup/domus/20??-??-?? 2>/dev/null | tail -1); [ -n \"\$d\" ] && echo \"\$(stat -c %Z \"\$d\") ok\"; }" 2>/dev/null) || antwort=""
+  rolle=$(printf '%s\n' "$antwort" | sed -n 1p)
+  sich=$(printf '%s\n' "$antwort" | sed -n 2p)
+  case "$sich" in [0-9]*" "ok|[0-9]*" "fehler) echo "$sich" > "$ZUSTAND/sicherung";; esac
 fi
 vorher=$(cat "$ZUSTAND/erreichbar" 2>/dev/null || echo 0)
 letzte=$(cat "$ZUSTAND/wecken" 2>/dev/null || echo 0)
@@ -76,11 +81,16 @@ fi
 echo "$erreichbar" > "$ZUSTAND/erreichbar"
 case "$aktion" in ""|"wartet auf den Wecker"|"startet …"|"läuft noch"*) ;; *) echo "$(date '+%F %T') $modus soll=$soll: $aktion";; esac
 
-python3 - "$STATUS" "$modus" "$soll" "$erreichbar" "$rolle" "$FENSTER_VON" "$FENSTER_BIS" "$aktion" <<'PY'
+python3 - "$STATUS" "$modus" "$soll" "$erreichbar" "$rolle" "$FENSTER_VON" "$FENSTER_BIS" "$aktion" "$ZUSTAND/sicherung" <<'PY'
 import json, os, sys, time
-datei, modus, soll, erreichbar, rolle, von, bis, aktion = sys.argv[1:9]
+datei, modus, soll, erreichbar, rolle, von, bis, aktion, sichdatei = sys.argv[1:10]
 d = {"zeit": time.strftime("%Y-%m-%dT%H:%M:%S"), "modus": modus, "soll": soll, "an": erreichbar == "1",
-     "rolle": rolle or None, "fenster": f"{von}–{bis}", "hinweis": aktion}
+     "rolle": rolle or None, "fenster": f"{von}–{bis}", "hinweis": aktion, "sicherung": None}
+try:   # letzte Sicherung der Reserve (zuletzt gemeldeter Wert)
+    t, ok = open(sichdatei).read().split()
+    d["sicherung"] = {"zeit": time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(int(t))), "ok": ok == "ok"}
+except (OSError, ValueError):
+    pass
 tmp = datei + ".neu"
 with open(tmp, "w") as f:
     json.dump(d, f, ensure_ascii=False)
