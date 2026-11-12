@@ -51,6 +51,7 @@ case "$ROLLE" in
     echo "$EIGENE" | grep -qx "$HAUPT_IP" || { echo "Dieser Rechner hat nicht HAUPT_IP $HAUPT_IP (rollen.conf)" >&2; exit 1; }
     sudo mkdir -p /var/lib/domus; echo haupt | sudo tee /var/lib/domus/rolle >/dev/null
     sudo systemctl disable --now domus-waechter.service 2>/dev/null || true
+    sudo systemctl disable --now domus-reserve-schlafen.timer 2>/dev/null || true   # nur die Reserve schaltet sich aus
     ip -4 addr show "$DEV" | grep -q "$VIP/" || { sudo ip addr add "$VIP/24" dev "$DEV"; sudo arping -q -U -c 3 -I "$DEV" "$VIP" || true; }
     netplan_vip add
     sudo ln -sf "$HIER/domus-vorrang.service" /etc/systemd/system/domus-vorrang.service
@@ -88,11 +89,12 @@ case "$ROLLE" in
     sudo rm -f /etc/systemd/system/docker.service.d/domus-vorrang.conf
     sudo systemctl disable domus-vorrang.service 2>/dev/null || true
     sudo systemctl disable --now domus-vorrang-pruefen.timer 2>/dev/null || true
-    sudo cp "$HIER/domus-waechter.service" "$HIER/domus-reserve-sicherung.service" "$HIER/domus-reserve-sicherung.timer" /etc/systemd/system/
+    sudo cp "$HIER/domus-waechter.service" "$HIER/domus-reserve-sicherung.service" "$HIER/domus-reserve-sicherung.timer" "$HIER/domus-reserve-schlafen.service" "$HIER/domus-reserve-schlafen.timer" /etc/systemd/system/
     [ -f "$DOMUS/system/domus-firewall.service" ] && sudo cp "$DOMUS/system/domus-firewall.service" /etc/systemd/system/
     sudo systemctl daemon-reload
     sudo systemctl enable --now domus-firewall.service domus-waechter.service
     mountpoint -q /srv/backup && sudo systemctl enable --now domus-reserve-sicherung.timer
+    sudo systemctl enable --now domus-reserve-schlafen.timer
     (cd "$DOMUS/pihole-zweit" && docker compose up -d >/dev/null)
     echo "Dieser Rechner ($RESERVE_IP) ist jetzt Reserve für $HAUPT_IP."
     ;;

@@ -1,0 +1,9 @@
+[Unit]
+Description=domus-reserve: jede Minute prüfen, ob die Reserve ausgeschaltet werden soll
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,7 @@
+# Reserve-PC: schaltet sich selbst aus, wenn der NUC da ist (reserve/schlafen.sh). System-Unit auf der Reserve.
+[Unit]
+Description=domus-reserve: ausserhalb des Mittags ausschalten (mit Wecker)
+
+[Service]
+Type=oneshot
+ExecStart=/home/claude/domus/reserve/schlafen.sh
