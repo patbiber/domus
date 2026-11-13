@@ -98,7 +98,13 @@ def berater():
     kwh_nacht = sum(gross.values()) / tage if gross else 0
     ursache = ("typisch für Waschmaschine, Tumbler, Geschirrspüler oder eine Heizungspumpe"
                if haushalt.get("boiler_elektrisch") is False else "typisch für einen Boiler, eine Heizung oder Haushaltsgeräte")
-    if kwh_nacht >= 0.3:
+    if kwh_nacht >= 0.3 and zg:
+        # Mit der Geräte-Zuordnung steckt diese Last schon in anderen Tipps: Infrarotheizung (Blöcke um 800 W nachts und um
+        # 5 Uhr), Spülmaschine/Wäsche (22–24 Uhr) und Kochen (nicht verschiebbar). Hier nochmals zu zählen wäre doppelt.
+        geprueft.append({"titel": "Nachtverbraucher in den Mittag legen",
+                         "ergebnis": f"{kwh_nacht:.1f} kWh pro Nacht über 600 W – das sind Heizung, Spülmaschine und Abendkochen, "
+                                     "die unter den anderen Tipps schon gezählt sind (nicht doppelt gerechnet)"})
+    elif kwh_nacht >= 0.3:
         tipps.append({"id": "nachtlast", "titel": "Nachtverbraucher in den Mittag legen",
             "chf_jahr": round(kwh_nacht * 365 * diff), "kwh_jahr": round(kwh_nacht * 365),
             "text": f"Zwischen 22 und 6 Uhr läuft an {len(gross)} von {round(tage)} Tagen ein grosser Verbraucher "
@@ -118,7 +124,23 @@ def berater():
 
     # 2b) Infrarotheizung (aus der Zuordnung)
     ir = zg.get("infrarot")
-    if ir and ir["kwh_tag"] >= 0.3:
+    heiz = None
+    try:                                                   # homi führt die Heizung selbst (Zeitplan, Solarwärme, Kuscheln)?
+        if zustand.heizung:
+            with zustand.lock:
+                heiz = zustand.heizung.report()
+    except Exception as e:                                 # Beiwerk
+        print("Berater: Heizung nicht verfügbar:", e, flush=True)
+    wo = (heiz or {}).get("woche") or {}
+    if heiz and heiz.get("aktiv") and heiz.get("plan") and wo.get("kwh"):
+        kwh_tag_neu = wo["kwh"] / 7
+        sonne = round(100 * wo.get("solar_kwh", 0) / wo["kwh"]) if wo["kwh"] else 0
+        zusatz = (f"; der Zähler-Rückblick der letzten {round(tage)} Tage zeigt noch {ir['kwh_tag']:.1f} kWh pro Tag, "
+                  "weil er auch die Tage vor dem Zeitplan enthält" if ir else "")
+        geprueft.append({"titel": "Infrarotheizung",
+                         "ergebnis": f"bereits optimiert: Zeitplan und Solarwärme in homi, diese Woche {kwh_tag_neu:.1f} kWh pro Tag, "
+                                     f"{sonne} % aus Sonne{zusatz}"})
+    elif ir and ir["kwh_tag"] >= 0.3:
         saison = 180                                       # Heiztage pro Jahr (Oktober–März)
         kwh_saison = ir["kwh_tag"] * saison
         netz = ir["netz_pct"] / 100
@@ -393,8 +415,8 @@ def grundlast_aktion(zg):
         return ("Mit einem Steckdosen-Messgerät (ca. CHF 20) die grössten Dauerverbraucher suchen: alte Kühl- und "
                 "Gefriergeräte, Router und Netzwerk, Umwälzpumpe, TV und Spielkonsole im Standby. "
                 "Was nachts nicht laufen muss, mit Steckdosenleiste oder Zeitschaltuhr ausschalten.")
-    teile = ["die Aktivboxen im Dachstock ausschalten, wenn keine Musik läuft – sie brauchen schon eingeschaltet ohne Ton "
-             "36 W (gemessen), das sind über 300 kWh im Jahr; am einfachsten mit einer schaltbaren Steckdosenleiste, die "
+    teile = ["die Aktivboxen im Dachstock ausschalten, wenn keine Musik läuft – eingeschaltet brauchen sie auch ohne Ton "
+             "36 W (gemessen); bleiben sie dauernd an, sind das über 300 kWh im Jahr; am einfachsten mit einer schaltbaren Steckdosenleiste, die "
              "auch Beamer und Desktop ganz vom Netz nimmt" if "standby" in zg else None,
              "prüfen, ob beide Router nötig sind – oft reicht einer, der zweite als Access Point oder ganz aus (je ca. 10 W)"
              if "router" in zg else None,
