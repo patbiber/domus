@@ -491,7 +491,7 @@ function beraterZeichnen() {
   if (!b) return;
   if (!b.aktiv) { $("b-stand").textContent = b.grund || "Noch keine Tipps."; return; }
   const st = new Date(b.stand);
-  $("b-stand").textContent = `Drei Tipps aus deinen Messwerten der letzten ${Math.round(b.tage)} Tage, sortiert nach Wirkung · Stand ${st.toLocaleDateString("de-CH")} ${st.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" })}`;
+  $("b-stand").textContent = `Drei Tipps aus deinen Messwerten der letzten ${Math.round(b.tage)} Tage, sortiert nach Wirkung · berechnet am ${st.toLocaleDateString("de-CH")}, neu jeden Sonntag`;
   const s = $("b-summe");
   if (b.summe_chf_jahr > 0) {
     s.innerHTML = `Setzt du alle drei um, bringt das rund <b>CHF ${Math.round(b.summe_chf_jahr).toLocaleString("de-CH")} pro Jahr</b>`

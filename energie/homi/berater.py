@@ -1,5 +1,6 @@
 """Energieberater: drei Tipps mit Begründung und Rechenweg, Batterie-Empfehlung."""
 import json
+import os
 import time
 from datetime import date, datetime, timedelta
 
@@ -22,14 +23,98 @@ BATTERIE_PREISE = {
 BATTERIE_LEBENSDAUER_J = 12
 
 berater_cache = {"zeit": 0, "daten": None}
+BERATER_DATEI = os.environ.get("BERATER_FILE", "/data/berater.json")   # überlebt Neustarts: die Woche bleibt stabil
+
+
+def _sonntag(d):
+    """Datum des letzten Sonntags (heute, wenn Sonntag) – ab da gilt die Berechnung der Woche."""
+    return d - timedelta(days=(d.weekday() + 1) % 7)
+
+
+def _naechster_sonntag(d):
+    return _sonntag(d) + timedelta(days=7)
+
 
 def berater():
+    """Der Berater rechnet einmal pro Woche neu (Sonntag, Wunsch Patrick 13.11.2026) und merkt sich das Ergebnis auf der
+    Platte. Nur der akute Hinweis auf negative Strompreise (heute/morgen) wird bei jeder Anfrage frisch dazugelegt."""
+    daten = berater_cache["daten"]
+    if not daten:
+        try:
+            with open(BERATER_DATEI, encoding="utf-8") as f:
+                daten = json.load(f)
+        except (OSError, ValueError):
+            daten = None
+    heute = date.today()
+    gueltig = False
+    if daten and daten.get("stand"):
+        try:
+            gueltig = _sonntag(datetime.fromisoformat(daten["stand"]).date()) == _sonntag(heute)
+        except ValueError:
+            pass
+    if not gueltig:
+        neu = _berechnen()
+        if neu.get("aktiv"):
+            neu["naechste_berechnung"] = _naechster_sonntag(heute).isoformat()
+            try:
+                tmp = BERATER_DATEI + ".neu"
+                with open(tmp, "w", encoding="utf-8") as f:
+                    json.dump(neu, f, ensure_ascii=False)
+                os.replace(tmp, BERATER_DATEI)
+            except OSError as e:
+                print("Berater: Ergebnis nicht gespeichert:", e, flush=True)
+            daten = neu
+        elif not daten:
+            return neu                                       # noch zu wenig Daten: nicht merken, später neu versuchen
+    berater_cache.update(zeit=time.time(), daten=daten)
+    return _mit_akut(daten)
+
+
+def _akut():
+    """Negative Strompreise heute/morgen (ändert sich täglich, darum nicht in der Wochenberechnung)."""
+    plan = einspeise_plan()
+    tage_minus = [(n, d) for n, d in (("heute", plan.get("heute")), ("morgen", plan.get("morgen"))) if d and d.get("minuspreis_bloecke")]
+    if not tage_minus:
+        return None
+    n, d = tage_minus[0]
+    tief = min(x["preis_rp"] for x in d["stunden"] if x["stunde"] in d["minuspreis_stunden"])
+    return {"id": "minuspreis", "titel": f"{n.capitalize()} negative Strompreise nutzen", "akut": True,
+            "chf_jahr": None, "kwh_jahr": None,
+            "text": f"{n.capitalize()} {' und '.join(d['minuspreis_bloecke'])} liegt der Börsenpreis unter null.",
+            "warum": "In diesen Stunden gibt es an der Börse mehr Strom als Abnehmer. Wer dann verbraucht, entlastet das "
+                     "Netz; mit einem dynamischen Einspeisetarif kostet Einspeisen in dieser Zeit sogar Geld.",
+            "rechnung": [f"Day-Ahead-Preise Schweiz (EPEX Spot via Energy-Charts) für {n}",
+                         f"Stunden mit Preis unter null: {', '.join(d['minuspreis_bloecke'])}, tiefster Preis {tief:.1f} Rp./kWh",
+                         f"Erwarteter Überschuss in dieser Zeit: {d.get('ueberschuss_bei_minuspreis_kwh', 0):.1f} kWh"],
+            "aktion": "Grosse Verbraucher genau in diese Stunden legen. Mit dynamischem Einspeisetarif: Einspeisung drosseln."}
+
+
+def _mit_akut(daten):
+    try:
+        akut = _akut()
+    except Exception as e:                                   # Beiwerk
+        print("Berater: negative Preise nicht verfügbar:", e, flush=True)
+        return daten
+    rest = daten.get("_rest") or daten["tipps"]
+    geprueft = [g for g in daten["geprueft"] if g["titel"] != "Negative Strompreise"]
+    if not akut:
+        geprueft.append({"titel": "Negative Strompreise", "ergebnis": "heute und morgen keine"})
+    drei = ([akut] if akut else []) + rest[:3 - (1 if akut else 0)]
+    summe = sum(x["chf_jahr"] or 0 for x in drei)
+    monate = None
+    am = daten.get("_amort") or {}
+    if am.get("pro_jahr_chf") and am.get("rest_chf"):
+        monate = round(12 * (am["rest_chf"] / am["pro_jahr_chf"] - am["rest_chf"] / (am["pro_jahr_chf"] + summe)))
+    out = {k: v for k, v in daten.items() if not k.startswith("_")}
+    out.update(tipps=drei, geprueft=geprueft, summe_chf_jahr=summe, monate_frueher=monate)
+    return out
+
+
+def _berechnen():
     """Drei Tipps mit dem grössten Nutzen in CHF pro Jahr aus den Messwerten der letzten 14 Tage, dazu eine Batterie-
     Empfehlung (Kauf) bzw. Betriebstipps (vorhandene Batterie, anlage.json "haushalt.batterie").
     Jeder Tipp erklärt sich selbst: "warum" (was homi in den Daten sieht) und "rechnung" (Rechenschritte mit Zahlen).
     "geprueft" listet alle Kandidaten mit Ergebnis, auch die nicht gezeigten."""
-    if time.time() - berater_cache["zeit"] < 3600 and berater_cache["daten"]:
-        return berater_cache["daten"]
     with open(ANLAGE_CFG, encoding="utf-8") as f:
         cfg = json.load(f)
     haushalt = cfg.get("haushalt") or {}
@@ -273,7 +358,6 @@ def berater():
     netz_versch = sum(g["netz_kwh"] for g in versch) / tage * 365 if versch else 0
     if versch and netz_versch > 15:
         kwh = netz_versch * 0.8
-        f = ((state.get("prognose") or {}).get("morgen") or {}).get("bestes_fenster")
         def wann(g):
             h = g.get("haupt_stunden") or []
             return f"meist um {', '.join(f'{x} Uhr' for x in h[:2])}" if h else ""
@@ -288,12 +372,11 @@ def berater():
                          f"Annahme: 80 % davon lassen sich in die Sonnenstunden legen → {tsd(kwh)} kWh/Jahr",
                          f"{tsd(kwh)} kWh × {rp(diff)} Vorteil = CHF {round(kwh * diff)} pro Jahr"],
             "aktion": "Spülmaschine statt spät abends mit Startzeitvorwahl über Mittag laufen lassen, Wäsche ebenso"
-                      + (f" – morgen am besten {f['von']}–{f['bis']} Uhr." if f else ".")})
+                      + ", am besten bei Sonne zwischen 11 und 15 Uhr (das beste Fenster für morgen zeigt homi bei der Solarprognose)."})
         if "kochen" in zg:
             geprueft.append({"titel": "Kochen & Backen", "ergebnis": f"rund {zg['kochen']['kwh_tag']:.1f} kWh pro Tag, "
                              "lässt sich aber nicht in den Mittag verschieben"})
     elif kwh > 30:
-        f = ((state.get("prognose") or {}).get("morgen") or {}).get("bestes_fenster")
         tipps.append({"id": "verschieben", "titel": "Grosse Geräte in die Sonnenstunden",
             "chf_jahr": round(kwh * diff), "kwh_jahr": round(kwh),
             "text": f"Am meisten Strom aus dem Netz brauchst du zwischen {spitze} und {spitze + 1} Uhr. Rund "
@@ -306,39 +389,20 @@ def berater():
                          f"Annahme: 40 % davon sind verschiebbar (Waschen, Spülen, Trocknen) → {tsd(kwh)} kWh/Jahr",
                          f"{tsd(kwh)} kWh × {rp(diff)} Vorteil = CHF {round(kwh * diff)} pro Jahr"],
             "aktion": "Waschmaschine, Geschirrspüler und Tumbler mit Startzeitvorwahl über Mittag laufen lassen"
-                      + (f" – morgen am besten {f['von']}–{f['bis']} Uhr." if f else ".")})
+                      + ", am besten bei Sonne zwischen 11 und 15 Uhr."})
     else:
         geprueft.append({"titel": "Grosse Geräte in die Sonnenstunden", "ergebnis": "kaum Netzbezug über der Grundlast"})
 
-    # 5) Akut: negative Preise in Sicht
-    plan = einspeise_plan()
-    tage_minus = [(n, d) for n, d in (("heute", plan.get("heute")), ("morgen", plan.get("morgen"))) if d and d.get("minuspreis_bloecke")]
-    if tage_minus:
-        n, d = tage_minus[0]
-        tief = min(x["preis_rp"] for x in d["stunden"] if x["stunde"] in d["minuspreis_stunden"])
-        tipps.insert(0, {"id": "minuspreis", "titel": f"{n.capitalize()} negative Strompreise nutzen", "akut": True,
-            "chf_jahr": None, "kwh_jahr": None,
-            "text": f"{n.capitalize()} {' und '.join(d['minuspreis_bloecke'])} liegt der Börsenpreis unter null.",
-            "warum": "In diesen Stunden gibt es an der Börse mehr Strom als Abnehmer. Wer dann verbraucht, entlastet das "
-                     "Netz; mit einem dynamischen Einspeisetarif kostet Einspeisen in dieser Zeit sogar Geld.",
-            "rechnung": [f"Day-Ahead-Preise Schweiz (EPEX Spot via Energy-Charts) für {n}",
-                         f"Stunden mit Preis unter null: {', '.join(d['minuspreis_bloecke'])}, tiefster Preis {tief:.1f} Rp./kWh",
-                         f"Erwarteter Überschuss in dieser Zeit: {d.get('ueberschuss_bei_minuspreis_kwh', 0):.1f} kWh"],
-            "aktion": "Grosse Verbraucher genau in diese Stunden legen. Mit dynamischem Einspeisetarif: Einspeisung drosseln."})
-    else:
-        geprueft.append({"titel": "Negative Strompreise", "ergebnis": "heute und morgen keine"})
-
-    akut = [x for x in tipps if x.get("akut")]
-    rest = sorted((x for x in tipps if not x.get("akut")), key=lambda x: -(x["chf_jahr"] or 0))
-    drei = (akut + rest)[:3]
-    for x in (akut + rest)[3:]:
+    rest = sorted(tipps, key=lambda x: -(x["chf_jahr"] or 0))      # (negative Preise: _akut(), täglich frisch)
+    drei = rest[:3]
+    for x in rest[3:]:
         geprueft.insert(0, {"titel": x["titel"], "ergebnis": f"CHF {x['chf_jahr']}/Jahr – weniger als die drei gezeigten"})
     summe = sum(x["chf_jahr"] or 0 for x in drei)
     monate_frueher = None
     if am.get("aktiv") and am.get("pro_jahr_chf") and am.get("rest_chf"):
         monate_frueher = round(12 * (am["rest_chf"] / am["pro_jahr_chf"] - am["rest_chf"] / (am["pro_jahr_chf"] + summe)))
     auswahl = ("homi rechnet bis zu sechs mögliche Massnahmen mit deinen Messwerten und deinem Tarif durch und zeigt die drei mit "
-               "dem grössten Nutzen in Franken pro Jahr. Hinweise auf negative Strompreise stehen immer zuoberst. "
+               "dem grössten Nutzen in Franken pro Jahr. Neu gerechnet wird jeden Sonntag; Hinweise auf negative Strompreise stehen immer zuoberst. "
                "Annahmen (z. B. wie viel sich verschieben lässt) sind bewusst vorsichtig und bei jedem Tipp genannt.")
     # Batterie
     preise = {**BATTERIE_PREISE, **(cfg.get("batterie_preise") or {})}
@@ -404,8 +468,8 @@ def berater():
     daten = {"aktiv": True, "stand": datetime.now().isoformat(timespec="minutes"), "tage": round(tage, 1), "basis": basis,
              "auswahl": auswahl, "grundlast_w": round(grund_w), "spitze_stunde": spitze,
              "tarif": {"bezug_rp": round(bezug * 100, 2), "rueck_rp": round(rueck * 100, 2)},
-             "tipps": drei, "geprueft": geprueft, "summe_chf_jahr": summe, "monate_frueher": monate_frueher, "batterie": batterie}
-    berater_cache.update(zeit=time.time(), daten=daten)
+             "tipps": drei, "geprueft": geprueft, "summe_chf_jahr": summe, "monate_frueher": monate_frueher, "batterie": batterie,
+             "_rest": rest, "_amort": {"pro_jahr_chf": am.get("pro_jahr_chf"), "rest_chf": am.get("rest_chf")}}
     return daten
 
 
