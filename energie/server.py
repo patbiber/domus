@@ -15,6 +15,7 @@ Endpunkte:
   /api/steuerung  Wechselrichter-Steuerung über Modbus: Verbindung, Begrenzung, Testmodus-Auswertung (Minuspreis →
                 Nulleinspeisung: was homi getan hätte und was es gekostet/gebracht hätte)
   /api/geraete  smarte Steckdosen (myStrom): Zustand, Regel, Verbrauch heute/7 Tage; POST {"id", "modus": auto|ein|aus}
+  /api/sicherheit  Sicherungen: letzter Abgleich, Backups, GitHub-Upload; nur home.biber.solar
   /api/reserve  Reserve-PC: Knopf «Reserve Server On» (dauerhaft an statt nur über Mittag); nur home.biber.solar; POST {"dauerhaft": true|false}
   /api/heizung  Infrarotheizung (Tuya): Ist/Soll, Zeitplan, Solarwärme, nächster Wechsel; POST {"kuscheln": true|false}
   /api/verguetung  Abnahmevergütung ab 2027: Vergütungsmodelle je Quartal, Referenz-Marktpreis, Ausgleich der
@@ -153,6 +154,10 @@ class Handler(SimpleHTTPRequestHandler):
             if self.host_name() != "home.biber.solar":      # nur in der Retro-Webseite (home.biber.solar)
                 return self.send_error(404)
             return self.send_json(reserve.bericht())
+        if path == "/api/sicherheit":
+            if self.host_name() != "home.biber.solar":      # nur in der Retro-Webseite
+                return self.send_error(404)
+            return self.send_json(reserve.sicherheit())
         if path == "/api/heizung":
             with lock:
                 return self.send_json(zustand.heizung.report())

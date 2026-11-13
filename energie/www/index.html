@@ -128,6 +128,11 @@
   .gerat .v { color: var(--yellow); } .gerat.an { border-color: var(--yellow); } .gerat.an .v { animation: blink 1.4s steps(2) infinite; }
   .g-knoepfe { display: flex; gap: 4px; margin-top: 6px; }
   .g-knoepfe button { flex: 1; font: bold 12px "Courier New", Courier, monospace; padding: 4px 0; background: #000; color: var(--grey); border: 2px solid #333; cursor: pointer; }
+  .sich { grid-column: span 2; } @media (max-width: 600px) { .sich { grid-column: auto; } }
+  .sich .v { color: var(--green); } .sich.warn { border-color: var(--red); } .sich.warn .v { color: var(--red); }
+  .sich ul { list-style: none; margin: 4px 0 0; padding: 0; font-size: 12px; }
+  .sich li { display: flex; justify-content: space-between; gap: 6px; border-top: 1px solid #1a1a1a; padding: 2px 0; color: var(--white); }
+  .sich li span { color: var(--green); white-space: nowrap; } .sich li.warn span { color: var(--red); }
   .res .v { color: var(--grey); } .res.an .v { color: var(--green, #66ff66); } #b-reserve.an { color: #000; background: #66ff66; border-color: #66ff66; }
   .g-knoepfe button.an { color: #000; background: var(--yellow); border-color: var(--yellow); }
   /* Infrarotheizung: Ist-Temperatur, Kuschel-Knopf */
@@ -201,7 +206,8 @@
       <div class="stat verg" id="t-verg" title="Abnahmevergütung ab 2027: Wert deiner Einspeisung je Modell im laufenden Quartal"><div class="k">Vergütung ab 2027 · Quartal</div><div class="v" id="s-verg">–</div><div class="s" id="s-verg2">&nbsp;</div></div>
       <div class="stat batt"><div class="k">Batterie-Simulation</div><div class="v" id="s-batt">–</div><div class="s" id="s-batt2">&nbsp;</div></div>
       <div class="stat amort" title="Investition minus bisheriger Ertrag (selbst verbraucht × Bezugstarif + eingespeist × Rücklieferung), heutige Tarife"><div class="k">Anlage abbezahlt</div><div class="v" id="s-amort">–</div><div class="s" id="s-amort2">&nbsp;</div><span class="balken8"><i id="s-amort3" style="width:0"></i></span></div>
-      <h3 class="gruppe">System <span>· Die Server hinter homi</span></h3>
+      <h3 class="gruppe">System <span>· Sicherungen und Server hinter homi</span></h3>
+      <div class="stat sich" id="t-sich" hidden title="Letzter Abgleich, letzte Backups und letzter GitHub-Upload. Rot, wenn etwas zu alt ist oder fehlgeschlagen."><div class="k">Datensicherheit</div><div class="v" id="s-sich">–</div><ul id="s-sich2"></ul></div>
       <div class="stat srv"><div class="k">homi-Server (unter der Treppe)</div><div class="v" id="s-srv">–</div><div class="s" id="s-srv2">&nbsp;</div></div>
       <div class="stat res" id="t-res" hidden title="Reserve-PC (domus2): läuft normal nur 30 Minuten über Mittag. Knopf an = läuft dauernd und übernimmt bei einem Ausfall des NUC."><div class="k">Reserve-Server</div><div class="v" id="s-res">–</div><div class="s" id="s-res2">&nbsp;</div><div class="s" id="s-res3">&nbsp;</div>
         <div class="g-knoepfe"><button type="button" id="b-reserve">RESERVE SERVER ON</button></div></div>
@@ -612,6 +618,23 @@ $("b-kuscheln").addEventListener("click", async () => {
 
 // Reserve-Server (domus2): normal nur über Mittag, mit dem Knopf «Reserve Server On» dauernd (reserve/mittag.sh auf dem NUC)
 let reserve = null;
+function wannText(iso) {   // «heute 12:07», «gestern 03:10», «8.11. 14:33»
+  const t = new Date(iso), h = new Date(), gest = new Date(h.getFullYear(), h.getMonth(), h.getDate() - 1);
+  const hm = t.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
+  const tag = t.toDateString() === h.toDateString() ? "heute" : t.toDateString() === gest.toDateString() ? "gestern" : t.toLocaleDateString("de-CH", { day: "numeric", month: "numeric" }) ;
+  return `${tag} ${hm}`;
+}
+// Datensicherheit: letzter Abgleich, Backups, GitHub-Upload (system/sicherheit-status.py)
+async function pollSicherheit() {
+  let d; try { const r = await fetch("api/sicherheit", { cache: "no-store" }); if (!r.ok) return; d = await r.json(); } catch { return; }
+  const t = $("t-sich"); t.hidden = false;
+  if (!d.bekannt) { t.classList.add("warn"); $("s-sich").textContent = "⚠ keine Meldung"; $("s-sich2").innerHTML = "<li>Der NUC meldet den Stand der Sicherungen nicht.</li>"; return; }
+  const schlecht = d.punkte.filter(p => !p.ok).length;
+  t.classList.toggle("warn", schlecht > 0);
+  $("s-sich").textContent = schlecht ? `⚠ ${schlecht} prüfen` : "alles aktuell";
+  $("s-sich2").innerHTML = d.punkte.map(p => `<li class="${p.ok ? "" : "warn"}" title="${(p.detail || "").replace(/"/g, "'")}">${p.name}<span>${p.zeit ? wannText(p.zeit) : "noch nie"}${p.ok ? "" : " ⚠"}</span></li>`).join("")
+    + d.punkte.filter(p => p.detail && (!p.ok || p.name.startsWith("GitHub"))).map(p => `<li class="${p.ok ? "" : "warn"}"><small>${p.detail}</small></li>`).join("");
+}
 async function pollReserve() {
   try { const r = await fetch("api/reserve", { cache: "no-store" }); if (!r.ok) return; reserve = await r.json(); } catch { return; }
   const t = $("t-res"); t.hidden = false; t.classList.toggle("an", !!reserve.dauerhaft);
@@ -619,10 +642,7 @@ async function pollReserve() {
   $("s-res2").textContent = reserve.dauerhaft ? "dauernd an – schützt bei einem Ausfall des NUC" : `nur über Mittag (${reserve.fenster}) – sonst aus, kein Schutz bei einem Ausfall`;
   const sc = reserve.sicherung, e3 = $("s-res3");
   if (sc && sc.zeit) {
-    const t = new Date(sc.zeit), h = new Date(), gest = new Date(h.getFullYear(), h.getMonth(), h.getDate() - 1);
-    const hm = t.toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" });
-    const tag = t.toDateString() === h.toDateString() ? "heute" : t.toDateString() === gest.toDateString() ? "gestern" : t.toLocaleDateString("de-CH", { day: "numeric", month: "numeric" });
-    e3.textContent = `${sc.ok ? "Backup" : "⚠ Backup FEHLGESCHLAGEN"}: ${tag} ${hm}`; e3.style.color = sc.ok ? "" : "var(--red)";
+    e3.textContent = `${sc.ok ? "Backup" : "⚠ Backup FEHLGESCHLAGEN"}: ${wannText(sc.zeit)}`; e3.style.color = sc.ok ? "" : "var(--red)";
   } else { e3.textContent = "Backup: noch keine Meldung"; e3.style.color = ""; }
   const b = $("b-reserve"); b.classList.toggle("an", !!reserve.dauerhaft); b.textContent = "RESERVE SERVER ON";
   b.title = reserve.dauerhaft ? "Antippen: wieder nur über Mittag" : "Antippen: Reserve dauernd einschalten";
@@ -1416,6 +1436,7 @@ pollSteuerung(); setInterval(pollSteuerung, 15000);
 pollGeraete(); setInterval(pollGeraete, 15000);
 pollHeizung(); setInterval(pollHeizung, 30000);
 pollReserve(); setInterval(pollReserve, 30000);
+pollSicherheit(); setInterval(pollSicherheit, 60000);
 pollZuordnung(); setInterval(pollZuordnung, 1800000);
 pollVerguetung(); setInterval(pollVerguetung, 10 * 60000);
 pollWoche(); setInterval(pollWoche, 60 * 60000);

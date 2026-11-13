@@ -48,6 +48,7 @@ HEIZUNG_FILE = os.environ.get("HEIZUNG_FILE", "/data/heizung.json")
 STEUERUNG_FILE = os.environ.get("STEUERUNG_FILE", "/data/steuerung.json")
 RESERVE_FILE = os.environ.get("RESERVE_FILE", "/data/reserve.json")
 RESERVE_STATUS_FILE = os.environ.get("RESERVE_STATUS_FILE", "/data/reserve-status.json")
+SICHERHEIT_FILE = os.environ.get("SICHERHEIT_FILE", "/data/sicherheit-status.json")   # system/sicherheit-status.py (NUC)
 
 ANLAGE_CFG = os.environ.get("ANLAGE_CFG", "/app/anlage.json")
 

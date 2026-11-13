@@ -1,0 +1,8 @@
+# NUC: Status der Sicherungen (Abgleich, Backups, GitHub) für die Retro-Kachel «Datensicherheit». User-Unit von claude.
+[Unit]
+Description=domus: Status der Sicherungen für homi
+
+[Service]
+Type=oneshot
+ExecStart=/home/claude/domus/system/sicherheit-status.sh
+Nice=10

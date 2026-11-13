@@ -7,7 +7,7 @@ import json
 import os
 import time
 
-from .konfig import RESERVE_FILE, RESERVE_STATUS_FILE
+from .konfig import RESERVE_FILE, RESERVE_STATUS_FILE, SICHERHEIT_FILE
 
 
 def _lesen(pfad):
@@ -38,3 +38,15 @@ def setzen(dauerhaft, von):
         json.dump({"dauerhaft": bool(dauerhaft), "von": von, "zeit": time.strftime("%Y-%m-%dT%H:%M:%S")}, f)
     os.replace(tmp, RESERVE_FILE)
     return bericht()
+
+
+def sicherheit():
+    """Kachel «Datensicherheit»: Status der Sicherungen (schreibt system/sicherheit-status.py auf dem NUC jede Minute)."""
+    d = _lesen(SICHERHEIT_FILE)
+    try:
+        alter = time.time() - time.mktime(time.strptime(d["zeit"], "%Y-%m-%dT%H:%M:%S"))
+    except (KeyError, ValueError):
+        return {"bekannt": False}
+    if alter > 600:          # Meldung fehlt (z. B. NUC aus, Reserve hat übernommen): nichts Veraltetes als «sicher» zeigen
+        return {"bekannt": False}
+    return {"bekannt": True, "alles_ok": bool(d.get("alles_ok")), "punkte": d.get("punkte", [])}

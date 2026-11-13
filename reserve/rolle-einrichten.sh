@@ -62,11 +62,11 @@ case "$ROLLE" in
     sudo systemctl daemon-reload; sudo systemctl enable domus-vorrang.service domus-firewall.service
     sudo systemctl enable --now domus-vorrang-pruefen.timer
     docker rm -f pihole-zweit >/dev/null 2>&1 || true
-    ln -sf "$HIER/domus-reserve-abgleich.service" "$HIER/domus-reserve-abgleich.timer" "$HIER/domus-reserve-mittag.service" "$HIER/domus-reserve-mittag.timer" ~/.config/systemd/user/
+    ln -sf "$HIER/domus-reserve-abgleich.service" "$HIER/domus-reserve-abgleich.timer" "$HIER/domus-reserve-mittag.service" "$HIER/domus-reserve-mittag.timer" "$HIER/../system/domus-sicherheit-status.service" "$HIER/../system/domus-sicherheit-status.timer" ~/.config/systemd/user/
     systemctl --user daemon-reload
     user_units enable
-    systemctl --user enable domus-reserve-abgleich.timer domus-reserve-mittag.timer claude-sitzung.service >/dev/null 2>&1 || true
-    systemctl --user start domus-reserve-abgleich.timer domus-reserve-mittag.timer
+    systemctl --user enable domus-reserve-abgleich.timer domus-reserve-mittag.timer domus-sicherheit-status.timer claude-sitzung.service >/dev/null 2>&1 || true
+    systemctl --user start domus-reserve-abgleich.timer domus-reserve-mittag.timer domus-sicherheit-status.timer
     [ -f /etc/systemd/system/homi-login.service ] && sudo systemctl enable --now homi-login.service
     for d in pihole homeassistant energie umami proxy energy academy biber-solar biber-solar-test training unifi; do
       [ -f "$DOMUS/$d/compose.yml" ] && (cd "$DOMUS/$d" && docker compose up -d >/dev/null 2>&1 || echo "  $d: Start fehlgeschlagen")
@@ -78,8 +78,8 @@ case "$ROLLE" in
     echo "$EIGENE" | grep -qx "$RESERVE_IP" || { echo "Dieser Rechner hat nicht RESERVE_IP $RESERVE_IP (rollen.conf)" >&2; exit 1; }
     sudo mkdir -p /var/lib/domus; echo reserve | sudo tee /var/lib/domus/rolle >/dev/null
     sudo rm -f /var/lib/domus/datenbanken-eingesetzt
-    systemctl --user stop domus-reserve-abgleich.timer domus-reserve-mittag.timer >/dev/null 2>&1 || true
-    rm -f ~/.config/systemd/user/*.wants/domus-reserve-abgleich.timer ~/.config/systemd/user/*.wants/domus-reserve-mittag.timer ~/.config/systemd/user/*.wants/claude-sitzung.service
+    systemctl --user stop domus-reserve-abgleich.timer domus-reserve-mittag.timer domus-sicherheit-status.timer >/dev/null 2>&1 || true
+    rm -f ~/.config/systemd/user/*.wants/domus-reserve-abgleich.timer ~/.config/systemd/user/*.wants/domus-reserve-mittag.timer ~/.config/systemd/user/*.wants/domus-sicherheit-status.timer ~/.config/systemd/user/*.wants/claude-sitzung.service
     tmux kill-session -t claude 2>/dev/null || true
     user_units disable; systemctl --user reset-failed || true
     sudo systemctl disable --now homi-login.service 2>/dev/null || true

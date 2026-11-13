@@ -43,4 +43,6 @@ nginx: `POST:/api/reserve` steht in der Methoden-Liste von `proxy/conf.d/home.bi
 Der Abgleich lässt die absichtlich ausgeschaltete Reserve in Ruhe (`.../reserve-abgleich/soll`), die Sicherung läuft um 12:05.
 Die Retro-Kachel «Reserve-Server» zeigt «Backup: <Zeit>» der letzten Sicherung: `sicherung.sh` schreibt `/var/lib/domus/sicherung` («Zeit ok|fehler»), `mittag.sh` holt den Wert beim Start der Reserve und merkt ihn auf dem NUC (`~/.local/state/domus/reserve-abgleich/sicherung`, Fallback: Zeit des neuesten Sicherungsordners).
 
+Die Kachel «Datensicherheit» (Retro-Seite, System-Gruppe) zeigt Abgleich NUC → Reserve, Backup NUC (verschlüsselt, 03:10), Home-Assistant-Backup, Backup auf der Reserve und den letzten GitHub-Upload; rot, wenn etwas zu alt (> 30 h, HA > 10 Tage) oder fehlgeschlagen ist. Quelle: `system/sicherheit-status.py` (User-Timer `domus-sicherheit-status`, jede Minute, nur Hauptrechner) → `energie/data/sicherheit-status.json` → `/api/sicherheit` (nur home.biber.solar; ohne frische Meldung zeigt die Kachel «keine Meldung»).
+
 Port 8099 des NUC ist für die Reserve gesperrt – deshalb meldet der NUC den Knopf-Zustand per SSH statt dass die Reserve ihn abfragt.
