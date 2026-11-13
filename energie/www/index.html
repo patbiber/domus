@@ -140,6 +140,9 @@
   .hue li { display: flex; justify-content: space-between; align-items: center; gap: 6px; border-top: 1px solid #1a1a1a; padding: 2px 0; color: var(--white); }
   .hue li i { display: inline-block; width: 9px; height: 9px; margin-left: 2px; border: 1px solid #444; background: #111; }
   .hue li i.an { border-color: transparent; } .hue li i.weg { background: none; border-color: #633; }
+  .lsp .v { color: var(--cyan); } .lsp ul { list-style: none; margin: 4px 0 0; padding: 0; font-size: 12px; }
+  .lsp li { display: flex; justify-content: space-between; gap: 6px; border-top: 1px solid #1a1a1a; padding: 2px 0; color: var(--white); } .lsp li.warn { color: var(--red); }
+  .lsp .sens { color: var(--cyan); display: block; margin-top: 4px; font-size: 12px; }
   .hue .sens { color: var(--cyan); display: block; margin-top: 4px; font-size: 12px; }
   .heiz .v { color: var(--cyan); } .heiz.an .v { color: #ff9944; } .heiz.kuschel { border-color: #ff66aa; }
   .heiz.kuschel .v { color: #ff66aa; } #b-kuscheln.an { color: #000; background: #ff66aa; border-color: #ff66aa; }
@@ -205,6 +208,7 @@
       <div class="stat heiz" id="t-heiz" hidden title="Infrarotheizung: Zeitplan, Solarwärme und Kuschel-Knopf"><div class="k" id="s-heiz0">Heizung</div><div class="v" id="s-heiz">–</div><div class="s" id="s-heiz2">&nbsp;</div>
         <div class="g-knoepfe"><button type="button" id="b-kuscheln">KUSCHELN 22 °C</button></div></div>
       <div class="stat hue" id="t-hue" hidden title="Philips Hue: welche Lampen brennen (Farbe wie in echt). Nur Anzeige, homi schaltet nichts."><div class="k">Hue-Licht</div><div class="v" id="s-hue">–</div><div class="s" id="s-hue2">&nbsp;</div><ul id="s-hue3"></ul><span class="sens" id="s-hue4"></span></div>
+      <div class="stat lsp" id="t-lsp" hidden title="Google-Cast-Lautsprecher im Heimnetz. Nur Anzeige; bei negativem Strompreis sagt Home Assistant den Preis an."><div class="k">Lautsprecher</div><div class="v" id="s-lsp">–</div><ul id="s-lsp2"></ul><span class="sens" id="s-lsp3">Ansage bei negativem Strompreis (07–21 Uhr)</span></div>
       <h3 class="gruppe">Auswertung <span>· Bericht, Tipps und Rechnung</span></h3>
       <div class="stat woche" title="Wochenbericht: kommt jeden Montag um 08:00 auch als Mail und Push"><div class="k" id="s-woche0">Letzte Woche</div><div class="v" id="s-woche">–</div><div class="s" id="s-woche2">&nbsp;</div></div>
       <div class="stat rat" title="Energieberater: drei Tipps aus den Messwerten der letzten 14 Tage"><div class="k">Energieberater · Tipp antippen = Warum · neu jeden Sonntag</div><div class="v" id="s-rat">–</div><ol id="s-rat2"></ol><div class="s" id="s-rat3">&nbsp;</div></div>
@@ -640,6 +644,16 @@ async function pollHue() {
   const se = (hue.sensoren || [])[0];
   $("s-hue4").textContent = !se ? "" : !se.aktiviert ? `Sensor ${se.name} (${se.raum}): ausgeschaltet in der Hue-App${se.batterie != null ? " · Akku " + se.batterie + " %" : ""}`
     : `Sensor ${se.name} (${se.raum}): ${se.temp_c != null ? se.temp_c.toFixed(1) + " °C" : "– °C"}${se.lux != null ? " · " + se.lux + " lx" : ""}${se.bewegung ? " · Bewegung" : ""}${se.batterie != null ? " · Akku " + se.batterie + " %" : ""}`;
+}
+// Cast-Lautsprecher: nur Status (homi/lautsprecher.py)
+async function pollLsp() {
+  let d; try { const r = await fetch("api/lautsprecher", { cache: "no-store" }); if (!r.ok) return; d = await r.json(); } catch { return; }
+  const t = $("t-lsp");
+  if (!d || !d.aktiv) { t.hidden = true; return; }
+  t.hidden = false;
+  $("s-lsp").textContent = `${d.online} von ${d.gesamt} an`;
+  const h = s => s >= 86400 ? Math.floor(s / 86400) + " Tg" : s >= 3600 ? Math.floor(s / 3600) + " h" : Math.floor(s / 60) + " min";
+  $("s-lsp2").innerHTML = d.geraete.map(g => `<li class="${g.online ? "" : "warn"}" title="${g.ip}${g.online ? " · läuft seit " + h(g.laeuft_s) : " · nicht erreichbar"}${g.online && g.signal_dbm != null ? " · WLAN " + g.signal_dbm + " dBm" : ""}"><span>${g.name}<br><small>${g.ort}</small></span><span>${g.online ? "bereit" : "aus?"}</span></li>`).join("");
 }
 let reserve = null;
 function wannText(iso) {   // «heute 12:07», «gestern 03:10», «8.11. 14:33»
@@ -1482,6 +1496,7 @@ pollHeizung(); setInterval(pollHeizung, 30000);
 pollReserve(); setInterval(pollReserve, 30000);
 pollSicherheit(); setInterval(pollSicherheit, 60000);
 pollHue(); setInterval(pollHue, 15000);
+pollLsp(); setInterval(pollLsp, 20000);
 pollZuordnung(); setInterval(pollZuordnung, 1800000);
 pollVerguetung(); setInterval(pollVerguetung, 10 * 60000);
 pollWoche(); setInterval(pollWoche, 60 * 60000);

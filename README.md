@@ -567,10 +567,18 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   die Tür per `rest_command.homi_kuehlschrank` an homi (`POST /api/kuehlschrank`, nur von HA auf 127.0.0.1;
   `GET` zeigt Zustand und `offen_s`). Timer `homi-push-kuehlschrank` (jede Minute, `push.py kuehlschrank`) schickt nach
   2 min offen einen Push «🧊 Kühlschrank offen» (Thema `kuehlschrank`, in der App abwählbar) und beim Schliessen «✅ zu».
+- **Lautsprecher und Minuspreis-Ansage** (seit 13.11.2026): Zwei Google-Cast-Geräte – «Stubä speaker» (Chromecast Audio, 192.168.1.26,
+  Stereoanlage Wohnzimmer) und «Dachstock Holodeck» (Chromecast Ultra, .89, Aktivboxen) – sind in Home Assistant über die
+  Integration «Google Cast» eingebunden (`media_player.stuba_speaker`, `media_player.dachstock_holodeck`). homi zeigt nur den
+  Status in der Retro-Kachel «Lautsprecher» (`homi/lautsprecher.py`, `/api/lautsprecher`, fragt `:8008/setup/eureka_info`,
+  Geräte in `anlage.json` → `lautsprecher`). Wird der Börsenpreis negativ (Sensor `binary_sensor.borsenpreis_negativ`, 1 Minute
+  stabil), sagen beide Lautsprecher zwischen 07 und 21 Uhr den Preis an (Automation `homi_minuspreis_ansage` in
+  `homeassistant/config/configuration.yaml`, `tts.speak` mit Google Translate auf Deutsch). Datenschutz: nur der Ansagesatz
+  (Preis) geht dafür ans Internet (Google Translate), keine Personendaten. Die Ansage hängt an Home Assistant, nicht an homi.
 - **Pi-hole** (`pihole/`, seit 06.11.2026): DNS- und DHCP-Server fürs Heimnetz, blockiert Werbung und Tracker für alle
   Geräte. Die Sunrise-Box lässt den DNS-Server nicht ändern, darum ist **ihr DHCP aus** und Pi-hole verteilt die Adressen
   (Pool .50–.250, 24 h, Gateway .1, DNS 192.168.1.23). Feste Adressen (Fronius .221, myStrom .211, Heizung .103,
-  UniFi-AP .94, Ubiquiti .196, Kühlschrank .61, Chromecast .26, Belkin .141, Hue-Bridge .229) stehen in `pihole/compose.yml`
+  UniFi-AP .94, Ubiquiti .196, Kühlschrank .61, Chromecast Stubä .26, Chromecast Holodeck .89, Belkin .141, Hue-Bridge .229) stehen in `pihole/compose.yml`
   (`FTLCONF_dhcp_hosts`). Oberfläche http://192.168.1.23:8053/admin (Passwort `PIHOLE_PASSWORT` in `.env`), nur aus
   192.168.1.0/24 (Firewall). Netz host (DHCP braucht Broadcasts), DNS nur auf eno1 gebunden, weil systemd-resolved
   127.0.0.53 hält. Blocklisten: Standard (Werbung/Tracker) + Erwachsenen-Seiten (StevenBlack porn-only, Wunsch

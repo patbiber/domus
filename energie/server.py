@@ -16,6 +16,7 @@ Endpunkte:
                 Nulleinspeisung: was homi getan hätte und was es gekostet/gebracht hätte)
   /api/geraete  smarte Steckdosen (myStrom): Zustand, Regel, Verbrauch heute/7 Tage; POST {"id", "modus": auto|ein|aus}
   /api/hue  Hue-Lampen und Sensor (nur lesen); nur home.biber.solar
+  /api/lautsprecher  Cast-Lautsprecher (Status); nur home.biber.solar
   /api/sicherheit  Sicherungen: letzter Abgleich, Backups, GitHub-Upload; nur home.biber.solar
   /api/reserve  Reserve-PC: Knopf «Reserve Server On» (dauerhaft an statt nur über Mittag); nur home.biber.solar; POST {"dauerhaft": true|false}
   /api/heizung  Infrarotheizung (Tuya): Ist/Soll, Zeitplan, Solarwärme, nächster Wechsel; POST {"kuscheln": true|false}
@@ -43,7 +44,7 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlsplit
 
-from homi import hue, reserve, zustand
+from homi import hue, lautsprecher, reserve, zustand
 from homi.amortisation import amort_cache, amortisation
 from homi.archiv import Archiv, archiv_aggregat
 from homi.berater import berater, berater_cache
@@ -159,6 +160,10 @@ class Handler(SimpleHTTPRequestHandler):
             if self.host_name() != "home.biber.solar":      # nur in der Retro-Webseite
                 return self.send_error(404)
             return self.send_json(hue.bericht())
+        if path == "/api/lautsprecher":
+            if self.host_name() != "home.biber.solar":      # nur in der Retro-Webseite
+                return self.send_error(404)
+            return self.send_json(lautsprecher.bericht())
         if path == "/api/sicherheit":
             if self.host_name() != "home.biber.solar":      # nur in der Retro-Webseite
                 return self.send_error(404)

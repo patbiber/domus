@@ -48,5 +48,9 @@
     "_kommentar": "Infrarotheizung (Tuya «Smart XL», lokal, homi/heizung.py; Local Key in .env TUYA_HEIZUNG_KEY). plan: [Uhrzeit, °C oder null = aus], gilt jeden Tag (Patrick 05.11.2026). kuscheln: Knopf in Retro, App und HA. solar: bei Überschuss oder negativem Börsenpreis auf temp_c heizen, wenn der Plan weniger vorsieht."},
   "steuerung": {"modus": "scharf", "seit": "2026-10-16", "scharf_seit": "2026-10-16", "_kommentar": "Modbus-Steuerung des Fronius: aus | test (nur nachrechnen) | scharf (homi schreibt; auf Patricks Wunsch seit 16.10.2026)"},
   "hue": {"host": "192.168.1.229", "_kommentar": "Hue Bridge (homi/hue.py, nur lesen; Schlüssel HUE_APP_KEY in .env). stockwerk: Raumname → 1 = oben im Haus-Bild, sonst unten (Annahme 13.11.2026, bitte prüfen)", "stockwerk": {"Dachgeschoss": 1, "Freddy Zimmer": 1, "Büro": 1}},
+  "lautsprecher": [
+    {"name": "Stubä speaker", "ort": "Wohnzimmer (Stereoanlage)", "ip": "192.168.1.26"},
+    {"name": "Dachstock Holodeck", "ort": "Dachstock (Aktivboxen)", "ip": "192.168.1.89"}
+  ],
   "geraet_stunden": 2
 }

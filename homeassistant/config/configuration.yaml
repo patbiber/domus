@@ -26,6 +26,32 @@ automation homi:                         # fest im YAML (nicht über die Oberfl�
       - action: rest_command.homi_kuehlschrank
         data:
           tuer: "{{ 'offen' if is_state('binary_sensor.kuhlschrank_tur', 'on') else 'zu' }}"
+  - id: homi_minuspreis_ansage
+    alias: Minuspreis ansagen
+    description: Wird der Börsenpreis negativ, sagen die Lautsprecher im Wohnzimmer (Stubä speaker) und im Dachstock (Holodeck) den Preis an (Patrick 13.11.2026). Nur 07–21 Uhr. Stimme Google Translate (nur der Satz geht ans Internet).
+    mode: single
+    triggers:
+      - trigger: state
+        entity_id: binary_sensor.borsenpreis_negativ
+        to: "on"
+        for: "00:01:00"
+    conditions:
+      - condition: time
+        after: "07:00:00"
+        before: "21:00:00"
+    actions:
+      - action: tts.speak
+        target:
+          entity_id: tts.google_ubersetzer_en_com_google_translate_en_com
+        data:
+          media_player_entity_id:
+            - media_player.stuba_speaker
+            - media_player.dachstock_holodeck
+          language: de
+          message: >-
+            Achtung, der Strompreis ist jetzt negativ: minus
+            {{ ((states('sensor.borsenpreis_day_ahead') | float(0)) | abs) | round(1) | string | replace('.', ' Komma ') }}
+            Rappen pro Kilowattstunde. Jetzt Strom verbrauchen lohnt sich.
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
