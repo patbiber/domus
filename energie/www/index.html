@@ -157,10 +157,153 @@
     .ui { grid-template-columns: 1fr; }
     .inv { border-left: 0; padding-left: 0; border-top: 2px solid #222; padding-top: 6px; }
   }
+  /* ===== Oberfläche im Stil der alten Point-and-Click-Abenteuer (C64), seit 13.11.2026 ===== */
+  @font-face { font-family: "Press Start 2P"; src: url("fonts/PressStart2P-Regular.ttf") format("truetype"); font-display: swap; }
+  @font-face { font-family: "VT323"; src: url("fonts/VT323-Regular.ttf") format("truetype"); font-display: swap; }
+  @font-face { font-family: "homi-zeichen"; src: url("fonts/homi-zeichen.ttf") format("truetype"); }   /* ⚠ ● ■ ☀ ▲ ▼ ← → ✓ als Pixel */
+  :root {
+    --pix: "Press Start 2P", "homi-zeichen", "Courier New", Courier, monospace;      /* Pixelschrift: Verben, Titel, Werte */
+    --term: "VT323", "homi-zeichen", "Courier New", Courier, monospace;              /* Terminalschrift: Fliesstext */
+    --p: 12px; --t: 20px;
+    --blau: #352879; --hellblau: #6c5eb5; --eisblau: #b3abf0; --beige: #c9bfa5; --beige-d: #9c9279;
+  }
+  @media (max-width: 760px) { :root { --p: 8px; } }
+  html, body { background: #08080c; }
+  body { font-family: var(--term); font-weight: normal; font-size: var(--t); line-height: 1; padding: 18px 12px 28px;
+    background: radial-gradient(ellipse at 50% 0, #1b1830 0, #08080c 70%) fixed; -webkit-font-smoothing: none; }
+  b, strong, h2, h3 { font-weight: normal; }
+
+  /* Gehäuse: beiger Röhrenmonitor mit Typenschild */
+  .gehaeuse { width: 100%; max-width: 1000px; background: linear-gradient(#d4cab0, var(--beige) 30%, #b5ab91); border-radius: 22px;
+    padding: 20px 20px 0; box-shadow: 0 0 0 2px #7d745e, 0 12px 0 #6f6753, 0 30px 60px rgba(0, 0, 0, .8); }
+  .monitor { max-width: none; border: 0; border-radius: 16px / 20px; padding: 12px;
+    box-shadow: 0 0 0 4px #1a1a1a, 0 0 0 7px var(--beige-d), inset 0 0 50px rgba(108, 94, 181, .13); }
+  .blende { display: flex; align-items: center; gap: 12px; padding: 12px 6px 14px; font: 8px var(--pix); color: #5b533f; }
+  .blende .regenbogen { display: flex; flex-direction: column; width: 26px; }
+  .blende .regenbogen i { height: 3px; }
+  .blende .marke { letter-spacing: 1px; }
+  .blende .marke b { color: #2c2718; }
+  .blende .knopf { width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #777, #222); box-shadow: 0 1px 0 #efe7d0; }
+  .blende .luft { flex: 1; }
+  .blende .led { width: 10px; height: 6px; background: #ff3b30; box-shadow: 0 0 8px #ff3b30; animation: led 4s steps(1) infinite; }
+  @keyframes led { 96% { opacity: .5; } }
+
+  /* Kopfzeile im Bildschirm */
+  .kopf { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; padding: 2px 4px 8px; border-bottom: 2px solid var(--blau); margin-bottom: 8px; }
+  .logo { font: 24px/1 var(--pix); color: var(--yellow); text-shadow: 2px 2px 0 #ff9900, 4px 4px 0 #cc2200, 6px 6px 0 #5a0d6e; letter-spacing: 2px; padding-bottom: 6px; }
+  .logo small { font-size: 8px; color: var(--eisblau); text-shadow: none; letter-spacing: 1px; margin-left: 14px; vertical-align: 6px; }
+  .kopf-r { font: var(--p) var(--pix); color: var(--eisblau); text-align: right; padding-bottom: 4px; white-space: nowrap; }
+  .kopf-r .live { color: var(--green); animation: blink 2s steps(2) infinite; }
+
+  /* Sprechtext, Bild, Satzzeile */
+  #talk { font: var(--p)/1.6 var(--pix); min-height: 4.8em; padding: 4px 4px 6px; text-shadow: 2px 2px 0 #000; display: flex; align-items: center; justify-content: center; }
+  #scene { box-shadow: 0 0 0 2px var(--blau);
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' shape-rendering='crispEdges'%3E%3Cg fill='%23000'%3E%3Crect x='13' y='1' width='6' height='11'/%3E%3Crect x='13' y='20' width='6' height='11'/%3E%3Crect x='1' y='13' width='11' height='6'/%3E%3Crect x='20' y='13' width='11' height='6'/%3E%3C/g%3E%3Cg fill='%23fff'%3E%3Crect x='15' y='3' width='2' height='7'/%3E%3Crect x='15' y='22' width='2' height='7'/%3E%3Crect x='3' y='15' width='7' height='2'/%3E%3Crect x='22' y='15' width='7' height='2'/%3E%3C/g%3E%3C/svg%3E") 16 16, crosshair; }
+  #sentence { font: var(--p)/1.6 var(--pix); color: var(--purple); padding: 10px 0 8px; min-height: 0; }
+  #sentence::after { content: "_"; animation: blink 1s steps(2) infinite; }
+
+  /* Verben und Inventar */
+  .ui { grid-template-columns: 1.25fr 1fr; gap: 14px; }
+  .verbs { gap: 0 4px; align-content: start; }
+  .verbs button { font: var(--p)/1 var(--pix); color: var(--green-dim); padding: 9px 2px; }
+  .verbs button:hover, .verbs button:focus-visible { color: var(--yellow); }
+  .verbs button.active { color: #000; background: var(--green); box-shadow: -4px 0 0 var(--green), 4px 0 0 var(--green); }
+  .inv { font: var(--p)/1 var(--pix); border-left: 2px solid var(--blau); padding-left: 14px; }
+  .inv h2, .panel h2 { font: var(--p)/1.5 var(--pix); color: var(--eisblau); margin: 0 0 8px; }
+  .inv-box { display: flex; gap: 8px; }
+  .inv ul { flex: 1; min-width: 0; max-height: calc(6 * (var(--p) + 8px)); overflow: hidden; scrollbar-width: none; }
+  .inv li { padding: 4px 0; line-height: 1; height: calc(var(--p) + 8px); white-space: nowrap; overflow: hidden; }
+  .inv li span:first-child { overflow: hidden; text-overflow: clip; }
+  .inv li span:last-child { color: var(--purple); flex: none; }
+  .inv li:hover, .inv li:hover span:last-child { color: var(--yellow); }
+  .pfeile { display: flex; flex-direction: column; justify-content: space-between; }
+  .pfeile button { all: unset; cursor: pointer; width: 28px; height: 28px; background: var(--blau); display: grid; place-items: center; }
+  .pfeile button:hover { background: var(--hellblau); }
+  .pfeile button:disabled { opacity: .3; cursor: default; }
+  .pfeile svg { width: 14px; height: 8px; fill: var(--eisblau); }
+  .inv .sum { font: var(--p)/1 var(--pix); color: var(--yellow); border-top: 2px solid var(--blau); margin-top: 8px; padding-top: 8px; }
+
+  /* Reiter: ein Thema aufs Mal statt langes Scrollen */
+  .reiter { display: flex; flex-wrap: wrap; gap: 10px 8px; margin-top: 14px; padding: 12px 0 4px; border-top: 2px solid var(--blau); }
+  .reiter button, .reiter a { all: unset; cursor: pointer; font: var(--p)/1 var(--pix); color: var(--eisblau); background: var(--blau); padding: 8px 9px;
+    box-shadow: 0 4px 0 #19123f; position: relative; }
+  .reiter button:hover, .reiter a:hover { color: #fff; background: var(--hellblau); }
+  .reiter button.aktiv { color: #000; background: var(--yellow); box-shadow: 0 2px 0 #8a8a2a; transform: translateY(2px); }
+  .reiter button.alarm:not(.aktiv) { color: #fff; background: #a00; box-shadow: 0 4px 0 #400; animation: blink 1s steps(2) infinite; }
+  .reiter button.alarm::after { content: "!"; margin-left: 4px; color: var(--yellow); }
+  .reiter button.alarm.aktiv::after { color: #a00; }
+  .reiter a { margin-left: auto; background: none; box-shadow: none; color: var(--green-dim); }
+  .reiter a:hover { background: none; color: var(--green); }
+  .r-aus { display: none !important; }
+  main:not([data-reiter="alles"]) .panel { border-top: 0; margin-top: 6px; padding-top: 6px; }
+  main:not([data-reiter="alles"]) .gruppe { margin-top: 0; }
+
+  /* Kacheln: schwarzes Feld mit blauer Titelzeile und Pixel-Ecken */
+  .stats { gap: 10px; grid-template-columns: repeat(auto-fit, minmax(176px, 1fr)); }
+  .gruppe { font: var(--p)/1.5 var(--pix); color: var(--yellow); letter-spacing: 0; border-bottom: 0; padding: 6px 0 2px; }
+  .gruppe span { font: 20px/1 var(--term); color: var(--grey); margin-left: 4px; }
+  .stat { background: #000; border: 2px solid var(--hellblau); padding: 0 8px 8px; min-width: 0;
+    clip-path: polygon(0 4px, 4px 4px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px)); }
+  .stat .k { font: 8px/1.5 var(--pix); letter-spacing: 0; color: var(--eisblau); background: var(--blau); margin: 0 -8px 8px; padding: 6px 8px 4px; }
+  .stat .v { font: 16px/1.25 var(--pix); overflow-wrap: anywhere; margin-bottom: 6px; }
+  .stat .s, .fahrplan, .sich ul, .hue ul, .lsp ul, .rat ol, .wr-log, .legend, .lsp .sens, .hue .sens { font: 20px/1 var(--term); }
+  .stat .s { color: var(--grey); }
+  .stat small { font-size: 1em; color: var(--grey); }
+  .stat.warn, .stat.neg { border-color: var(--red); } .stat.warn .k, .stat.neg .k { background: #a00; color: #fff; }
+  .gerat.an, .heiz.kuschel, .res.an { border-color: var(--yellow); } .gerat.an .k, .res.an .k { background: var(--yellow); color: #000; }
+  .heiz.kuschel { border-color: #ff66aa; } .heiz.kuschel .k { background: #ff66aa; color: #000; }
+  .sich li, .hue li, .lsp li { border-top: 2px dotted #2a2a55; padding: 3px 0; }
+  .rat ol { padding-left: 22px; }
+  .g-knoepfe { gap: 6px; margin-top: 8px; }
+  .g-knoepfe button { font: 8px/1.6 var(--pix); padding: 7px 2px; color: var(--eisblau); background: var(--blau); border: 0; box-shadow: 0 4px 0 #19123f; }
+  .g-knoepfe button:hover { color: #fff; background: var(--hellblau); }
+  .g-knoepfe button.an { box-shadow: 0 2px 0 #8a8a2a; transform: translateY(2px); }
+  .balken8 { height: 8px; background: var(--blau); } .balken8 i { background: var(--green); }
+
+  /* Wechselrichter, App, Diagramme, Fuss */
+  .wr h2 { font: var(--p)/1.5 var(--pix); }
+  .wr-knopf { font: 8px/1.4 var(--pix); }
+  .wr-knopf .wr-k2 { font-size: 32px; letter-spacing: 0; margin-top: 6px; }
+  .wr-knopf.scharf .wr-k2 { font-size: 16px; }
+  .wr-status { font: 16px/1.4 var(--pix); }
+  .wr-info, .wr-regel { font: 20px/1 var(--term); }
+  .charts { gap: 6px; } .charts canvas { box-shadow: 0 0 0 2px var(--blau); }
+  .legend { margin-top: 8px; }
+  #app p, #app .themen, #push-status, #app-meldung { font: 20px/1.1 var(--term); }
+  #app button { font: 8px/1 var(--pix); padding: 10px; color: var(--eisblau); background: var(--blau); border: 0; box-shadow: 0 4px 0 #19123f; }
+  #app button:hover, #app button:focus-visible { color: #fff; background: var(--hellblau); }
+  footer { font: 20px/1 var(--term); color: #555; margin-top: 16px; }
+
+  /* Einschaltbild wie am C64 (nur einmal pro Sitzung, antippen überspringt) */
+  #boot { position: absolute; inset: 0; z-index: 5; background: var(--hellblau); padding: clamp(14px, 5vw, 46px); cursor: pointer; }
+  #boot pre { margin: 0; height: 100%; background: var(--blau); color: var(--hellblau); font: var(--p)/1.5 var(--pix); padding: 1.5em 1em; white-space: pre-wrap; overflow: hidden; color: #8b7fd6; }
+  #boot.weg { display: none; }
+  #boot .c { display: inline-block; width: 1em; height: 1em; background: #8b7fd6; vertical-align: -2px; animation: blink .6s steps(2) infinite; }
+
+  @media (max-width: 760px) {
+    body { padding: 0; }
+    .gehaeuse { border-radius: 0; padding: 6px 6px 0; box-shadow: none; }
+    .monitor { border-radius: 8px; padding: 8px; box-shadow: 0 0 0 3px #1a1a1a; }
+    .blende { padding: 8px 4px; } .blende .marke span { display: none; }
+    .logo { font-size: 16px; text-shadow: 2px 2px 0 #ff9900, 4px 4px 0 #cc2200; }
+    .logo small { display: block; margin: 8px 0 0; }
+    .ui { grid-template-columns: 1fr; gap: 6px; }
+    .verbs button { padding: 10px 2px; }
+    .inv { border-left: 0; padding-left: 0; border-top: 2px solid var(--blau); padding-top: 10px; }
+    .stats { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+    .stat .v { font-size: 12px; }
+    .wr-status { font-size: 12px; }
+    .reiter { gap: 10px 6px; } .reiter button { padding: 9px 7px; }
+    .sich, .res { grid-column: 1 / -1; }   /* lange Zeilen: auf dem Handy volle Breite */
+  }
+  @media (prefers-reduced-motion: reduce) { #boot { display: none; } }
 </style>
 </head>
 <body>
+<div class="gehaeuse">
 <main class="monitor">
+  <div id="boot" title="Antippen überspringt"><pre></pre></div>
+  <header class="kopf"><div class="logo">HOMI<small>ENERGIE-ABENTEUER</small></div><div class="kopf-r"><span class="live">●</span> LIVE <span id="uhr">–</span></div></header>
   <div id="minus-banner" role="alert"></div>
   <div id="talk" aria-live="polite">Lade Daten vom Fronius…</div>
   <canvas id="scene" width="320" height="150" aria-label="Haus mit Solaranlage, Figur und Stromnetz"></canvas>
@@ -169,10 +312,13 @@
     <div class="verbs" id="verbs"></div>
     <div class="inv">
       <h2>Inventar: Wer frisst den Strom?</h2>
-      <ul id="inv"></ul>
+      <div class="inv-box"><ul id="inv"></ul>
+        <div class="pfeile"><button type="button" id="inv-auf" aria-label="Inventar nach oben"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path d="M3 0h1v1h1v1h1v1h1v1H0V3h1V2h1V1h1z"/></svg></button><button type="button" id="inv-ab" aria-label="Inventar nach unten"><svg viewBox="0 0 7 4" shape-rendering="crispEdges"><path d="M0 0h7v1H6v1H5v1H4v1H3V3H2V2H1V1H0z"/></svg></button></div></div>
       <div class="sum"><span>Smart Meter</span><span id="invsum">–</span></div>
     </div>
   </div>
+
+  <nav class="reiter" id="reiter" aria-label="Themen"></nav>
 
   <section class="panel wr" id="wr-panel" hidden><div class="wr-innen">
     <h2>⚠ Wechselrichter-Steuerung · <span id="wr-modus">–</span></h2>
@@ -253,6 +399,8 @@
   </section>
   <footer>Daten: Fronius Solar API (live) · Tarife: Gemeindewerke Stäfa · Preise inkl. MWST · Börsenpreise: EPEX Spot Day-Ahead CH via <a href="https://energy-charts.info">Energy-Charts</a> (CC BY 4.0), EUR→CHF zum SNB-Tageskurs (11 Uhr) · <a href="https://homi.solar/datenschutz.html" target="_blank" rel="noopener">Datenschutz</a> · <span id="stand"></span></footer>
 </main>
+<div class="blende"><span class="regenbogen"><i style="background:#e33"></i><i style="background:#f90"></i><i style="background:#fe3"></i><i style="background:#4b4"></i><i style="background:#39f"></i></span><span class="marke"><b>homi 64</b><span> · PERSONAL ENERGY COMPUTER</span></span><span class="luft"></span><span class="knopf"></span><span class="knopf"></span><span>POWER</span><span class="led"></span></div>
+</div>
 
 <script>
 "use strict";
@@ -1508,6 +1656,80 @@ $("s-rat2").addEventListener("click", e => {
 setInterval(chatter, 7000);
 setInterval(wander, 3500);
 requestAnimationFrame(frame);
+</script>
+<script>
+// ===== C64-Oberfläche: Reiter, Inventar-Pfeile, Uhr, Einschaltbild =====
+(() => {
+  const main = document.querySelector("main.monitor");
+  // --- Reiter: jede Kachelgruppe wird ein Thema ---
+  const NAMEN = ["jetzt", "prognose", "geraete", "bericht", "system"];
+  let i = -1;
+  for (const el of document.querySelector(".stats").children) {
+    if (el.classList.contains("gruppe")) i++;
+    el.dataset.r = NAMEN[Math.max(i, 0)];
+  }
+  $("wr-panel").dataset.r = "geraete";
+  document.querySelector(".charts").dataset.r = "verlauf";
+  $("app").dataset.r = "system";
+  document.querySelector(".stats").parentElement.querySelector("h2").dataset.r = "nur-alles";
+  const REITER = [["jetzt", "Jetzt"], ["prognose", "Prognose"], ["geraete", "Geräte"], ["bericht", "Bericht"], ["verlauf", "Verlauf"], ["system", "System"], ["alles", "Alles"]];
+  const leiste = $("reiter"), knopf = {};
+  function zeige(id) {
+    main.dataset.reiter = id;
+    document.querySelectorAll("[data-r]").forEach(el => el.classList.toggle("r-aus", id !== "alles" && el.dataset.r !== id));
+    for (const k in knopf) knopf[k].classList.toggle("aktiv", k === id);
+    try { localStorage.setItem("homi-reiter", id); } catch {}
+  }
+  for (const [id, name] of REITER) {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = name.toUpperCase(); b.onclick = () => zeige(id);
+    leiste.appendChild(b); knopf[id] = b;
+  }
+  const log = document.createElement("a");
+  log.href = "logbuch.html"; log.textContent = "LOGBUCH →"; leiste.appendChild(log);
+  let start = "jetzt";
+  try { start = localStorage.getItem("homi-reiter") || start; } catch {}
+  zeige(knopf[start] ? start : "jetzt");
+  // Reiter blinkt rot, wenn dahinter etwas Aufmerksamkeit braucht (Kachel rot, Wechselrichter aus oder gedrosselt)
+  setInterval(() => {
+    for (const [id] of REITER) {
+      if (id === "alles") continue;
+      const a = [...document.querySelectorAll(`[data-r="${id}"]`)].some(el => !el.hidden && (el.matches(".stat.warn, .stat.neg")
+        || el.querySelector(".stat.warn:not([hidden]), .stat.neg:not([hidden]), .wr-status.aus, .wr-status.drossel")));
+      knopf[id].classList.toggle("alarm", a);
+    }
+  }, 2000);
+
+  // --- Inventar: Pfeile statt Rollbalken ---
+  const ul = $("inv"), auf = $("inv-auf"), ab = $("inv-ab");
+  const zeile = () => (ul.firstElementChild ? ul.firstElementChild.offsetHeight : 16);
+  const pfeile = () => { auf.disabled = ul.scrollTop <= 0; ab.disabled = ul.scrollTop + ul.clientHeight >= ul.scrollHeight - 1; };
+  auf.onclick = () => { ul.scrollTop -= 3 * zeile(); pfeile(); };
+  ab.onclick = () => { ul.scrollTop += 3 * zeile(); pfeile(); };
+  ul.addEventListener("wheel", e => { e.preventDefault(); ul.scrollTop += Math.sign(e.deltaY) * zeile(); pfeile(); }, { passive: false });
+  setInterval(pfeile, 1000);
+
+  // --- Uhr ---
+  const uhr = () => { $("uhr").textContent = new Date().toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" }); };
+  uhr(); setInterval(uhr, 10000);
+
+  // --- Einschaltbild ---
+  const boot = $("boot"), pre = boot.querySelector("pre");
+  let gesehen = false;
+  try { gesehen = sessionStorage.getItem("homi-boot") === "1"; } catch {}
+  const halt = location.search.includes("boot=halt");
+  if (gesehen && !halt || matchMedia("(prefers-reduced-motion: reduce)").matches) { boot.classList.add("weg"); return; }
+  try { sessionStorage.setItem("homi-boot", "1"); } catch {}
+  const ZEILEN = ["", "  **** HOMI 64 BASIC V2 ****", "", " 64K RAM  38911 BASIC BYTES FREE", "", "READY.", "LOAD \"HOMI\",8,1", "", "SEARCHING FOR HOMI", "LOADING", "READY.", "RUN"];
+  let n = 0;
+  const fertig = () => { clearInterval(takt); boot.classList.add("weg"); };
+  const takt = setInterval(() => {
+    n++;
+    pre.innerHTML = ZEILEN.slice(0, n).join("\n") + '\n<span class="c"></span>';
+    if (n >= ZEILEN.length && !halt) { clearInterval(takt); setTimeout(fertig, 500); }
+  }, 170);
+  boot.onclick = fertig;
+})();
 </script>
 </body>
 </html>

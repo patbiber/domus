@@ -183,6 +183,12 @@ Laufzeit-Zustand), `erfassung` (5-s-Schleife), `fronius`, `tarif`, `boerse`, `ar
   ```
 - **Logbuch** `logbuch.html` (Link im Kassenbuch): Tag (10 min), Woche, Monat, Jahr, Alles; Ansicht per `#tag`, `#monat` …
 - liefert die Webseite `energie/www/index.html` aus (Retro-Adventure-Look, zufällige Geräte passend zum Smart-Meter-Verbrauch).
+  Seit 13.11.2026 im C64-Look (Patricks Wahl nach Entwurf): Pixelschrift Press Start 2P, Fliesstext VT323 (beide SIL OFL,
+  Lizenztexte in `energie/www/fonts/`), eigene Pixel-Symbole `fonts/homi-zeichen.ttf` (⚠ ● ■ ☀ ▲ ▼ ← → ✓, fehlen in beiden
+  Schriften), beiges Monitor-Gehäuse «homi 64», Reiter (Jetzt/Prognose/Geräte/Bericht/Verlauf/System/Alles, letzter Reiter
+  im Browser gemerkt, rot blinkend bei Warnungen), Inventar mit Pfeiltasten, C64-Einschaltbild einmal pro Sitzung
+  (antippen überspringt, `?boot=halt` hält es zum Prüfen an). Die Reiter ordnen die Kacheln über die Gruppen-Überschriften
+  (`h3.gruppe`) zu – neue Kacheln einfach in die passende Gruppe stellen.
   Tag/Nacht richtet sich nach der PV-Leistung: nachts Mond, Sterne, beleuchtete Räume, Nachtstrom-Sprüche;
   der Schlafmodus erscheint nur noch, wenn der Fronius keine Daten liefert.
 
