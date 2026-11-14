@@ -84,6 +84,14 @@ try:
     letzte = datetime.strptime(w.get("ExecMainExitTimestamp", "").rsplit(" ", 1)[0], "%a %Y-%m-%d %H:%M:%S").timestamp()
 except ValueError:
     letzte = None
+if letzte is None:   # nach einem Neustart kennt systemd den letzten Lauf nicht mehr → im Journal nachsehen
+    j = subprocess.run(["journalctl", "--user", "-u", "github-abend.service", "-o", "short-unix", "--no-pager", "-n", "200"],
+                       capture_output=True, text=True).stdout.splitlines()
+    fertig = [l for l in j if "Finished github-abend" in l or "Failed to start github-abend" in l or "github-abend.service: Failed" in l]
+    if fertig:
+        letzte = float(fertig[-1].split()[0])
+        if "Finished" not in fertig[-1]:
+            w["Result"] = "failed"
 detail = f"{wartend} Commit(s) warten auf den Abend" if wartend else "alles hochgeladen"
 ok = w.get("Result") == "success" and (aeltester is None or time.time() - aeltester < 30 * H)
 punkte.append(punkt("GitHub-Upload", letzte, 30, detail, ok=ok))
