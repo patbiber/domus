@@ -35,7 +35,7 @@ if [ ! -f /var/lib/domus/datenbanken-eingesetzt ]; then
 fi
 
 # --- Container (Reihenfolge wie auf dem NUC: zuerst DNS/DHCP, dann Dienste, zuletzt nginx)
-for d in pihole homeassistant energie umami proxy energy academy biber-solar biber-solar-test training unifi; do
+for d in pihole homeassistant energie umami proxy energy academy biber-solar biber-solar-test training unifi projekte; do
   [ -f "$DOMUS/$d/compose.yml" ] || continue
   (cd "$DOMUS/$d" && docker compose up -d --remove-orphans) || fehler+=("$d")
 done

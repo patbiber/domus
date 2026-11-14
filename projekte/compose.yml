@@ -1,0 +1,43 @@
+# Projekte (projects.biber.solar, seit 14.11.2026): Patricks Projekt- und Aufgabenverwaltung mit Kanban-Boards (Vikunja).
+# Daten (SQLite-Datenbank, Anhänge): ./data (nicht im Repo, im Gesamt-Backup und im Abgleich zur Reserve).
+# Keine Selbstregistrierung; Konten nur per «docker exec vikunja /app/vikunja/vikunja user create …».
+# JWT-Schlüssel in ../.env (PROJEKTE_JWT_SECRET). Datenschutz-Link: homi.solar/datenschutz.html (CLAUDE.md).
+services:
+  vikunja:
+    container_name: vikunja
+    image: vikunja/vikunja:latest
+    restart: unless-stopped
+    user: "1000:1000"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      VIKUNJA_SERVICE_PUBLICURL: https://projects.biber.solar/
+      VIKUNJA_SERVICE_JWTSECRET: ${PROJEKTE_JWT_SECRET}
+      VIKUNJA_SERVICE_ENABLEREGISTRATION: "false"
+      VIKUNJA_SERVICE_TIMEZONE: Europe/Zurich
+      VIKUNJA_SERVICE_ENABLELINKSHARING: "true"
+      VIKUNJA_DATABASE_TYPE: sqlite
+      VIKUNJA_DATABASE_PATH: /db/vikunja.db
+      VIKUNJA_FILES_BASEPATH: /files
+      VIKUNJA_DEFAULTSETTINGS_LANGUAGE: de-DE
+      VIKUNJA_DEFAULTSETTINGS_TIMEZONE: Europe/Zurich
+      VIKUNJA_DEFAULTSETTINGS_WEEK_START: "1"
+      VIKUNJA_LEGAL_PRIVACYURL: https://homi.solar/datenschutz.html
+      VIKUNJA_RATELIMIT_ENABLED: "true"
+    volumes:
+      - ./data/db:/db
+      - ./data/files:/files
+    networks:
+      - proxy_default
+    logging:                           # Docker-Log begrenzen: höchstens 3 × 10 MB
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  proxy_default:
+    external: true

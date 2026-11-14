@@ -23,6 +23,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | `system/` | Neustart-Bericht, wöchentliches Docker-Image-Update mit Prüfung und Zurückrollen, Überwachung der öffentlichen IP (systemd-User-Dienste) | läuft |
 | `energie/` | Energie-API (Fronius live + GWS-Tarif) und Retro-Webseite https://home.biber.solar | läuft |
 | `strompreise/` | Monatliches Archiv der GWS-Stromtarife (Skript + systemd-User-Timer, kein Docker) | läuft |
+| `projekte/` | Projektverwaltung mit Kanban (Vikunja) https://projects.biber.solar | läuft (seit 14.11.2026) |
 | `film/` | Kurzfilm «Ein Tag mit homi» (72 s, 1080×1350 für LinkedIn) im Retro-Stil, gerendert mit Puppeteer + ffmpeg | fertig (28.10.2026) |
 
 ## Einrichtung
@@ -581,6 +582,15 @@ kunden/kunde.py entfernen sonnenhof --ja         # Konfiguration, Passwort, Zert
   stabil), sagen beide Lautsprecher zwischen 07 und 21 Uhr den Preis an (Automation `homi_minuspreis_ansage` in
   `homeassistant/config/configuration.yaml`, `tts.speak` mit Google Translate auf Deutsch). Datenschutz: nur der Ansagesatz
   (Preis) geht dafür ans Internet (Google Translate), keine Personendaten. Die Ansage hängt an Home Assistant, nicht an homi.
+- **Projektverwaltung** (`projekte/`, https://projects.biber.solar, seit 14.11.2026): Vikunja (Container `vikunja`, SQLite in
+  `projekte/data`, nicht im Repo; im Gesamt-Backup, im Abgleich zur Reserve und im wöchentlichen Image-Update). Projekte:
+  MPower-Mandat, Webseite, Shop, Splitboard, Surfen, Daten, Mediation, EMS, homi Screen – je Kanban mit den Spalten Ideen ·
+  Zu tun · In Arbeit · Wartet · Erledigt. Konto `patrick`; keine Selbstregistrierung – Konten für Externe legt Claude an:
+  `docker exec vikunja /app/vikunja/vikunja user create -u <name> -e <mail> -p <passwort>`, danach teilt Patrick einzelne
+  Projekte (lesen / schreiben / Admin) oder per Link (Link-Freigabe ist an). Kein Mailversand. JWT-Schlüssel
+  `PROJEKTE_JWT_SECRET` und API-Token für Claude `VIKUNJA_TOKEN` (gültig bis 14.11.2027) in `.env`; `projekte/.env` ist ein
+  Link darauf. nginx `proxy/conf.d/projects.biber.solar.conf` (noindex, Login-Bremse). Datenschutz: Abschnitt 6a in
+  homi.solar/datenschutz.html (DE/EN).
 - **Pi-hole** (`pihole/`, seit 06.11.2026): DNS- und DHCP-Server fürs Heimnetz, blockiert Werbung und Tracker für alle
   Geräte. Die Sunrise-Box lässt den DNS-Server nicht ändern, darum ist **ihr DHCP aus** und Pi-hole verteilt die Adressen
   (Pool .50–.250, 24 h, Gateway .1, DNS 192.168.1.23). Feste Adressen (Fronius .221, myStrom .211, Heizung .103,

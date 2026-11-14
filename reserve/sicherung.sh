@@ -23,7 +23,7 @@ df -h /srv/backup | tail -1
 melde ok
 
 if [ "$(cat /var/lib/domus/rolle 2>/dev/null)" != "aktiv" ]; then
-  for d in pihole homeassistant energie umami proxy energy academy biber-solar biber-solar-test training unifi pihole-zweit; do
+  for d in pihole homeassistant energie umami proxy energy academy biber-solar biber-solar-test training unifi projekte pihole-zweit; do
     [ -f "$DOMUS/$d/compose.yml" ] || continue
     (cd "$DOMUS/$d" && docker compose pull -q --ignore-buildable 2>&1 | tail -2)
   done

@@ -54,7 +54,7 @@ sudo ip addr add "$VIP/24" dev "$DEV" 2>/dev/null || true
 sudo arping -q -U -c 3 -I "$DEV" "$VIP" 2>/dev/null || true
 sudo systemctl reset-failed domus-vorrang.service docker.service 2>/dev/null || true
 sudo systemctl start domus-vorrang.service docker.service
-for d in pihole homeassistant energie umami proxy energy academy biber-solar biber-solar-test training unifi; do
+for d in pihole homeassistant energie umami proxy energy academy biber-solar biber-solar-test training unifi projekte; do
   [ -f "$DOMUS/$d/compose.yml" ] && { (cd "$DOMUS/$d" && docker compose up -d) >/dev/null 2>&1 || nochmals+=("$d"); }
 done
 for d in "${nochmals[@]}"; do (cd "$DOMUS/$d" && docker compose up -d --force-recreate) >/dev/null || echo "FEHLER: $d startet nicht"; done
