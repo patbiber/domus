@@ -24,6 +24,7 @@ Jeder Dienst hat einen eigenen Ordner mit eigener `compose.yml`:
 | `energie/` | Energie-API (Fronius live + GWS-Tarif) und Retro-Webseite https://home.biber.solar | läuft |
 | `strompreise/` | Monatliches Archiv der GWS-Stromtarife (Skript + systemd-User-Timer, kein Docker) | läuft |
 | `projekte/` | Projektverwaltung mit Kanban (Vikunja) https://projects.biber.solar | läuft (seit 14.11.2026) |
+| `monitor/` | Anleitung homi-Monitor im Gang: Raspberry Pi zeigt http://192.168.1.23:8099/monitor.html im Vollbild (Skript `energie/www/pi/monitor-einrichten.sh`) | Seite fertig, Pi noch einzurichten (15.11.2026) |
 | `film/` | Kurzfilm «Ein Tag mit homi» (72 s, 1080×1350 für LinkedIn) im Retro-Stil, gerendert mit Puppeteer + ffmpeg | fertig (28.10.2026) |
 
 ## Einrichtung
