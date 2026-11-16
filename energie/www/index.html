@@ -269,6 +269,18 @@
   .wr-info, .wr-regel { font: 20px/1 var(--term); }
   .charts { gap: 6px; } .charts canvas { box-shadow: 0 0 0 2px var(--blau); }
   .legend { margin-top: 8px; }
+  .vg-kopf { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-top: 4px; }
+  .vg-titel { font: 12px/1 var(--pix); color: var(--yellow); }
+  .vg-knoepfe { display: flex; align-items: center; gap: 6px; font: 8px/1 var(--pix); }
+  .vg-knoepfe b { color: #fff; min-width: 11em; text-align: center; }
+  .vg-knoepfe button { font: 8px/1 var(--pix); padding: 7px 8px; color: var(--eisblau); background: var(--blau); border: 0; cursor: pointer; box-shadow: 0 3px 0 #19123f; }
+  .vg-knoepfe button:hover, .vg-knoepfe button:focus-visible { color: #fff; background: var(--hellblau); }
+  .vg-knoepfe button.an { color: #000; background: var(--yellow); }
+  .vg-knoepfe button:disabled { opacity: .35; cursor: default; }
+  #chartV, #chartP { cursor: crosshair; touch-action: pan-y; }
+  .vg-info { font: 20px/1.15 var(--term); color: var(--white); min-height: 2.3em; }
+  .vg-info b { color: var(--yellow); font-weight: normal; } .vg-info .rot { color: var(--red); } .vg-info .gelb { color: var(--yellow); }
+  #p-info { color: var(--white); }
   #app p, #app .themen, #push-status, #app-meldung { font: 20px/1.1 var(--term); }
   #app button { font: 8px/1 var(--pix); padding: 10px; color: var(--eisblau); background: var(--blau); border: 0; box-shadow: 0 4px 0 #19123f; }
   #app button:hover, #app button:focus-visible { color: #fff; background: var(--hellblau); }
@@ -369,7 +381,13 @@
         <div class="g-knoepfe"><button type="button" id="b-reserve">RESERVE SERVER ON</button></div></div>
     </div>
     <div class="charts">
-      <div class="legend"><span><i style="background:#ffdd33"></i>Solar</span><span><i style="background:#ff5555"></i>Verbrauch</span><span>Leistung, letzte 24 h</span></div>
+      <div class="vg-kopf"><span class="vg-titel">VERBRAUCH GENAU</span>
+        <span class="vg-knoepfe"><button type="button" id="vg-zur" title="Tag davor">◀</button><b id="vg-tag">HEUTE</b><button type="button" id="vg-vor" title="Tag danach">▶</button>
+        <button type="button" id="vg-stunde" class="an">STUNDE</button><button type="button" id="vg-10min">10 MIN</button></span></div>
+      <div class="legend"><span><i style="background:#ffdd33"></i>Verbrauch aus Sonnenstrom</span><span><i style="background:#ff5555"></i>Verbrauch aus dem Netz</span><span><i style="background:#6c5eb5"></i>Solarertrag</span><span>Balken antippen oder mit der Maus zeigen</span></div>
+      <canvas id="chartV" width="320" height="96" aria-label="Diagramm Verbrauch je Stunde oder je 10 Minuten"></canvas>
+      <div class="vg-info" id="vg-info">&nbsp;</div>
+      <div class="legend"><span><i style="background:#ffdd33"></i>Solar</span><span><i style="background:#ff5555"></i>Verbrauch</span><span>Leistung, letzte 24 h</span><span id="p-info"></span></div>
       <canvas id="chartP" width="320" height="56" aria-label="Diagramm Leistung"></canvas>
       <div class="legend"><span><i style="background:#55ff55"></i>Ich bekomme (CHF/h)</span><span><i style="background:#ff5555"></i>Ich bezahle (CHF/h)</span></div>
       <canvas id="chartM" width="320" height="40" aria-label="Diagramm Geldfluss"></canvas>
@@ -937,6 +955,102 @@ function drawAbregelung() {
   A.fillStyle = "#666"; A.fillRect(Math.round(24 * bw), 0, 1, h);
   ptext(A, max.toFixed(1) + " KWH", w - 42, 1, "#55ff55");
 }
+
+// ---------- Verbrauch genau: je Stunde oder je 10 Minuten, Tag wählbar, Balken antippen ----------
+const VG = { tag: 0, aufl: "stunde", daten: null, fach: [], wahl: -1 };
+const tagIso = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const kwh = x => (x || 0).toFixed(x >= 10 ? 1 : 2) + " kWh";
+async function vgLaden() {
+  const d = new Date(); d.setDate(d.getDate() - VG.tag);
+  $("vg-tag").textContent = VG.tag === 0 ? "HEUTE" : VG.tag === 1 ? "GESTERN"
+    : d.toLocaleDateString("de-CH", { weekday: "short", day: "numeric", month: "numeric" }).toUpperCase();
+  $("vg-vor").disabled = VG.tag === 0;
+  try {
+    const r = await fetch(`api/archiv?aufloesung=${VG.aufl}&von=${tagIso(d)}&bis=${tagIso(d)}`, { cache: "no-store" });
+    VG.daten = r.ok ? await r.json() : null;
+  } catch { VG.daten = null; }
+  const n = VG.aufl === "stunde" ? 24 : 144;
+  VG.fach = new Array(n).fill(null);
+  for (const z of (VG.daten && VG.daten.zeilen) || []) {
+    const h = +z.zeit.slice(11, 13), m = VG.aufl === "stunde" ? 0 : +z.zeit.slice(14, 16);
+    const i = VG.aufl === "stunde" ? h : h * 6 + Math.floor(m / 10);
+    if (i >= 0 && i < n) VG.fach[i] = z;
+  }
+  VG.wahl = -1;
+  vgZeichnen();
+}
+function vgVon(i) {
+  const min = VG.aufl === "stunde" ? 60 : 10, a = i * min, b = a + min;
+  const f = x => String(Math.floor(x / 60) % 24).padStart(2, "0") + ":" + String(x % 60).padStart(2, "0");
+  return f(a) + "–" + (b === 1440 ? "24:00" : f(b));
+}
+function vgZeichnen() {
+  const c = $("chartV"), V = c.getContext("2d"), w = c.width, h = c.height, n = VG.fach.length, plotH = h - 9;
+  V.fillStyle = "#050505"; V.fillRect(0, 0, w, h);
+  const bw = w / n;
+  for (let s = 0; s <= 24; s += 3) {
+    const x = Math.min(w - 1, Math.round(s / 24 * w));
+    V.fillStyle = "#1a1a1a"; V.fillRect(x, 0, 1, plotH);
+    if (s < 24) ptext(V, String(s).padStart(2, "0"), x + 1, h - 6, "#666");
+  }
+  const da = VG.fach.filter(Boolean);
+  if (!da.length) { ptext(V, "KEINE DATEN FUR DIESEN TAG", 108, 40, "#666"); $("vg-info").innerHTML = "&nbsp;"; return; }
+  const max = Math.max(VG.aufl === "stunde" ? .2 : .04, ...da.map(z => z.verbrauch_kwh || 0));   // Massstab nach Verbrauch; Solar höher als oben wird am Rand gezeigt
+  const Y = v => Math.round(v / max * (plotH - 2));
+  VG.fach.forEach((z, i) => {
+    if (!z) return;
+    const x = Math.round(i * bw), bb = Math.max(1, Math.round((i + 1) * bw) - x - (bw >= 4 ? 1 : 0));
+    const netz = Math.min(z.bezug_kwh || 0, z.verbrauch_kwh || 0), sonne = Math.max(0, (z.verbrauch_kwh || 0) - netz);
+    const hs = Y(sonne), hn = Y(netz), hp = Math.min(Y(z.pv_kwh || 0), plotH - 2);
+    V.fillStyle = "#ffdd33"; V.fillRect(x, plotH - hs, bb, hs);
+    V.fillStyle = "#ff5555"; V.fillRect(x, plotH - hs - hn, bb, hn);
+    if (hp) { V.fillStyle = "#6c5eb5"; V.fillRect(x, plotH - hp - 1, bb, 2); }
+    if (i === VG.wahl) { V.fillStyle = "rgba(255,255,255,.25)"; V.fillRect(x, 0, bb, plotH); }
+  });
+  ptext(V, kwh(max).replace(" ", ""), 2, 2, "#aaa");
+  vgInfo();
+}
+function vgInfo() {
+  const el = $("vg-info"), z = VG.fach[VG.wahl];
+  if (z) {
+    const std = (z.sekunden || (VG.aufl === "stunde" ? 3600 : 600)) / 3600, netz = Math.min(z.bezug_kwh || 0, z.verbrauch_kwh || 0);
+    el.innerHTML = `<b>${vgVon(VG.wahl)} Uhr</b> · verbraucht <b>${kwh(z.verbrauch_kwh)}</b> (Ø ${fmtW((z.verbrauch_kwh || 0) / std * 1000)})`
+      + ` · <span class="gelb">${kwh((z.verbrauch_kwh || 0) - netz)} Sonne</span> · <span class="rot">${kwh(netz)} Netz</span>`
+      + ` · Solar ${kwh(z.pv_kwh)} · bezahlt CHF ${(z.kosten_chf || 0).toFixed(2)}`;
+    return;
+  }
+  const s = VG.daten && VG.daten.summe, da = VG.fach.map((z, i) => [z, i]).filter(([z]) => z);
+  if (!s || !da.length) { el.innerHTML = "&nbsp;"; return; }
+  const [top, ti] = da.reduce((a, b) => ((b[0].verbrauch_kwh || 0) > (a[0].verbrauch_kwh || 0) ? b : a));
+  el.innerHTML = `Ganzer Tag: verbraucht <b>${kwh(s.verbrauch_kwh)}</b>, davon <span class="rot">${kwh(s.bezug_kwh)} aus dem Netz</span>`
+    + ` (CHF ${(s.kosten_chf || 0).toFixed(2)}) · am meisten <b>${vgVon(ti)} Uhr: ${kwh(top.verbrauch_kwh)}</b>`;
+}
+function canvasX(c, e) {
+  const r = c.getBoundingClientRect(), p = e.touches ? e.touches[0] : e;
+  return (p.clientX - r.left) / r.width;
+}
+(() => {
+  const c = $("chartV");
+  const wahl = e => { const i = Math.floor(canvasX(c, e) * VG.fach.length); if (i !== VG.wahl && i >= 0 && i < VG.fach.length) { VG.wahl = i; vgZeichnen(); } };
+  c.addEventListener("mousemove", wahl); c.addEventListener("click", wahl); c.addEventListener("touchstart", wahl, { passive: true });
+  c.addEventListener("mouseleave", () => { VG.wahl = -1; vgZeichnen(); });
+  $("vg-zur").onclick = () => { VG.tag++; vgLaden(); };
+  $("vg-vor").onclick = () => { if (VG.tag > 0) { VG.tag--; vgLaden(); } };
+  const aufl = a => { VG.aufl = a; $("vg-stunde").classList.toggle("an", a === "stunde"); $("vg-10min").classList.toggle("an", a === "10min"); vgLaden(); };
+  $("vg-stunde").onclick = () => aufl("stunde"); $("vg-10min").onclick = () => aufl("10min");
+  // Leistungsgrafik 24 h: Wert unter der Maus / dem Finger
+  const p = $("chartP"), info = $("p-info");
+  const zeigP = e => {
+    if (!hist.length) return;
+    const ts = Date.now() - 24 * 3600e3 + canvasX(p, e) * 24 * 3600e3;
+    const q = hist.reduce((a, b) => Math.abs(Date.parse(b.zeit) - ts) < Math.abs(Date.parse(a.zeit) - ts) ? b : a);
+    info.textContent = new Date(q.zeit).toLocaleTimeString("de-CH", { hour: "2-digit", minute: "2-digit" }) + " Uhr: Solar " + fmtW(q.pv_w || 0) + " · Verbrauch " + fmtW(q.verbrauch_w || 0);
+  };
+  p.addEventListener("mousemove", zeigP); p.addEventListener("click", zeigP); p.addEventListener("touchstart", zeigP, { passive: true });
+  p.addEventListener("mouseleave", () => { info.textContent = ""; });
+  vgLaden();
+  setInterval(() => { if (VG.tag === 0 && VG.wahl < 0) vgLaden(); }, 300000);
+})();
 
 async function pollHist() {
   try { hist = await (await fetch("api/history", { cache: "no-store" })).json(); } catch {}
