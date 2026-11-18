@@ -66,7 +66,7 @@ PUSH_HOSTS = re.compile(r"^(fcm\.googleapis\.com|[a-z0-9.-]+\.push\.services\.mo
 
 OPEN_METEO = ("https://api.open-meteo.com/v1/forecast?latitude={breite}&longitude={laenge}"
               "&hourly=global_tilted_irradiance,cloud_cover&tilt={neigung}&azimuth={azimut}"
-              "&current=temperature_2m,weather_code,is_day,wind_speed_10m"
+              "&current=temperature_2m,weather_code,is_day,wind_speed_10m,cloud_cover,precipitation"
               "&daily=temperature_2m_max,temperature_2m_min,weather_code,sunrise,sunset"
               "&past_days=14&forecast_days=3&timezone=Europe%2FZurich")
 

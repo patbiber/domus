@@ -63,7 +63,8 @@ def prognose_berechnen():
     c, dy = d.get("current") or {}, d.get("daily") or {}
     i = (dy.get("time") or []).index(heute.isoformat()) if heute.isoformat() in (dy.get("time") or []) else None
     wetter = {"temp_c": c.get("temperature_2m"), "code": c.get("weather_code"), "tag": bool(c.get("is_day")),
-              "wind_kmh": c.get("wind_speed_10m"), "zeit": c.get("time")}
+              "wind_kmh": c.get("wind_speed_10m"), "wolken_pct": c.get("cloud_cover"),
+              "niederschlag_mm": c.get("precipitation"), "zeit": c.get("time")}
     if i is not None:
         wetter.update(max_c=dy["temperature_2m_max"][i], min_c=dy["temperature_2m_min"][i],
                       code_tag=dy["weather_code"][i], aufgang=dy["sunrise"][i][11:16], untergang=dy["sunset"][i][11:16])
