@@ -24,7 +24,9 @@ Endpunkte:
                 Minimalvergütung, Abregelschwelle
   /api/zuordnung  Verbraucher-Zuordnung: welche Geräte wie viel brauchen (14 Tage, Schätzung aus dem Zähler) und was
                 vermutlich gerade läuft
-  /api/info     Anzeigename und Leistung der Anlage
+  /api/sonne    öffentliche Kachel «Live vom Dach» auf biber.solar: Solarleistung, Wetter, Day-Ahead-Preis, Ertrag
+               wenn alles zum Börsenpreis eingespeist würde (ohne Verbrauchsdaten); auch über biber.solar/api/sonne
+ /api/info     Anzeigename und Leistung der Anlage
   /api/wochenbericht  letzte ganze Woche (Mo–So) mit Vorwochen-Vergleich, ?woche=2026-W41
   /api/push     GET: öffentlicher VAPID-Schlüssel; POST: App-Push an-/abmelden, Testnachricht
   /             statische Webseite: www/ (Retro) bzw. www-kunde/ für <name>.homi.solar
@@ -54,6 +56,7 @@ from homi.einspeisung import einspeise_plan
 from homi.erfassung import poll
 from homi.konfig import ANLAGE_CFG, ARCHIV_DIR, ARCHIV_TAGE, KUNDE_HOST, PORT, PUSH_DIR, PUSH_HOSTS, PUSH_THEMEN, SPEICHER_FILE, STEUERUNG_FILE, GERAETE_FILE, HEIZUNG_FILE, WWW, WWW_KUNDE
 from homi.prognose import poll_prognose
+from homi.oeffentlich import sonne
 from homi.push_abo import push_lesen, push_schluessel, push_schreiben
 from homi.speicher import SpeicherSimulation
 from homi.geraete import starten as geraete_starten
@@ -106,6 +109,8 @@ class Handler(SimpleHTTPRequestHandler):
             except (OSError, ValueError):
                 a = {}
             return self.send_json({"titel": a.get("titel") or "Mein Zuhause", "kwp": a.get("max_kw")})
+        if path == "/api/sonne":          # öffentlich auf biber.solar: nur Sonne, Wetter, Börsenpreis (kein Verbrauch)
+            return self.send_json(sonne())
         if path == "/api/status":
             with lock:
                 return self.send_json(state["status"] or {"fronius_ok": False, "startet": True})

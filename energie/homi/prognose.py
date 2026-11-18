@@ -59,10 +59,18 @@ def prognose_berechnen():
                 "bestes_fenster": bestes_fenster(rest, cfg.get("geraet_stunden", 2))}
 
     jetzt = datetime.now()
+    # aktuelles Wetter (für die Kachel auf biber.solar): Temperatur, WMO-Wettercode, Tag/Nacht, Wind, Min/Max heute
+    c, dy = d.get("current") or {}, d.get("daily") or {}
+    i = (dy.get("time") or []).index(heute.isoformat()) if heute.isoformat() in (dy.get("time") or []) else None
+    wetter = {"temp_c": c.get("temperature_2m"), "code": c.get("weather_code"), "tag": bool(c.get("is_day")),
+              "wind_kmh": c.get("wind_speed_10m"), "zeit": c.get("time")}
+    if i is not None:
+        wetter.update(max_c=dy["temperature_2m_max"][i], min_c=dy["temperature_2m_min"][i],
+                      code_tag=dy["weather_code"][i], aufgang=dy["sunrise"][i][11:16], untergang=dy["sunset"][i][11:16])
     return {"aktualisiert": jetzt.isoformat(timespec="minutes"), "faktor": round(faktor, 3),
             "eichstunden": len(paare), "ausrichtung": {"neigung": cfg["neigung"], "azimut": cfg["azimut"]},
             "heute": tag(heute, f"{jetzt.hour:02d}"), "morgen": tag(heute + timedelta(days=1)),
-            "uebermorgen": tag(heute + timedelta(days=2)), "stunden": stunden,
+            "uebermorgen": tag(heute + timedelta(days=2)), "stunden": stunden, "wetter": wetter,
             "quelle": "Open-Meteo (CC BY 4.0), geeicht mit den Messwerten von homi"}
 
 def prognose_log(p):
